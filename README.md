@@ -1,6 +1,4 @@
 # MUSI
-replace with product vision statement
-
 Musi is an app where users can rank their favorite songs, create personal lists, and share their music taste with others. Current music platforms make it easy to listen but not to express how much you like a song or compare preferences. By allowing users to share ranked lists and compare profiles with friends, Musi makes music more social and helps people discover new songs through each other.
 
 ## Team Members
