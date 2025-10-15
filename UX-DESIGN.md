@@ -36,11 +36,19 @@
 ### Profile
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/1f60b41f-d892-41f2-b008-18073fd7c58b" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/8dbe8828-ae87-4b0e-97a2-7d6814c74735" />
+
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/7cdcf610-1b33-422b-8033-56fcb2bf225e" />
+
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/2cd7c93f-ff32-47d7-b9b5-1122aff3e4b3" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/436dc83d-d655-4dc1-9c34-43e1b7982633" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/3f771aa2-d3c3-4d1e-ac89-8a44ed4e7b79" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/87e6cf7e-b390-4d24-bad6-a3ee5b6a2ed4" />
 
 ### Settings
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/056b6f65-3ce8-4975-aa5e-0289e7b8e46e" />
+<img height="430" alt="image" src="https://github.com/user-attachments/assets/74699f41-3833-42c1-a28e-a5bf47640bab" />
+<img height="430" alt="image" src="https://github.com/user-attachments/assets/3e993c54-17e1-45fd-a387-94d5711ef883" />
+<img height="430" alt="image" src="https://github.com/user-attachments/assets/f181bb06-48b7-40bf-9547-e20a298709d4" />
+<img height="430" alt="image" src="https://github.com/user-attachments/assets/931a085d-cf4f-415e-950f-3ce099841d55" />
+
+
 
 ### Rating flow
 
