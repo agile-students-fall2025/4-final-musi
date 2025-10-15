@@ -35,7 +35,7 @@ Answer these to fine tune your recommendations
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/2de9d41f-b33a-4781-97d7-fd159329a7ca" />
 
 ### Feed
-Explore latest reviews by users
+Explore Musi-curated lists and/or latest reviews by users
 
 <img height="430"  alt="image" src="https://github.com/user-attachments/assets/5b2f188e-effd-4131-ae69-0d2dcf33fc73" />
 
