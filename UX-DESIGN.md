@@ -7,9 +7,9 @@
 
 ### Intro
 
-<img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/e0faad28-d25a-4c0d-bf05-e6398e5bf612" />
-  | <img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/8417b7f9-7dd1-406d-a9f1-8dfd07c6b0a4" />
-
+<img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/e0faad28-d25a-4c0d-bf05-e6398e5bf612" /> 
+| <img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/8417b7f9-7dd1-406d-a9f1-8dfd07c6b0a4" />
+| <img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/49440efb-d4f2-4c68-9d10-7b3fc4dd332b" />
 
 ### Registration / Login
 
