@@ -7,7 +7,13 @@
 
 ### Intro
 
-### Registration / Login (Forgot password)
+<p>
+  
+    <img src="https://github.com/agile-students-fall2025/4-final-musi/blob/master/ux-design/StartingScreen0.png?raw=true" >
+    <img src="https://github.com/agile-students-fall2025/4-final-musi/blob/master/ux-design/StartingScreen1.png?raw=true" >
+</p>
+
+### Registration / Login
 
 ### Onboarding Survey
 
