@@ -5,7 +5,7 @@ Musi is an app where users can rank their favorite songs, create personal lists,
 
 ## Team Members
 - replace
-- Julz Liang - Github [julzliang](https://github.com/julzliang)
+- Julz Liang - Github: [julzliang](https://github.com/julzliang)
 - Ian Jiang - Github: [ianjiang7](https://github.com/ianjiang7)
 - Andy Cabidnol - Github: [andycabindol](https://github.com/andycabindol)
 - David Yu - Github: [DavidYu00](https://github.com/DavidYu00)
