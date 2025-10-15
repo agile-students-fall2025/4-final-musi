@@ -3,6 +3,10 @@
 ## Prototype
 [Click here to access prototype](https://www.figma.com/proto/FaM5OyOa9Vonx3uP4Fa4NA/Musi?page-id=180%3A5351&node-id=180-9563&viewport=132%2C385%2C0.09&t=FSAC15wmAHpodrue-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=180%3A9563)
 
+## App Map
+
+<img width="1599" height="1506" alt="image" src="https://github.com/user-attachments/assets/08b7e830-c116-4104-8542-0ebcce4db4aa" />
+
 ## Wireframe
 
 ### Intro
@@ -74,8 +78,6 @@ After registration, transitions to onboarding survey
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/7533c4ba-30c8-4e61-bd8f-c1972fec3f95" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/4a29cb20-692d-416b-9360-c087164dfa1f" />
 
-## App Map
 
-<img width="1599" height="1506" alt="image" src="https://github.com/user-attachments/assets/08b7e830-c116-4104-8542-0ebcce4db4aa" />
 
 
