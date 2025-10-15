@@ -11,31 +11,45 @@
 
 Intial screens after first opening the app -> transitions to Registration / Login
 
+
+
 ### Registration / Login
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/61cb14c0-fd2d-43e2-bb4b-61c4dc37f6b7" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/011b8994-9093-446c-ab0d-46dce68ea041" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/95d18934-83bc-4e45-93d0-56bbfd957847" />
 
 After registration, transitions to onboarding survey
 
+
+
 ### Onboarding Survey
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/2de9d41f-b33a-4781-97d7-fd159329a7ca" />
+
+
 
 ### Feed
 
 <img height="430"  alt="image" src="https://github.com/user-attachments/assets/5b2f188e-effd-4131-ae69-0d2dcf33fc73" />
 
+
+
 ### Your Lists
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/f470e1da-d405-4fae-a7a7-02fc2c3609cf" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/28c95ee8-19c8-47a8-9076-73e83c733e0d" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/582c449c-c2ff-4c26-97f8-aedd8eff9be0" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/234edf5e-332e-4922-9d1d-1408e4305d8d" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/bf0149f8-9e45-4f8c-aac1-ad7ebcd5eacc" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/db74e52b-d58b-46a6-9a82-da531d0fbc76" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/3071e384-8249-4524-85bc-fe11f0cb7fef" />
+
+
 
 ### Search
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/99546e2c-d2c3-4660-b719-d59e09705bc8" />
 
+
+
 ### Leaderboard
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/64f47238-d872-41a5-a5ae-a21a82f81bbe" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/c55cd8e3-5b1b-41cf-8506-e154e3c111c9" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/7cf5f368-d41a-4dd5-8c72-e18a8548b1b0" />
+
+
 
 ### Profile
 
@@ -45,12 +59,16 @@ After registration, transitions to onboarding survey
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/7cdcf610-1b33-422b-8033-56fcb2bf225e" />
 
+
+
 ### Settings
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/056b6f65-3ce8-4975-aa5e-0289e7b8e46e" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/74699f41-3833-42c1-a28e-a5bf47640bab" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/3e993c54-17e1-45fd-a387-94d5711ef883" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/f181bb06-48b7-40bf-9547-e20a298709d4" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/931a085d-cf4f-415e-950f-3ce099841d55" />
+
+
 
 ### Rating flow
 
