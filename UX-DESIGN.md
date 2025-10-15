@@ -7,8 +7,11 @@
 
 ### Intro
 
-<img src="https://github.com/agile-students-fall2025/4-final-musi/blob/master/ux-design/StartingScreen0.png?raw=true" >
-<img src="https://github.com/agile-students-fall2025/4-final-musi/blob/master/ux-design/StartingScreen1.png?raw=true" >
+Solarized dark             |  Solarized Ocean
+:-------------------------:|:-------------------------:
+<img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/e0faad28-d25a-4c0d-bf05-e6398e5bf612" />
+  | <img width="430" height="932" alt="image" src="https://github.com/user-attachments/assets/8417b7f9-7dd1-406d-a9f1-8dfd07c6b0a4" />
+
 
 ### Registration / Login
 
