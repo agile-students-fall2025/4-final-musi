@@ -9,9 +9,13 @@
 
 <img  height="430" alt="image" src="https://github.com/user-attachments/assets/e0faad28-d25a-4c0d-bf05-e6398e5bf612" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/8417b7f9-7dd1-406d-a9f1-8dfd07c6b0a4" /> <img  height="430" alt="image" src="https://github.com/user-attachments/assets/49440efb-d4f2-4c68-9d10-7b3fc4dd332b" />
 
+Intial screens after first opening the app -> transitions to Registration / Login
+
 ### Registration / Login
 
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/61cb14c0-fd2d-43e2-bb4b-61c4dc37f6b7" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/011b8994-9093-446c-ab0d-46dce68ea041" /> <img height="430" alt="image" src="https://github.com/user-attachments/assets/95d18934-83bc-4e45-93d0-56bbfd957847" />
+
+After registration, transitions to onboarding survey
 
 ### Onboarding Survey
 
@@ -47,8 +51,6 @@
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/3e993c54-17e1-45fd-a387-94d5711ef883" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/f181bb06-48b7-40bf-9547-e20a298709d4" />
 <img height="430" alt="image" src="https://github.com/user-attachments/assets/931a085d-cf4f-415e-950f-3ce099841d55" />
-
-
 
 ### Rating flow
 
