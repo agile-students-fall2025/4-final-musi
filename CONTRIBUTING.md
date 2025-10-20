@@ -2,7 +2,7 @@
 Thank you for taking time to contribute to MUSI.
 
 ## Team Values
-- 
+This file contains expectations for contribution to Musi.
 
 ## Sprint cadence and Standups
 Sprints are ~2 weeks longs. 
