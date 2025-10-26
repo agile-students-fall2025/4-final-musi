@@ -1,5 +1,6 @@
 # Guide to Contributing
-Thank you for taking time to contribute to MUSI.
+Thanks for tuning in to Musi! 🎧
+We’re so excited to have you join the jam session. Every great track needs collaboration — and your contributions help us make Musi even better!
 
 ## Team Values
 At Musi, we value open communication, accountability, and collaboration. Every team member plays a role in ensuring that our workflow runs smoothly and that everyone stays aligned throughout the development cycle. Those who repeatedly fail to communicate or fulfill their responsibilities will not be recognized for their contributions.
