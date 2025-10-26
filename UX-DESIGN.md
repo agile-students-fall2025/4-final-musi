@@ -2,6 +2,7 @@
 
 ## Prototype
 [Click here to access prototype](https://www.figma.com/proto/FaM5OyOa9Vonx3uP4Fa4NA/Musi?page-id=180%3A5351&node-id=180-9563&viewport=132%2C385%2C0.09&t=FSAC15wmAHpodrue-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=180%3A9563)
+
 [Click here to access figma file](https://www.figma.com/design/FaM5OyOa9Vonx3uP4Fa4NA/Musi?node-id=0-1&t=JwUvBqibYzNeld3A-1)
 
 
