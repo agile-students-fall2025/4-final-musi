@@ -6,10 +6,10 @@ import AlbumList from "../components/AlbumList"
 function Music(props) {
     return (
         <div className="Music">
-            <ImageHeader name={props.musicName}></ImageHeader>
+            <ImageHeader name={props.musicName}/>
             <Scores name={props.musicName}/>
             {props.musicType==="Album" && <AlbumList name={props.musicName}/>}
-            <FriendScore name={props.musicName}></FriendScore>
+            <FriendScore name={props.musicName}/>
             <BottomNavBar/>
         </div>
     )
