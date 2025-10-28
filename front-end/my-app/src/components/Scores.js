@@ -6,7 +6,7 @@ function Scores({title, artist, isRated}) {
     const [scores, setScores] = useState([0, 0, 0]);
     const [counts, setCounts] = useState([0, 0, 0]);
     const [descriptions, setDescriptions] = useState(["", "", ""]);
-    const [rank, setRank] = (0)
+    const [rank, setRank] = useState(0)
     useEffect(() => {
         setScores([7.6, 7.6, 7.8]);
         setCounts([101, 2, 12]);
@@ -23,9 +23,9 @@ function Scores({title, artist, isRated}) {
             "What your <strong>friends</strong> think", 
             "Average score from <strong>all</strong> users"])
         }
-    }, []);
+    }, [isRated, rank]);
     return (
-        <div className="scores">
+        <div className="scores-section">
             <h3 className="scores-title">Scores</h3>
             <div className="scores-scroller">
                 {scores.map((score, index) => (
