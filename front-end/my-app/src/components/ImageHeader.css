@@ -1,0 +1,104 @@
+.image-header-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background-color: #b8b8b8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.image-header-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.image-header-img {
+  width: 100%;
+  display: block;
+}
+
+.image-header-share-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.image-header-share-btn .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.image-header-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+}
+
+.image-header-title {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+  color: #000;
+}
+
+.image-header-artist {
+  font-size: 28px;
+  margin: 0 0 16px 0;
+  color: #000;
+}
+
+.image-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.image-header-ratings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.image-header-score {
+  background-color: #7ed321;
+  color: #000;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.image-header-total {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+}
+
+.image-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.image-header-action-btn {
+  background: transparent;
+  border: 2px solid #000;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.image-header-action-btn .icon {
+  width: 20px;
+  height: 20px;
+}
