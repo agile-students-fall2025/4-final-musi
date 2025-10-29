@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import Router components
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './index.css'; 
 import App from './App';
 import Welcome from './pages/welcome'; 
@@ -12,7 +12,6 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from './theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
@@ -20,9 +19,9 @@ root.render(
         <Routes>
           <Route path="/" element={<Welcome />} /> 
           <Route path="/login" element={<Login />} /> 
-          <Route path="/app" element={<App />} /> 
           <Route path="/signup" element={<Signup />} /> 
           <Route path="/onboarding" element={<Onboarding />} /> 
+          <Route path="/app/*" element={<App />} />  {/* Changed from /app to /app/* */}
         </Routes>
       </Router>
     </ThemeProvider>
