@@ -4,12 +4,10 @@ import { Link } from "react-router-dom";
 function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Construct the path to the song page (you can adjust this as needed)
-  const songPath = `/music/song/${encodeURIComponent(id)}`;
+  const songPath = `/music/song/${encodeURIComponent(artist)}/${encodeURIComponent(title)}}`;
 
   return (
     <div className="album-song-item">
-      {/* Wrap song info in a link */}
       <Link to={songPath} className="album-song-info" style={{ textDecoration: "none" }}>
         <span className="album-song-title">{title}</span>
         <span className="album-song-artist">{artist}</span>
