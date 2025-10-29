@@ -1,4 +1,5 @@
 import React, {useState} from 'react'
+import './ImageHeader.css'
 
 function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick}) {
 

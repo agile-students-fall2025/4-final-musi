@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AlbumSong from "./AlbumSong";
+import "./AlbumList.css";
 
 function AlbumList({ artist, title, onRatingClick }) {
   const [album, setAlbum] = useState([]);

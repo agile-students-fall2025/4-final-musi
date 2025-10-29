@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import "./AlbumSong.css";
 
 function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
