@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Search, Menu, Heart, Bookmark } from 'lucide-react';
 import { theme } from '../theme';
+import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
   background: white;
@@ -302,7 +303,12 @@ function Feed() {
       )
     );
   };
+  const navigate = useNavigate();
 
+  const handleGoToMusic = () => {
+    // ✅ Navigate to the Music page with mock data
+    navigate('/app/music');
+  };
   return (
     <Container>
       <Header>
@@ -385,6 +391,7 @@ function Feed() {
           </InteractionBar>
         </FeedItem>
       ))}
+      <Button onClick={handleGoToMusic}>Go to Music Page</Button>
     </Container>
   );
 }
