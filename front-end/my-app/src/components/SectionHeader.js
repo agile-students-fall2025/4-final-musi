@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { theme } from "../theme";
+import { ChevronDown } from "lucide-react";
 
 const Wrapper = styled.div`
   display: flex;
@@ -15,32 +16,11 @@ const Title = styled.h2`
   margin: 0;
 `;
 
-const Chevron = styled.button`
+const Chevron = styled(ChevronDown)`
   width: 22px;
   height: 22px;
-  border: none;
-  background: transparent;
+  color: ${theme.colors.text};
   cursor: pointer;
-  position: relative;
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    left: 6px;
-    top: 9px;
-    width: 10px;
-    height: 2px;
-    background: ${theme.colors.text};
-    transform-origin: left center;
-    border-radius: 2px;
-  }
-  &::before {
-    transform: rotate(45deg);
-  }
-  &::after {
-    transform: rotate(-45deg);
-  }
 `;
 
 export default function SectionHeader({ title }) {
