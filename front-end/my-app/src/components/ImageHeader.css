@@ -1,39 +1,53 @@
 .image-header-container {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  background-color: #b8b8b8;
+  max-width: 480px; 
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  color: #FFFFFF; 
+  font-family: system-ui, sans-serif;
 }
 
 .image-header-img {
   width: 100%;
-  height: auto;
+  height: 320px; 
   display: block;
-  object-fit: cover;
+  object-fit: cover; 
 }
 
-.image-header-img {
-  width: 100%;
-  display: block;
+.image-header-gradient {
+  position: absolute;
+  inset: 0; 
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.2), transparent);
 }
 
 .image-header-share-btn {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.3);
   border: none;
-  border-radius: 8px;
+  border-radius: 50%;
   width: 40px;
   height: 40px;
   cursor: pointer;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  transition: background-color 0.2s;
+}
+
+.image-header-share-btn:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .image-header-share-btn .icon {
   width: 20px;
   height: 20px;
+  filter: brightness(0) invert(1);
 }
 
 .image-header-content {
@@ -48,13 +62,14 @@
   font-size: 32px;
   font-weight: bold;
   margin: 0 0 4px 0;
-  color: #000;
+  color: #FFFFFF;
 }
 
 .image-header-artist {
   font-size: 28px;
   margin: 0 0 16px 0;
-  color: #000;
+  color: #e5e7eb; 
+  font-weight: 500;
 }
 
 .image-header-row {
@@ -81,7 +96,7 @@
 .image-header-total {
   font-size: 16px;
   font-weight: 600;
-  color: #000;
+  color: #e5e7eb; 
 }
 
 .image-header-actions {
@@ -90,15 +105,26 @@
 }
 
 .image-header-action-btn {
-  background: transparent;
-  border: 2px solid #000;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px; 
+  height: 44px;
   cursor: pointer;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  transition: background-color 0.2s;
+}
+
+.image-header-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .image-header-action-btn .icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  filter: brightness(0) invert(1);
 }

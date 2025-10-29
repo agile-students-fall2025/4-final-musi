@@ -1,11 +1,11 @@
-import {react, useState} from "react";
+import {react, useState, useEffect} from "react";
 import Score from "./Score";
 import "./Score.css";
 
 function Scores({title, artist, isRated}) {
     const [scores, setScores] = useState([0, 0, 0]);
     const [counts, setCounts] = useState([0, 0, 0]);
-    const [scoreTitles, setScoreTitles] = (["","",""])
+    const [scoreTitles, setScoreTitles] = useState(["","",""])
     const [descriptions, setDescriptions] = useState(["", "", ""]);
     const [rank, setRank] = useState(0)
     useEffect(() => {

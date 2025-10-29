@@ -1,14 +1,14 @@
 .scores-section {
     width: 100%;
-    max-width: 48rem;
+    max-width: 480px;
     margin-top: 2rem;
-    color: white;
+    color: black;
 }
 
 .scores-title {
-    font-size: 1.875rem; 
+    font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .scores-scroller {

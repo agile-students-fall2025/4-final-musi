@@ -1,205 +1,227 @@
 .rating-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
 }
 
 .rating-modal {
-  background: #fefefe;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 420px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  font-family: system-ui, sans-serif;
+    background: #fefefe;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .rating-modal-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5e5;
 }
 
 .rating-modal-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  background: #ccc;
-  margin-right: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    background: #ccc;
+    margin-right: 12px;
 }
 
 .rating-modal-info {
-  flex: 1;
+    flex: 1;
 }
 
-.rating-modal-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111;
+.rating-modal-info h3 { 
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111;
 }
 
-.rating-modal-subtitle {
-  font-size: 13px;
-  color: #666;
+.rating-modal-info p { 
+    margin: 0;
+    font-size: 13px;
+    color: #666;
 }
 
-.rating-modal-cancel {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 14px;
-  cursor: pointer;
+.rating-modal-cancel { 
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 .rating-modal-section {
-  padding: 16px;
-  text-align: center;
+    padding: 16px;
+    text-align: center;
 }
 
 .rating-modal-question {
-  font-weight: 500;
-  margin-bottom: 12px;
-  color: #222;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: #222;
 }
 
 .rating-modal-reactions {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
 }
 
-.rating-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #d3d3d3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
+.rating-circle { 
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #d3d3d3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: 2px solid transparent; 
 }
 
 .rating-circle.selected {
-  background: #000;
-  color: #fff;
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.rating-circle.selected[data-rating="1"] {
+    background: #666; 
+    color: #fff;
+    border-color: #666;
 }
 
 .checkmark {
-  font-size: 18px;
+    font-size: 18px;
 }
 
 .rating-modal-labels {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #666;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
 }
 
 .reaction-label.selected {
-  color: #000;
-  font-weight: 600;
+    color: #000;
+    font-weight: 600;
 }
 
 .rating-modal-options {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid #e5e5e5;
-  border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
 }
 
-.rating-option-btn {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  font-size: 15px;
-  border: none;
-  background: white;
-  text-align: left;
-  cursor: pointer;
+.rating-option-btn { 
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 15px;
+    border: none;
+    background: white;
+    text-align: left;
+    cursor: pointer;
 }
 
-.rating-option-btn img {
-  width: 20px;
-  margin-right: 8px;
-  opacity: 0.7;
+.rating-option-btn span { 
+    flex: 1; 
+}
+
+.rating-option-btn .icon { 
+    width: 20px;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+.rating-option-btn::after {
+    content: '>';
+    color: #ccc;
+    font-weight: bold;
 }
 
 .rating-option-btn:hover {
-  background: #f8f8f8;
+    background: #f8f8f8;
 }
 
 .rating-submit-btn {
-  width: 100%;
-  background: #000;
-  color: white;
-  border: none;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+    width: 100%;
+    background: #000;
+    color: white;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .rating-submit-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+    background: #ccc;
+    cursor: not-allowed;
 }
 
 .comment-popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
 }
 
 .comment-box {
-  background: white;
-  padding: 20px;
-  border-radius: 20px;
-  width: 80%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    width: 80%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .comment-box h4 {
-  margin: 0;
+    margin: 0;
 }
 
 .comment-box textarea {
-  resize: none;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 10px;
-  height: 100px;
-  font-size: 14px;
+    resize: none;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    height: 100px;
+    font-size: 14px;
 }
 
 .comment-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .comment-actions button {
-  background: black;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .comment-actions button:first-child {
-  background: #ccc;
-  color: black;
+    background: #e5e5e5;
+    color: black;
 }

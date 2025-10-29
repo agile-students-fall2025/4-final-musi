@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import BottomNavBar from "../components/BottomNavBar";
 import FriendScore from "../components/FriendScore";
 import ImageHeader from "../components/ImageHeader";
 import Scores from "../components/Scores";
 import AlbumList from "../components/AlbumList";
-import RatingModal from "../components/RatingModal.js"; // Import your modal
+import RatingModal from "../components/RatingModal.js";
+import SpotifySample from "../components/SpotifySample";
+import "./Music.css";
 
 function Music({ musicType, artist, title, isRated }) {
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -40,7 +42,7 @@ function Music({ musicType, artist, title, isRated }) {
   }, [artist, title]);
   return (
     <div className="Music">
-      <ImageHeader {...musicData} />
+      <ImageHeader {...musicData} onRatingClick={handleRatingClick}/>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
       <Scores title={title} artist={artist} isRated={isRated} />
       {musicType === "Album" && (
@@ -50,7 +52,7 @@ function Music({ musicType, artist, title, isRated }) {
       <BottomNavBar />
 
       {showRatingModal && (
-        <RatingModal song={selectedSong} onClose={handleCloseModal} />
+        <RatingModal { ...selectedSong } onClose={handleCloseModal} />
       )}
     </div>
   );
