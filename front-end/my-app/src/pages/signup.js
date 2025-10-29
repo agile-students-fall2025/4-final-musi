@@ -23,7 +23,7 @@ const TopBar = styled.div`
 const LogoWrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin: 32px 0;
+  margin: 28px 0;
 `;
 
 const Logo = styled.img`
@@ -78,7 +78,7 @@ const EyeIcon = styled.span`
 const PasswordRequirements = styled.div`
   color: ${theme.colors.text_secondary};
   font-size: 1rem;
-  margin: 16px 0 16px 0;
+  margin: 8px 0 4px 0;
 `;
 
 const Button = styled.button`
@@ -90,14 +90,13 @@ const Button = styled.button`
   font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 `;
 
 const BottomText = styled.div`
   text-align: center;
   color: ${theme.colors.text_secondary};
   font-size: 1.1rem;
-  margin-top: auto;
   margin-bottom: 36px;
 `;
 

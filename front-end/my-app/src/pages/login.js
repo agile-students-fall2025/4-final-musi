@@ -23,7 +23,7 @@ const TopBar = styled.div`
 const LogoWrapper = styled.div`
   display: flex;
   justify-content: center;
-  margin: 32px 0;
+  margin: 28px 0;
 `;
 
 const Logo = styled.img`
