@@ -7,7 +7,7 @@ const TabsWrapper = styled.nav`
   justify-content: start;
   align-items: end;
   gap: 16px;
-  border-bottom: 1px solid ${theme.colors.border};
+  border-bottom: 1px solid #D4D4D4;
   margin-bottom: 24px;
 
   scrollbar-gutter: stable both-edges; /* modern browsers */
@@ -39,7 +39,7 @@ const Tab = styled.button`
     props.active ? `2px solid #000000` : "2px solid transparent"};
   font-size: 0.95rem;
   font-weight: ${(props) => (props.active ? 700 : 500)};
-  color: ${(props) => (props.active ? theme.colors.text : theme.colors.subtext)};
+  color: ${(props) => (props.active ? theme.colors.text : theme.colors.text_secondary)};
   display: inline-flex;
   align-items: center;
   gap: 6px;
