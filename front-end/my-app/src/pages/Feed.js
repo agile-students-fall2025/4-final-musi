@@ -237,6 +237,21 @@ const InteractionRight = styled.div`
   color: #666;
 `;
 
+const Button = styled.button`
+  background-color: ${theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 0.85;
+  }
+`;
+
 function Feed() {
   const [feedData, setFeedData] = useState([
     {
