@@ -6,8 +6,8 @@ const Card = styled.article`
   display: grid;
   grid-template-columns: 56px 1fr auto;
   gap: 12px;
-  padding: 14px 0;
-  border-top: ${(props) => (props.dividerTop ? `1px solid ${theme.colors.border}` : "none")};
+  padding: 24px 0;
+  border-bottom: ${theme.colors.outline} 1px solid
 `;
 
 const Thumbnail = styled.div`
