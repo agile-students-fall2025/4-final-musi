@@ -1,0 +1,24 @@
+.scores-section {
+    width: 100%;
+    max-width: 48rem;
+    margin-top: 2rem;
+    color: white;
+}
+
+.scores-title {
+    font-size: 1.875rem; 
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.scores-scroller {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 1rem; 
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
+}
+
+.scores-scroller::-webkit-scrollbar {
+    display: none;
+}
