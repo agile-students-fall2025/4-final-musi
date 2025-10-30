@@ -7,11 +7,13 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   color: #FFFFFF; 
   font-family: system-ui, sans-serif;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .image-header-img {
   width: 100%;
-  height: 320px; 
+  height: 480px; 
   display: block;
   object-fit: cover; 
 }
@@ -59,17 +61,19 @@
 }
 
 .image-header-title {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: bold;
   margin: 0 0 4px 0;
   color: #FFFFFF;
+  text-align: left;
 }
 
 .image-header-artist {
-  font-size: 28px;
+  font-size: 32px;
   margin: 0 0 16px 0;
   color: #e5e7eb; 
   font-weight: 500;
+  text-align: left;
 }
 
 .image-header-row {
@@ -85,16 +89,16 @@
 }
 
 .image-header-score {
-  background-color: #7ed321;
-  color: #000;
-  font-size: 18px;
+  background-color: #86219A;
+  color: #FFFFFF;
+  font-size: 14px;
   font-weight: bold;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
 }
 
 .image-header-total {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #e5e7eb; 
 }
