@@ -1,10 +1,11 @@
 .album-list-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 480px;
     background-color: #ffffff;
     border-radius: 12px;
     padding: 16px 24px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    align-items: left;
 }
     
     .album-list-header {
@@ -12,4 +13,5 @@
     font-weight: bold;
     color: #000;
     margin: 0 0 16px 0;
+    text-align: left;
 }

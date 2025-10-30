@@ -36,6 +36,10 @@ function Music({ musicType, artist, title, isRated }) {
       avgScore: 8.4,
       totalRatings: 1250,
       isRated: true,
+      musicType: musicType || "Album",
+      vibe: ["heartbreak", "pop", "emotional"],
+      genre: ["pop", "indie pop"],
+      year: 2021,
     };
 
     setTimeout(() => setMusicData(mockData), 500); // simulate network delay
@@ -43,6 +47,14 @@ function Music({ musicType, artist, title, isRated }) {
   return (
     <div className="Music">
       <ImageHeader {...musicData} onRatingClick={handleRatingClick}/>
+      <div className="description">
+        <div className="vibe">
+          {musicData?.vibe?.join(" • ")}
+        </div>
+        <div className="genre-year">
+          {musicData?.musicType} | {musicData?.year} | {musicData?.genre?.join(" , ")}
+        </div>
+      </div>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
       <Scores title={title} artist={artist} isRated={isRated} />
       {musicType === "Album" && (
