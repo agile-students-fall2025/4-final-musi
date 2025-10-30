@@ -407,7 +407,12 @@ function Feed() {
       )
     );
   };
+  const navigate = useNavigate();
 
+  const handleGoToMusic = () => {
+    // ✅ Navigate to the Music page with mock data
+    navigate('/app/music');
+  };
   return (
     <Container>
       <Header>

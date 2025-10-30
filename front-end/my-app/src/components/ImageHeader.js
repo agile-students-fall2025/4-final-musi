@@ -1,7 +1,7 @@
 import React, {useState} from 'react'
 import './ImageHeader.css'
 
-function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick}) {
+function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType}) {
 
     const [isBookmarked, SetIsBookmarked] = useState(false)
 
@@ -49,7 +49,7 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
           </div>
           
           <div className="image-header-actions">
-            <button className="image-header-action-btn" title="Rate" onClick={()=>onRatingClick(isRated)}>
+            <button className="image-header-action-btn" title="Rate" onClick={()=>onRatingClick(title, artist, musicType, isRated)}>
               <img 
                 src={isRated ? "/edit.png" : "/plus.png"}
                 alt="Rate" 
