@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Search, Menu, Heart, Bookmark } from 'lucide-react';
-import { theme } from '../theme';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { Search, Menu, Heart, Bookmark } from "lucide-react";
+import { theme } from "../theme";
+import Sidebar from "../components/Sidebar";
 
 const Container = styled.div`
   background: white;
@@ -53,7 +53,7 @@ const SearchInput = styled.input`
   margin-left: 8px;
   font-size: 0.9rem;
   color: #666;
-  
+
   &::placeholder {
     color: #999;
   }
@@ -65,8 +65,8 @@ const FilterButtons = styled.div`
 `;
 
 const FilterButton = styled.button`
-  background: ${props => props.active ? theme.colors.accent : 'white'};
-  color: ${props => props.active ? 'white' : theme.colors.accent};
+  background: ${(props) => (props.active ? theme.colors.accent : "white")};
+  color: ${(props) => (props.active ? "white" : theme.colors.accent)};
   border: 1px solid ${theme.colors.accent};
   border-radius: 20px;
   padding: 8px 16px;
@@ -227,7 +227,7 @@ const LikeButton = styled.button`
   font-size: 0.85rem;
   color: #666;
   padding: 0;
-  
+
   &:hover {
     color: #333;
   }
@@ -254,50 +254,154 @@ const Button = styled.button`
 `;
 
 function Feed() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("trending");
   const [feedData, setFeedData] = useState([
     {
       id: 1,
-      user: 'Mia',
+      user: "Mia",
       activity: "ranked Drake's 'Views' album",
-      rating: '7.6',
-      time: 'Today',
-      review: "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
+      rating: "7.6",
+      time: "Today",
+      review:
+        "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
       likes: 10,
       bookmarks: 5,
-      isLiked: false
+      isLiked: false,
     },
     {
       id: 2,
-      user: 'Mia',
-      activity: "ranked Drake's 'Views' album", 
-      rating: '7.6',
-      time: 'Today',
-      review: "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
+      user: "Mia",
+      activity: "ranked Drake's 'Views' album",
+      rating: "7.6",
+      time: "Today",
+      review:
+        "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
       likes: 10,
       bookmarks: 5,
-      isLiked: false
+      isLiked: false,
     },
     {
       id: 3,
-      user: 'Mia',
+      user: "Mia",
       activity: "ranked Drake's 'Views' album",
-      rating: '7.6', 
-      time: 'Today',
-      review: "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
+      rating: "7.6",
+      time: "Today",
+      review:
+        "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
       likes: 10,
       bookmarks: 5,
-      isLiked: false
-    }
+      isLiked: false,
+    },
   ]);
 
+  // Different content for each tab
+  const getTabData = (tab) => {
+    switch (tab) {
+      case "trending":
+        return [
+          {
+            id: 1,
+            user: "Mia",
+            activity: "ranked Drake's 'Views' album",
+            rating: "7.6",
+            time: "Today",
+            review:
+              "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
+            likes: 10,
+            bookmarks: 5,
+            isLiked: false,
+          },
+          {
+            id: 2,
+            user: "Alex",
+            activity: "ranked Kendrick's 'DAMN.' album",
+            rating: "9.2",
+            time: "2 hours ago",
+            review:
+              "Kendrick really outdid himself here. Every track hits different and the production is insane.",
+            likes: 24,
+            bookmarks: 12,
+            isLiked: false,
+          },
+        ];
+      case "friend-recs":
+        return [
+          {
+            id: 3,
+            user: "Sarah",
+            activity: "recommended Tyler's 'Igor' album",
+            rating: "8.8",
+            time: "1 day ago",
+            review:
+              "If you haven't listened to Igor yet, you're missing out. Tyler's evolution as an artist is incredible.",
+            likes: 15,
+            bookmarks: 8,
+            isLiked: false,
+          },
+          {
+            id: 4,
+            user: "Jake",
+            activity: "recommended Frank Ocean's 'Blonde' album",
+            rating: "9.5",
+            time: "2 days ago",
+            review:
+              "Still the best album of the 2010s. Frank's vocals and the production are otherworldly.",
+            likes: 31,
+            bookmarks: 18,
+            isLiked: false,
+          },
+        ];
+      case "new-releases":
+        return [
+          {
+            id: 5,
+            user: "Music Bot",
+            activity: "new release: SZA's 'SOS' album",
+            rating: "8.4",
+            time: "3 hours ago",
+            review:
+              "SZA's highly anticipated follow-up to Ctrl is finally here. R&B perfection with modern twists.",
+            likes: 42,
+            bookmarks: 25,
+            isLiked: false,
+          },
+          {
+            id: 6,
+            user: "Music Bot",
+            activity: "new release: Metro Boomin's 'Heroes & Villains'",
+            rating: "7.9",
+            time: "5 hours ago",
+            review:
+              "Metro proves once again why he's one of the best producers in the game right now.",
+            likes: 28,
+            bookmarks: 14,
+            isLiked: false,
+          },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setFeedData(getTabData(tab));
+  };
+
+  // Initialize with trending data
+  React.useEffect(() => {
+    setFeedData(getTabData("trending"));
+  }, []);
+
   const handleLike = (itemId) => {
-    setFeedData(prevData => 
-      prevData.map(item => 
-        item.id === itemId 
-          ? { 
-              ...item, 
+    setFeedData((prevData) =>
+      prevData.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
               isLiked: !item.isLiked,
-              likes: item.isLiked ? item.likes - 1 : item.likes + 1
+              likes: item.isLiked ? item.likes - 1 : item.likes + 1,
             }
           : item
       )
@@ -313,7 +417,7 @@ function Feed() {
     <Container>
       <Header>
         <Logo src="/assets/images/logo.png" alt="musi" />
-        <MenuButton>
+        <MenuButton onClick={() => setIsSidebarOpen(true)}>
           <Menu size={24} color="#333" />
         </MenuButton>
       </Header>
@@ -323,15 +427,24 @@ function Feed() {
           <Search size={16} color="#999" />
           <SearchInput placeholder="Search a song, album or user..." />
         </SearchBar>
-        
+
         <FilterButtons>
-          <FilterButton active>
+          <FilterButton
+            active={activeTab === "trending"}
+            onClick={() => handleTabChange("trending")}
+          >
             Trending
           </FilterButton>
-          <FilterButton>
+          <FilterButton
+            active={activeTab === "friend-recs"}
+            onClick={() => handleTabChange("friend-recs")}
+          >
             Friend recs
           </FilterButton>
-          <FilterButton>
+          <FilterButton
+            active={activeTab === "new-releases"}
+            onClick={() => handleTabChange("new-releases")}
+          >
             New releases
           </FilterButton>
         </FilterButtons>
@@ -342,7 +455,7 @@ function Feed() {
           <SectionTitle>Featured Lists</SectionTitle>
           <SeeAll>See all</SeeAll>
         </SectionHeader>
-        
+
         <FeaturedLists>
           <ListCard>Study Flow</ListCard>
           <ListCard>RapCaviar</ListCard>
@@ -355,7 +468,7 @@ function Feed() {
       </Section>
 
       {feedData.map((item, index) => (
-        <FeedItem key={index}>
+        <FeedItem key={item.id}>
           <UserInfo>
             <Avatar />
             <UserDetails>
@@ -377,10 +490,10 @@ function Feed() {
           <InteractionBar>
             <InteractionLeft>
               <LikeButton onClick={() => handleLike(item.id)}>
-                <Heart 
-                  size={16} 
-                  fill={item.isLiked ? '#ff6b6b' : 'none'} 
-                  color={item.isLiked ? '#ff6b6b' : '#666'} 
+                <Heart
+                  size={16}
+                  fill={item.isLiked ? "#ff6b6b" : "none"}
+                  color={item.isLiked ? "#ff6b6b" : "#666"}
                 />
                 <span>{item.likes} likes</span>
               </LikeButton>
@@ -391,7 +504,10 @@ function Feed() {
           </InteractionBar>
         </FeedItem>
       ))}
-      <Button onClick={handleGoToMusic}>Go to Music Page</Button>
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
     </Container>
   );
 }

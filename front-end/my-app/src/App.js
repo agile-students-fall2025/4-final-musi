@@ -18,6 +18,7 @@ function App() {
           <Route path="/lists" element={<Lists />} />  {/* Changed route */}
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route
             path="/music"
