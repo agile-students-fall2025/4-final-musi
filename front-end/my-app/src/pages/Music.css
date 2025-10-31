@@ -1,0 +1,28 @@
+.Music {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem; 
+  padding: 1rem 0; 
+}
+
+.description {
+  margin-top: 1rem;
+  width: 480px;
+  text-align: left;
+}
+
+.vibe {
+  font-size: 1.25rem; 
+  line-height: 1.5rem;
+  font-weight: 600;
+  color: #86219A; 
+  margin-bottom: 0.25rem;
+}
+
+.genre-year {
+  font-size: 1.25rem;
+  line-height: 1.25rem; 
+  color: rgb(17 24 39); 
+}
