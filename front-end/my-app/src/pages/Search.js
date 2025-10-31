@@ -79,8 +79,6 @@ function Search() {
   const [results, setResults] = useState([]);
 
   const handleSearch = (term) => {
-    console.log('Searching for:', term);
-
     const filteredData = MOCK_SONGS.filter(item =>
       item.title.toLowerCase().includes(term.toLowerCase())
     );
@@ -89,20 +87,18 @@ function Search() {
 
   return (
     <div>
-      <h2>My Content</h2>
+      <h2>Musi</h2>
       <SearchBar onSearch={handleSearch} placeholder="Search a song, album, or user" />
-      <ul>
+      <div>
         {results.map((song, index) => (
-          <li key={index}>{song.title}
             <SongItem
               title={song.title}
               subtitle={`Song • ${song.artist}`}
               meta={song.tags.join(", ")}
               score={song.score}
             />
-          </li>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
