@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, X } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
+import FollowButton from '../components/FollowButton';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -415,13 +416,13 @@ const SectionDivider = styled.div`
   height: 16px;
 `;
 
-function Profile() {
+function User() {
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
   const [profile, setProfile] = useState({
-    name: 'Andy Cabindol',
-    username: '@andycabindol',
-    bio: 'love listening to R&B',
+    name: 'Julz Liang',
+    username: '@julz',
+    bio: 'nyu',
   });
 
   const genreData = [
@@ -441,6 +442,11 @@ function Profile() {
     <>
       <Container>
         <Header>
+          <div>
+            <IconButton>
+            <ChevronLeft size={22} />
+          </IconButton>
+          </div>
           <UserName>{profile.name}</UserName>
           <div>
             <IconButton><Share size={20} /></IconButton>
@@ -457,26 +463,21 @@ function Profile() {
           <Username>{profile.username}</Username>
           <Bio>{profile.bio}</Bio>
           <MemberSince>Member since August 1, 2025</MemberSince>
-          
+
           <ButtonGroup>
-            <Button onClick={() => setShowEditModal(true)}>Edit profile</Button>
-            <Button>Share profile</Button>
+            <FollowButton />
           </ButtonGroup>
         </ProfileSection>
 
         <StatsRow>
-           <a href="/app/followers" className="profile-stat-link">
           <StatItem>
             <StatValue>2</StatValue>
             <StatLabel>Followers</StatLabel>
           </StatItem>
-          </a>
-           <a href="/app/followers" className="profile-stat-link">
           <StatItem>
             <StatValue>6</StatValue>
             <StatLabel>Following</StatLabel>
           </StatItem>
-          </a>
           <StatItem>
             <StatValue>#2</StatValue>
             <StatLabel>Rank on Musi</StatLabel>
@@ -489,7 +490,7 @@ function Profile() {
             <ListItemText>Listened</ListItemText>
           </ListItemLeft>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ListItemCount>1</ListItemCount>
+            <ListItemCount>0</ListItemCount>
             <ChevronRight size={20} color="#999" />
           </div>
         </ListItem>
@@ -507,8 +508,8 @@ function Profile() {
 
         <ListItem>
           <ListItemLeft>
-            <span>🎯</span>
-            <ListItemText>Recs for you</ListItemText>
+            <span>🔗</span>
+            <ListItemText>Music you both like</ListItemText>
           </ListItemLeft>
           <ChevronRight size={20} color="#999" />
         </ListItem>
@@ -546,7 +547,7 @@ function Profile() {
         {activeTab === 'taste' && (
           <TabContent>
             <SectionTitle>YOUR TOP GENRES</SectionTitle>
-            
+
             <ChartContainer>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -565,10 +566,10 @@ function Profile() {
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              
-              <ChartLegend style={{ 
-                left: '10%', 
-                top: '50%', 
+
+              <ChartLegend style={{
+                left: '10%',
+                top: '50%',
                 transform: 'translateY(-50%)'
               }}>
                 <LegendItem>
@@ -586,10 +587,10 @@ function Profile() {
                   <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>24.00%</span>
                 </LegendItem>
               </ChartLegend>
-              
-              <ChartLegend style={{ 
-                right: '10%', 
-                top: '50%', 
+
+              <ChartLegend style={{
+                right: '10%',
+                top: '50%',
                 transform: 'translateY(-50%)'
               }}>
                 <LegendItem>
@@ -690,4 +691,4 @@ function Profile() {
   );
 }
 
-export default Profile;
+export default User;

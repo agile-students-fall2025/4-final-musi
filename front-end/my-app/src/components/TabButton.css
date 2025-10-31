@@ -1,0 +1,21 @@
+.tab-button {
+  flex: 1;
+  padding: 0.75rem;
+  text-align: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280; /* text-gray-500 */
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-button.active {
+  border-bottom-color: #000000;
+  font-weight: 600;
+  color: #000000;
+}
+
+.tab-count {
+  margin-right: 0.25rem;
+}
