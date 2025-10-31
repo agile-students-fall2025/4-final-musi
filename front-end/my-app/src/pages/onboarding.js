@@ -31,6 +31,19 @@ const questions = [
     options: ["Morning", "Afternoon", "Evening", "Late Night", "All Day"],
   },
   {
+    id: "listen_location",
+    type: "single",
+    title: "Where do you usually listen to music?",
+    options: [
+      "At Home",
+      "In the Car",
+      "At Work/School",
+      "While Exercising",
+      "On Public Transport",
+      "Everywhere",
+    ],
+  },
+  {
     id: "decade",
     type: "single",
     title: "Which decade of music best fits your vibe?",
@@ -62,7 +75,7 @@ const ProgressBar = styled.div`
 const ProgressFill = styled.div`
   height: 100%;
   background: ${theme.colors.accent};
-  width: ${props => props.progress}%;
+  width: ${(props) => props.progress}%;
   transition: width 0.3s ease;
 `;
 
@@ -146,6 +159,7 @@ function Onboarding() {
   const [answers, setAnswers] = useState({
     genres: [],
     listen_time: "",
+    listen_location: "", 
     decade: "",
   });
 
@@ -174,7 +188,7 @@ function Onboarding() {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      navigate("/app"); 
+      navigate("/app");
     }
   };
 
