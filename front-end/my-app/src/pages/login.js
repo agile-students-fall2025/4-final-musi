@@ -83,6 +83,11 @@ const ForgotPassword = styled.div`
   font-size: 1rem;
   font-weight: 500;
   margin: 8px 0 20px 0;
+  cursor: pointer;
+  
+  &:hover {
+    color: ${theme.colors.text};
+  }
 `;
 
 const Button = styled.button`
@@ -152,7 +157,9 @@ function Login() {
             {showPassword ? <FiEyeOff /> : <FiEye />}
           </EyeIcon>
         </InputWrapper>
-        <ForgotPassword>Forgot password?</ForgotPassword>
+        <ForgotPassword onClick={() => navigate("/forgot")}>
+          Forgot password?
+        </ForgotPassword>
         <Button type="submit">Login</Button>
       </Form>
       <BottomText>

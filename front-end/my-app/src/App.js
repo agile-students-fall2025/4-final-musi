@@ -7,6 +7,7 @@ import Search from "./pages/Search";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import User from "./pages/User";
+import Music from "./pages/Music";
 
 function App() {
   return (
@@ -18,8 +19,20 @@ function App() {
           <Route path="/lists" element={<Lists />} />  {/* Changed route */}
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<User />} />
+          <Route
+            path="/music"
+            element={
+              <Music
+                musicType="Album"
+                artist="Olivia Rodrigo"
+                title="SOUR"
+                isRated={true}
+              />
+            }
+          />
         </Routes>
       </div>
       <BottomNavBar />
