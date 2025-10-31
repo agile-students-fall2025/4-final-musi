@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { RiCloseCircleLine } from "react-icons/ri";
-import BackArrow from "../components/BackArrow";
 import { theme } from "../theme";
 import { useNavigate } from "react-router-dom";
 
@@ -11,7 +10,7 @@ const questions = [
     type: "multi",
     title: (
       <>
-        Select categories of songs you <i>don’t</i> vibe with.
+        Select categories of songs you <i>don't</i> vibe with.
       </>
     ),
     options: [
@@ -32,6 +31,19 @@ const questions = [
     options: ["Morning", "Afternoon", "Evening", "Late Night", "All Day"],
   },
   {
+    id: "listen_location",
+    type: "single",
+    title: "Where do you usually listen to music?",
+    options: [
+      "At Home",
+      "In the Car",
+      "At Work/School",
+      "While Exercising",
+      "On Public Transport",
+      "Everywhere",
+    ],
+  },
+  {
     id: "decade",
     type: "single",
     title: "Which decade of music best fits your vibe?",
@@ -47,16 +59,37 @@ const Container = styled.div`
   padding: 32px 24px 0 24px;
 `;
 
-const TopBar = styled.div`
-  display: flex;
-  align-items: center;
-  height: 40px;
+const ProgressContainer = styled.div`
+  width: 100%;
+  margin-bottom: 32px;
 `;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 10px;
+  background: ${theme.colors.background_secondary};
+  border-radius: 50px;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  background: ${theme.colors.accent};
+  width: ${(props) => props.progress}%;
+  transition: width 0.3s ease;
+`;
+
+// const ProgressText = styled.div`
+//   text-align: center;
+//   font-size: 0.9rem;
+//   color: ${theme.colors.text_secondary};
+//   margin-top: 8px;
+// `;
 
 const Title = styled.h2`
   font-size: 1.2rem;
   font-weight: 400;
-  margin: 32px 0 24px 0;
+  margin: 0 0 24px 0;
 `;
 
 const CategoryList = styled.div`
@@ -126,10 +159,12 @@ function Onboarding() {
   const [answers, setAnswers] = useState({
     genres: [],
     listen_time: "",
+    listen_location: "", 
     decade: "",
   });
 
   const currentQuestion = questions[step];
+  const progress = ((step + 1) / questions.length) * 100;
 
   const toggleGenre = (genre) => {
     setAnswers((prev) => ({
@@ -153,15 +188,21 @@ function Onboarding() {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      navigate("/app"); 
+      navigate("/app");
     }
   };
 
   return (
     <Container>
-      <TopBar>
-        <BackArrow />
-      </TopBar>
+      <ProgressContainer>
+        <ProgressBar>
+          <ProgressFill progress={progress} />
+        </ProgressBar>
+        {/* <ProgressText>
+          {step + 1} of {questions.length}
+        </ProgressText> */}
+      </ProgressContainer>
+
       <Title>{currentQuestion.title}</Title>
       <CategoryList>
         {currentQuestion.type === "multi" &&
