@@ -1,0 +1,73 @@
+.user-list-container {
+  padding: 0.5rem 1rem 0 1rem;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.user-info-link {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+  width: 3rem; /* 48px */
+  height: 3rem; /* 48px */
+  background-color: #d1d5db; /* bg-gray-300 */
+  border-radius: 50%;
+}
+
+.user-details {
+  margin-left: 0.75rem;
+  min-width: 0;
+}
+
+.user-name,
+.user-username {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-username {
+  font-size: 0.875rem;
+  color: #6b7280; /* text-gray-500 */
+}
+
+.user-actions {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.user-action-btn {
+  padding: 0.375rem 1rem; /* py-1.5 px-4 */
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  cursor: pointer;
+}
+
+.user-action-btn.following {
+  color: #374151; /* text-gray-700 */
+  background-color: #ffffff;
+}
+
+.user-action-btn.follow-back {
+  color: #ffffff;
+  background-color: #7c3aed; /* bg-purple-600 */
+  border-color: #7c3aed;
+}
