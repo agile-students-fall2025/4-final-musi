@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
+import { useNavigate } from "react-router-dom";
 
 const Container = styled.div`
   background: white;
@@ -253,14 +254,15 @@ const Button = styled.button`
   }
 `;
 
-function Feed() {
+function Feed({ setSelectedMusic }) {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("trending");
   const [feedData, setFeedData] = useState([
     {
       id: 1,
       user: "Mia",
-      activity: "ranked Drake's 'Views' album",
+      activity: "ranked",
       rating: "7.6",
       time: "Today",
       review:
@@ -268,11 +270,14 @@ function Feed() {
       likes: 10,
       bookmarks: 5,
       isLiked: false,
+      title: "Views",
+      artist: "Drake",
+      musicType: "Album",
     },
     {
       id: 2,
       user: "Mia",
-      activity: "ranked Drake's 'Views' album",
+      activity: "ranked",
       rating: "7.6",
       time: "Today",
       review:
@@ -280,11 +285,14 @@ function Feed() {
       likes: 10,
       bookmarks: 5,
       isLiked: false,
+      title: "Views",
+      artist: "Drake",
+      musicType: "Album",
     },
     {
       id: 3,
       user: "Mia",
-      activity: "ranked Drake's 'Views' album",
+      activity: "ranked",
       rating: "7.6",
       time: "Today",
       review:
@@ -292,6 +300,9 @@ function Feed() {
       likes: 10,
       bookmarks: 5,
       isLiked: false,
+      title: "Views",
+      artist: "Drake",
+      musicType: "Album",
     },
   ]);
 
@@ -303,7 +314,7 @@ function Feed() {
           {
             id: 1,
             user: "Mia",
-            activity: "ranked Drake's 'Views' album",
+            activity: "ranked",
             rating: "7.6",
             time: "Today",
             review:
@@ -311,11 +322,14 @@ function Feed() {
             likes: 10,
             bookmarks: 5,
             isLiked: false,
+            artist: "Drake",
+            title: "Views",
+            musicType: "Album",
           },
           {
             id: 2,
             user: "Alex",
-            activity: "ranked Kendrick's 'DAMN.' album",
+            activity: "ranked",
             rating: "9.2",
             time: "2 hours ago",
             review:
@@ -323,6 +337,9 @@ function Feed() {
             likes: 24,
             bookmarks: 12,
             isLiked: false,
+            artist: "Kendrick Lamar",
+            title: "DAMN.",
+            musicType: "Album",
           },
         ];
       case "friend-recs":
@@ -330,7 +347,7 @@ function Feed() {
           {
             id: 3,
             user: "Sarah",
-            activity: "recommended Tyler's 'Igor' album",
+            activity: "recommended",
             rating: "8.8",
             time: "1 day ago",
             review:
@@ -338,11 +355,14 @@ function Feed() {
             likes: 15,
             bookmarks: 8,
             isLiked: false,
+            artist: "Tyler, The Creator",
+            title: "Igor",
+            musicType: "Album",
           },
           {
             id: 4,
             user: "Jake",
-            activity: "recommended Frank Ocean's 'Blonde' album",
+            activity: "recommended",
             rating: "9.5",
             time: "2 days ago",
             review:
@@ -350,6 +370,9 @@ function Feed() {
             likes: 31,
             bookmarks: 18,
             isLiked: false,
+            artist: "Frank Ocean",
+            title: "Blonde",
+            musicType: "Album",
           },
         ];
       case "new-releases":
@@ -357,7 +380,7 @@ function Feed() {
           {
             id: 5,
             user: "Music Bot",
-            activity: "new release: SZA's 'SOS' album",
+            activity: "new release",
             rating: "8.4",
             time: "3 hours ago",
             review:
@@ -365,11 +388,14 @@ function Feed() {
             likes: 42,
             bookmarks: 25,
             isLiked: false,
+            artist: "SZA",
+            title: "SOS",
+            musicType: "Album",
           },
           {
             id: 6,
             user: "Music Bot",
-            activity: "new release: Metro Boomin's 'Heroes & Villains'",
+            activity: "new release",
             rating: "7.9",
             time: "5 hours ago",
             review:
@@ -377,6 +403,9 @@ function Feed() {
             likes: 28,
             bookmarks: 14,
             isLiked: false,
+            artist: "Metro Boomin",
+            title: "Heroes & Villains",
+            musicType: "Album",
           },
         ];
       default:
@@ -408,6 +437,10 @@ function Feed() {
     );
   };
   
+  const goToMusic = (music) => {
+    setSelectedMusic(music);
+    navigate("/app/music");
+  };
   return (
     <Container>
       <Header>
@@ -466,13 +499,22 @@ function Feed() {
         <FeedItem key={item.id}>
           <UserInfo>
             <Avatar />
-            <UserDetails>
-              <UserName>{item.user}</UserName>
-              <ActivityText>{item.activity}</ActivityText>
-              <TimeStamp>{item.time}</TimeStamp>
-            </UserDetails>
-            <Rating>{item.rating}</Rating>
-          </UserInfo>
+              <UserDetails>
+                <UserName>{item.user}</UserName>
+                  <ActivityText>
+                  {item.activity}{" "}
+                    <span
+                      style={{ color: theme.colors.accent, cursor: "pointer", fontWeight: 600 }}
+                      onClick={() => goToMusic(item)}
+                    >
+                      {item.title}
+                    </span>
+                  {" "}by {item.artist}
+                  </ActivityText>
+                  <TimeStamp>{item.time}</TimeStamp>
+                  </UserDetails>
+                  <Rating>{item.rating}</Rating>
+              </UserInfo>
 
           <AlbumGrid>
             <AlbumCover />
