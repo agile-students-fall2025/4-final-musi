@@ -7,6 +7,7 @@ import Search from "./pages/Search";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Music from "./pages/Music";
+import FeaturedList from './pages/FeaturedList';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/featuredlist/:title" element={<FeaturedList />} />
           <Route
             path="/music"
             element={

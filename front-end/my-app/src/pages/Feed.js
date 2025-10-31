@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
@@ -128,6 +129,22 @@ const ListCard = styled.div`
   font-size: 0.9rem;
 `;
 
+const ListCardButton = styled.button`
+  min-width: 120px;
+  height: 120px;
+  background: #666;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+`;
+
 const FeedItem = styled.div`
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -253,7 +270,41 @@ const Button = styled.button`
   }
 `;
 
+const FEATURED_LISTS = [
+  {
+    title: "Study flow",
+    tracks: [
+      { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
+      { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
+      { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
+      { id: 4, title: "Ain’t Nobody", subtitle: "Song • Chaka Khan" },
+      { id: 5, title: "Le Freak", subtitle: "Song • CHIC" },
+    ],
+  },
+  {
+    title: "RapCaviar",
+    tracks: [
+      { id: 11, title: "Meltdown", subtitle: "Song • Travis Scott, Drake" },
+      { id: 12, title: "First Person Shooter", subtitle: "Song • Drake, J. Cole" },
+      { id: 13, title: "Rich Flex", subtitle: "Song • Drake, 21 Savage" },
+      { id: 14, title: "BROTHER STONE", subtitle: "Song • Don Toliver" },
+      { id: 15, title: "Knife Talk", subtitle: "Song • Drake, 21 Savage, Project Pat" },
+    ],
+  },
+  {
+    title: "Teenage Fever",
+    tracks: [
+      { id: 21, title: "drivers license", subtitle: "Song • Olivia Rodrigo" },
+      { id: 22, title: "Heather", subtitle: "Song • Conan Gray" },
+      { id: 23, title: "Telepatía", subtitle: "Song • Kali Uchis" },
+      { id: 24, title: "Sweater Weather", subtitle: "Song • The Neighbourhood" },
+      { id: 25, title: "Someone You Loved", subtitle: "Song • Lewis Capaldi" },
+    ],
+  },
+];
+
 function Feed() {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("trending");
   const [feedData, setFeedData] = useState([
@@ -407,6 +458,12 @@ function Feed() {
       )
     );
   };
+
+  const openFeatured = (list) => {
+    navigate(`/app/featuredlist/${encodeURIComponent(list.title)}`, {
+      state: { title: list.title, tracks: list.tracks },
+    });
+  };
   
   return (
     <Container>
@@ -452,9 +509,15 @@ function Feed() {
         </SectionHeader>
 
         <FeaturedLists>
-          <ListCard>Study Flow</ListCard>
-          <ListCard>RapCaviar</ListCard>
-          <ListCard>Teenage Fever</ListCard>
+          {FEATURED_LISTS.map((list) => (
+            <ListCardButton
+              key={list.title}
+              onClick={() => openFeatured(list)}
+              aria-label={`Open ${list.title}`}
+            >
+              {list.title}
+            </ListCardButton>
+          ))}
         </FeaturedLists>
       </Section>
 
