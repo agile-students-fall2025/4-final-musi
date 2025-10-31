@@ -2,36 +2,35 @@ import React from "react";
 import styled from "styled-components";
 
 const StyledLeaderboardItem = styled.li`
-  display: flex; /* Use flexbox to arrange children */
-  justify-content: space-between; /* This is the key! Pushes items apart */
-  align-items: center; /* Keeps them aligned vertically */
-  padding: 12px 8px; /* Add some nice spacing */
-  border-bottom: 1px solid #f0f0f0; /* Separator line */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
 
-  /* Change background on hover for a nice effect */
   &:hover {
     background-color: #fafafa;
   }
 `;
 
 const ItemRank = styled.span`
-  flex-basis: 40px; /* Give it a fixed width */
+  flex-basis: 40px;
   font-size: 1rem;
   font-weight: bold;
   color: #888;
 `;
 
 const ItemUsername = styled.span`
-  flex-grow: 1; /* Allows it to take up the remaining space */
-  margin-left: 16px; /* Adds space between rank and username */
+  flex-grow: 1;
+  margin-left: 16px;
   font-size: 1.1rem;
   font-weight: 500;
   color: #333;
 `;
 
 const ItemScore = styled.span`
-  flex-basis: 80px; /* Give it a fixed width */
-  text-align: right; /* Align the number to the right */
+  flex-basis: 80px;
+  text-align: right;
   font-size: 1.1rem;
   font-weight: bold;
   color: #000;
@@ -54,11 +53,11 @@ const leaderboardData = [
   { rank: 4, username: "@ian", score: 1428 },
   { rank: 5, username: "@zuhair", score: 1304 },
   { rank: 6, username: "@dvd", score: 1237 },
-  { rank: 7, username: "@dvd", score: 1220 },
-  { rank: 8, username: "@dvd", score: 1096 },
-  { rank: 9, username: "@dvd", score: 1029 },
-  { rank: 10, username: "@dvd", score: 814 },
-  { rank: 11, username: "@dvd", score: 451 },
+  { rank: 7, username: "@soju", score: 1220 },
+  { rank: 8, username: "@oui", score: 1096 },
+  { rank: 9, username: "@beef", score: 1029 },
+  { rank: 10, username: "@eri", score: 814 },
+  { rank: 11, username: "@tofu", score: 451 },
 ];
 
 function Leaderboard() {
