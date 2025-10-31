@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, Heart, Check } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import { theme } from '../theme';
 import SongItem from '../components/SongItem';
 import Sidebar from '../components/Sidebar';
@@ -113,6 +114,18 @@ const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+`;
+
+const StatItemClickable = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 
 const StatValue = styled.div`
@@ -597,6 +610,7 @@ const SaveButton = styled.button`
 `;
 
 function Profile() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showInputModal, setShowInputModal] = useState(false);
@@ -623,6 +637,15 @@ function Profile() {
       isLiked: false,
     },
   ]);
+
+  // Navigation handlers
+  const handleFollowersClick = () => {
+    navigate('/app/followers');
+  };
+
+  const handleFollowingClick = () => {
+    navigate('/app/followers');
+  };
 
   const genreData = [
     { name: 'R&B', value: 32, color: '#4A4A4A' },
@@ -732,18 +755,16 @@ function Profile() {
         </ProfileSection>
 
         <StatsRow>
-           <a href="/app/followers" className="profile-stat-link">
-          <StatItem>
+          <StatItemClickable onClick={handleFollowersClick}>
             <StatValue>2</StatValue>
             <StatLabel>Followers</StatLabel>
-          </StatItem>
-          </a>
-           <a href="/app/followers" className="profile-stat-link">
-          <StatItem>
+          </StatItemClickable>
+          
+          <StatItemClickable onClick={handleFollowingClick}>
             <StatValue>6</StatValue>
             <StatLabel>Following</StatLabel>
-          </StatItem>
-          </a>
+          </StatItemClickable>
+          
           <StatItem>
             <StatValue>#2</StatValue>
             <StatLabel>Rank on Musi</StatLabel>
