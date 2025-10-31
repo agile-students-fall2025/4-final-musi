@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { Plus, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 
 const Card = styled.article`
@@ -7,7 +8,9 @@ const Card = styled.article`
   grid-template-columns: 56px 1fr auto;
   gap: 12px;
   padding: 24px 0;
-  border-bottom: ${theme.colors.outline} 1px solid
+  border-bottom: 1px solid ${theme.colors.outline};
+  align-items: center;
+  width: 100%;
 `;
 
 const Thumbnail = styled.div`
@@ -40,6 +43,12 @@ const Meta = styled.div`
   color: ${theme.colors.subtext};
 `;
 
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
 const Score = styled.div`
   width: 56px;
   height: 56px;
@@ -52,16 +61,56 @@ const Score = styled.div`
   font-size: 1rem;
 `;
 
-export default function SongItem({ title, subtitle, meta, score, dividerTop }) {
+
+
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+`;
+
+const CircleIconButton = styled(IconButton)`
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid ${theme.colors.border};
+  border-radius: 50%;
+  justify-content: center;
+`;
+
+export default function SongItem({
+  title,
+  subtitle,
+  meta,
+  score,
+  showScore = true,
+  showPlus = false,
+  showBookmark = false,
+}) {
   return (
-    <Card dividerTop={dividerTop}>
+    <Card>
       <Thumbnail />
       <Body>
         <Title>{title}</Title>
         <Subtitle>{subtitle}</Subtitle>
-        <Meta>{meta}</Meta>
+        {meta && <Meta>{meta}</Meta>}
       </Body>
-      <Score>{score}</Score>
+
+      <RightSection>
+        {showScore && <Score>{score}</Score>}
+        {showPlus && (
+          <CircleIconButton aria-label="Add">
+            <Plus size={20} color={theme.colors.text} />
+          </CircleIconButton>
+        )}
+        {showBookmark && (
+          <IconButton aria-label="Bookmark">
+            <Bookmark size={20} color={theme.colors.text} />
+          </IconButton>
+        )}
+      </RightSection>
     </Card>
   );
 }

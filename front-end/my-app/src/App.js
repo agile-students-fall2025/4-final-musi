@@ -8,6 +8,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import User from "./pages/User";
 import Music from "./pages/Music";
+import FeaturedList from './pages/FeaturedList';
 import { useState } from 'react';
 import Followers from "./pages/Followers";
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/featuredlist/:title" element={<FeaturedList />} />
           <Route path="/user" element={<User />} />
           <Route path="/music" element={
             <Music {...selectedMusic} isRated={false} />
