@@ -8,6 +8,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Music from "./pages/Music";
 import { useState } from 'react';
+import Followers from "./pages/Followers";
 
 function App() {
   const [selectedMusic, setSelectedMusic] = useState(null);

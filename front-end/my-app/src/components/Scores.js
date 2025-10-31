@@ -20,7 +20,7 @@ function Scores({title, artist, isRated}) {
         if (isRated===true) {
             setRank(1);
             setScoreTitles(["Your Musi Rating", "Friend Score", "User Score"]);
-            setDescriptions([`#<strong>${rank}</strong>on your list of music`,
+            setDescriptions([`#<strong>${rank}</strong> on your list of music`,
             "What your <strong>friends</strong> think", 
             "Average score from <strong>all</strong> users"])
         }
