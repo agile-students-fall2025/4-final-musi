@@ -20,7 +20,7 @@ const SearchBar = ({ onSearch, placeholder = "Search..." }) => {
 
   return (
     <form className="search-bar-container" onSubmit={handleSubmit}>
-      <span className="search-icon">🔍</span>
+      <span className="search-icon"></span>
       <input
         type="text"
         className="search-input"
