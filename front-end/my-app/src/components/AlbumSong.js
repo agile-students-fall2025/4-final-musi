@@ -4,7 +4,7 @@ import "./AlbumSong.css";
 
 function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
-
+  const [rated, setRated] = useState(isRated);
   const songPath = `/music/song/${encodeURIComponent(artist)}/${encodeURIComponent(title)}}`;
 
   return (
@@ -15,7 +15,7 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
       </Link>
 
       <div className="album-song-actions">
-        {isRated ? (
+        {rated ? (
           <>
             <button
               className="album-song-btn"
@@ -31,7 +31,11 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
             <button
               className="album-song-btn"
               title="Rate"
-              onClick={() => onRatingClick(title, artist, "Song", false)}
+              onClick={() => {
+                onRatingClick(title, artist, "Song", false);
+                setRated(true);
+              }
+            }
             >
               <img src="/plus.png" alt="Rate" className="icon" />
             </button>

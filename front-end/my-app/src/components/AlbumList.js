@@ -7,10 +7,10 @@ function AlbumList({ artist, title, onRatingClick }) {
 
   useEffect(() => {
     const mockAlbumSongs = [
-      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: true, score: 7.6 },
-      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: null },
-      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: true, score: 8.0 },
-      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: null },
+      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
     ];
     setAlbum(mockAlbumSongs);
   }, []);
