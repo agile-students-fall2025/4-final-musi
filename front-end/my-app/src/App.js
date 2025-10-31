@@ -6,6 +6,7 @@ import Lists from "./pages/Lists";  // Changed from YourLists
 import Search from "./pages/Search";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import User from "./pages/User";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/user" element={<User />} />
         </Routes>
       </div>
       <BottomNavBar />
