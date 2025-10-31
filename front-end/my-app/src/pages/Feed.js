@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
-import { useNavigate } from "react-router-dom";
+
 
 const Container = styled.div`
   background: white;
