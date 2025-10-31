@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
+import "../components/Score.css"; // Import the Score CSS
 
 const Container = styled.div`
   background: white;
@@ -188,16 +189,6 @@ const TimeStamp = styled.div`
   text-align: left;
 `;
 
-const Rating = styled.div`
-  background: #333;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-left: auto;
-`;
-
 const AlbumGrid = styled.div`
   display: flex;
   gap: 8px;
@@ -253,6 +244,19 @@ const LikeButton = styled.button`
 const InteractionRight = styled.div`
   font-size: 0.85rem;
   color: #666;
+`;
+
+const FeedScoreContainer = styled.div`
+  .score-circle {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border: 1.5px solid #4b5563 !important;
+  }
+  
+  .score-number {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
 `;
 
 const Button = styled.button`
@@ -574,7 +578,15 @@ function Feed({ setSelectedMusic }) {
                   </ActivityText>
                   <TimeStamp>{item.time}</TimeStamp>
                   </UserDetails>
-                  <Rating>{item.rating}</Rating>
+                  <FeedScoreContainer>
+                    <div className="score-item">
+                      <div className="score-circle-container">
+                        <div className="score-circle">
+                          <span className="score-number">{item.rating}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </FeedScoreContainer>
               </UserInfo>
 
           <AlbumGrid>
