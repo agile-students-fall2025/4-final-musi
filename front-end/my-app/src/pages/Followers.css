@@ -1,0 +1,83 @@
+.followers-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.followers-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 73px; 
+  box-sizing: border-box;
+}
+
+.back-link {
+  position: absolute;
+  left: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #000;
+}
+
+.header-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.followers-nav {
+  display: flex;
+  position: sticky;
+  top: 73px; 
+  background-color: #ffffff;
+  z-index: 10;
+  height: 52px;
+  box-sizing: border-box;
+}
+
+.search-container {
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 125px; 
+  background-color: #ffffff;
+  z-index: 10;
+}
+
+.search-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #9ca3af; 
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+  background-color: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 2px #c4b5fd;
+}

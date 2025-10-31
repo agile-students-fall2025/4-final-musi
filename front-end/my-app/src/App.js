@@ -8,31 +8,27 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import User from "./pages/User";
 import Music from "./pages/Music";
+import { useState } from 'react';
+import Followers from "./pages/Followers";
 
 function App() {
+  const [selectedMusic, setSelectedMusic] = useState(null);
+
   return (
     <div className="App">
       <div style={{ paddingBottom: '80px' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/app/feed" replace />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/lists" element={<Lists />} />  {/* Changed route */}
+          <Route path="/feed" element={<Feed setSelectedMusic={setSelectedMusic} />} />
+          <Route path="/lists" element={<Lists setSelectedMusic={setSelectedMusic} />} />  {/* Changed route */}
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/user" element={<User />} />
-          <Route
-            path="/music"
-            element={
-              <Music
-                musicType="Album"
-                artist="Olivia Rodrigo"
-                title="SOUR"
-                isRated={true}
-              />
-            }
-          />
+          <Route path="/music" element={
+            <Music {...selectedMusic} isRated={false} />
+          } />
         </Routes>
       </div>
       <BottomNavBar />

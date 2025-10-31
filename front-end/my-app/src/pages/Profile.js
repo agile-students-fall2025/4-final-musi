@@ -465,14 +465,18 @@ function Profile() {
         </ProfileSection>
 
         <StatsRow>
+           <a href="/app/followers" className="profile-stat-link">
           <StatItem>
             <StatValue>2</StatValue>
             <StatLabel>Followers</StatLabel>
           </StatItem>
+          </a>
+           <a href="/app/followers" className="profile-stat-link">
           <StatItem>
             <StatValue>6</StatValue>
             <StatLabel>Following</StatLabel>
           </StatItem>
+          </a>
           <StatItem>
             <StatValue>#2</StatValue>
             <StatLabel>Rank on Musi</StatLabel>
