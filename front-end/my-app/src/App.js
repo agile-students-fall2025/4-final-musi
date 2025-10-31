@@ -24,13 +24,13 @@ function App() {
           <Route path="/lists" element={<Lists setSelectedMusic={setSelectedMusic} />} />  {/* Changed route */}
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/featuredlist/:title" element={<FeaturedList />} />
           <Route path="/user" element={<User />} />
           <Route path="/music" element={
             <Music {...selectedMusic} isRated={false} />
           } />
+          <Route path="/followers" element={<Followers />} />
         </Routes>
       </div>
       <BottomNavBar />

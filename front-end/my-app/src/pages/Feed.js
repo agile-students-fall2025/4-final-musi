@@ -5,7 +5,6 @@ import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 
-
 const Container = styled.div`
   background: white;
   min-height: 100vh;
