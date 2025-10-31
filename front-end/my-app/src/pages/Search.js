@@ -1,25 +1,45 @@
-import React from 'react';
-import styled from 'styled-components';
-import { theme } from '../theme';
+import React, { useState } from 'react';
+import SearchBar from '../components/SearchBar';
 
-const Container = styled.div`
-  min-height: 100vh;
-  background: ${theme.colors.background};
-  padding: 20px;
-`;
-
-const Title = styled.h1`
-  font-size: 1.5rem;
-  color: ${theme.colors.text};
-  margin-bottom: 20px;
-`;
+const tempData = [
+  { name: "Paint it, Black"},
+  { name: "Espresso"},
+  { name: "I am"},
+  { name: "Jane Doe"},
+  { name: "Kick Back"},
+  { name: "Don't Fear the Reaper"},
+  { name: "After Like"},
+  { name: "Roundabout"},
+  { name: "Dice"},
+  { name: "Tora Moyo"},
+  { name: "Cry for Me"},
+  { name: "Famous"},
+  { name: "Bachelor Girl"},
+  { name: "The Chain"},
+];
 
 function Search() {
+  const [results, setResults] = useState([]);
+
+  const handleSearch = (term) => {
+    console.log('Searching for:', term);
+
+    const filteredData = tempData.filter(item =>
+      item.name.toLowerCase().includes(term.toLowerCase())
+    );
+    setResults(filteredData);
+  };
+
   return (
-    <Container>
-      <Title>Search</Title>
-      <p>Search for music here</p>
-    </Container>
+    <div>
+      <h2>My Content</h2>
+      <SearchBar onSearch={handleSearch} placeholder="Search a song, album, or user" />
+      <ul>
+        {results.map((item, index) => (
+          <li key={index}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
