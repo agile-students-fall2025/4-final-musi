@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, X } from 'lucide-react';
+import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, Heart, Check } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
+import SongItem from '../components/SongItem';
+import Sidebar from '../components/Sidebar';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -20,6 +22,12 @@ const Header = styled.div`
 const UserName = styled.h1`
   font-size: 1.25rem;
   font-weight: 600;
+`;
+
+const HeaderIcons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const IconButton = styled.button`
@@ -240,44 +248,6 @@ const LegendColor = styled.div`
   background: ${props => props.color};
 `;
 
-const TrackList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-`;
-
-const TrackItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const TrackImage = styled.div`
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  background: #d3d3d3;
-  flex-shrink: 0;
-`;
-
-const TrackInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const TrackTitle = styled.div`
-  font-size: 1rem;
-  font-weight: 500;
-  color: ${theme.colors.text};
-`;
-
-const TrackArtist = styled.div`
-  font-size: 0.85rem;
-  color: ${theme.colors.text_secondary};
-`;
-
 const InsightsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -302,6 +272,117 @@ const InsightValue = styled.div`
   font-size: 1.5rem;
   font-weight: 600;
   color: ${theme.colors.text};
+`;
+
+// Feed Item Styles
+const FeedItem = styled.div`
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+`;
+
+const FeedAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  background: #ddd;
+  border-radius: 50%;
+`;
+
+const UserDetails = styled.div`
+  flex: 1;
+`;
+
+const FeedUserName = styled.div`
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: left;
+`;
+
+const ActivityText = styled.div`
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: left;
+`;
+
+const TimeStamp = styled.div`
+  font-size: 0.8rem;
+  color: #999;
+  text-align: left;
+`;
+
+const Rating = styled.div`
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-left: auto;
+`;
+
+const AlbumGrid = styled.div`
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+`;
+
+const AlbumCover = styled.div`
+  width: 80px;
+  height: 80px;
+  background: #666;
+  border-radius: 4px;
+`;
+
+const ReviewText = styled.p`
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.4;
+  margin: 12px 0;
+  text-align: left;
+`;
+
+const InteractionBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+`;
+
+const InteractionLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: #666;
+`;
+
+const LikeButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0;
+
+  &:hover {
+    color: #333;
+  }
+`;
+
+const InteractionRight = styled.div`
+  font-size: 0.85rem;
+  color: #666;
 `;
 
 // Edit Modal Styles
@@ -415,14 +496,133 @@ const SectionDivider = styled.div`
   height: 16px;
 `;
 
+// Input Modal Styles
+const InputModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  display: ${props => props.show ? 'flex' : 'none'};
+  flex-direction: column;
+  z-index: 3000;
+`;
+
+const InputModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+`;
+
+const CancelButton = styled.button`
+  background: none;
+  border: none;
+  color: ${theme.colors.text};
+  font-size: 1rem;
+  cursor: pointer;
+`;
+
+const InputModalTitle = styled.h2`
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${theme.colors.text};
+`;
+
+const InputModalBody = styled.div`
+  flex: 1;
+  padding: 24px 20px;
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 24px;
+`;
+
+const InputPrefix = styled.span`
+  font-size: 1rem;
+  color: ${theme.colors.text};
+  margin-right: 8px;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: ${theme.colors.text};
+  background: transparent;
+
+  &::placeholder {
+    color: ${theme.colors.text_secondary};
+  }
+`;
+
+const CheckIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #4CAF50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+`;
+
+const SaveButton = styled.button`
+  width: calc(100% - 40px);
+  margin: 0 20px 20px 20px;
+  padding: 16px;
+  background: #000;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
 function Profile() {
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showInputModal, setShowInputModal] = useState(false);
+  const [editingField, setEditingField] = useState(null);
+  const [tempValue, setTempValue] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const [profile, setProfile] = useState({
     name: 'Andy Cabindol',
-    username: '@andycabindol',
+    username: 'andycabindol',
     bio: 'love listening to R&B',
   });
+
+  const [feedData, setFeedData] = useState([
+    {
+      id: 1,
+      user: "You",
+      activity: "ranked Cheryl Lynn's 'Got to Be Real'",
+      rating: "7.6",
+      time: "Today",
+      review: "The song was awesome",
+      likes: 0,
+      bookmarks: 0,
+      isLiked: false,
+    },
+  ]);
 
   const genreData = [
     { name: 'R&B', value: 32, color: '#4A4A4A' },
@@ -432,20 +632,87 @@ function Profile() {
   ];
 
   const topTracks = [
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
+    {
+      id: 1,
+      title: "Got to Be Real",
+      artist: "Cheryl Lynn",
+      tags: ["Disco", "R&B / Soul", "Funk"],
+      score: 9.0,
+    },
+    {
+      id: 2,
+      title: "Got to Be Real",
+      artist: "Cheryl Lynn",
+      tags: ["Disco", "R&B / Soul", "Funk"],
+      score: 9.0,
+    },
+    {
+      id: 3,
+      title: "Got to Be Real",
+      artist: "Cheryl Lynn",
+      tags: ["Disco", "R&B / Soul", "Funk"],
+      score: 9.0,
+    },
   ];
+
+  const handleLike = (itemId) => {
+    setFeedData((prevData) =>
+      prevData.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              isLiked: !item.isLiked,
+              likes: item.isLiked ? item.likes - 1 : item.likes + 1,
+            }
+          : item
+      )
+    );
+  };
+
+  const openEditField = (field) => {
+    setEditingField(field);
+    setTempValue(profile[field]);
+    setShowEditModal(false);
+    setShowInputModal(true);
+  };
+
+  const handleSaveField = () => {
+    if (tempValue.trim()) {
+      setProfile({
+        ...profile,
+        [editingField]: tempValue
+      });
+      setShowInputModal(false);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowInputModal(false);
+    setShowEditModal(true);
+    setTempValue('');
+  };
+
+  const getFieldTitle = (field) => {
+    switch(field) {
+      case 'name': return 'Change name';
+      case 'username': return 'Change username';
+      case 'bio': return 'Change bio';
+      default: return 'Edit';
+    }
+  };
 
   return (
     <>
       <Container>
         <Header>
           <UserName>{profile.name}</UserName>
-          <div>
-            <IconButton><Share size={20} /></IconButton>
-            <IconButton><Menu size={20} /></IconButton>
-          </div>
+          <HeaderIcons>
+            <IconButton><Share size={24} /></IconButton>
+            <IconButton onClick={() => setIsSidebarOpen(true)}>
+              <Menu size={24} color="#333" />
+            </IconButton>
+          </HeaderIcons>
         </Header>
 
         <ProfileSection>
@@ -454,7 +721,7 @@ function Profile() {
               <Edit size={16} />
             </EditIcon>
           </Avatar>
-          <Username>{profile.username}</Username>
+          <Username>@{profile.username}</Username>
           <Bio>{profile.bio}</Bio>
           <MemberSince>Member since August 1, 2025</MemberSince>
           
@@ -533,9 +800,43 @@ function Profile() {
 
         {activeTab === 'activity' && (
           <TabContent>
-            <p style={{ color: theme.colors.text_secondary, textAlign: 'center', padding: '40px 0' }}>
-              No recent activity
-            </p>
+            {feedData.map((item) => (
+              <FeedItem key={item.id}>
+                <UserInfo>
+                  <FeedAvatar />
+                  <UserDetails>
+                    <FeedUserName>{item.user}</FeedUserName>
+                    <ActivityText>{item.activity}</ActivityText>
+                    <TimeStamp>{item.time}</TimeStamp>
+                  </UserDetails>
+                  <Rating>{item.rating}</Rating>
+                </UserInfo>
+
+                <AlbumGrid>
+                  <AlbumCover />
+                  <AlbumCover />
+                  <AlbumCover />
+                </AlbumGrid>
+
+                <ReviewText>Notes: {item.review}</ReviewText>
+
+                <InteractionBar>
+                  <InteractionLeft>
+                    <LikeButton onClick={() => handleLike(item.id)}>
+                      <Heart
+                        size={16}
+                        fill={item.isLiked ? "#ff6b6b" : "none"}
+                        color={item.isLiked ? "#ff6b6b" : "#666"}
+                      />
+                      <span>{item.likes} likes</span>
+                    </LikeButton>
+                  </InteractionLeft>
+                  <InteractionRight>
+                    <span>{item.bookmarks} bookmarks</span>
+                  </InteractionRight>
+                </InteractionBar>
+              </FeedItem>
+            ))}
           </TabContent>
         )}
 
@@ -606,17 +907,19 @@ function Profile() {
             </ChartContainer>
 
             <SectionTitle>YOUR TOP TRACKS</SectionTitle>
-            <TrackList>
-              {topTracks.map((track, index) => (
-                <TrackItem key={index}>
-                  <TrackImage />
-                  <TrackInfo>
-                    <TrackTitle>{track.title}</TrackTitle>
-                    <TrackArtist>{track.artist}</TrackArtist>
-                  </TrackInfo>
-                </TrackItem>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {topTracks.map((track, i) => (
+                <li key={track.id}>
+                  <SongItem
+                    title={track.title}
+                    subtitle={`Song • ${track.artist}`}
+                    meta={track.tags.join(", ")}
+                    score={track.score}
+                    dividerTop={i > 0}
+                  />
+                </li>
               ))}
-            </TrackList>
+            </ul>
 
             <SectionTitle>INSIGHTS</SectionTitle>
             <InsightsGrid>
@@ -632,6 +935,12 @@ function Profile() {
           </TabContent>
         )}
       </Container>
+
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
 
       {/* Edit Profile Modal */}
       <ModalOverlay show={showEditModal} onClick={() => setShowEditModal(false)}>
@@ -649,7 +958,7 @@ function Profile() {
           </EditPhotoSection>
 
           <FormSection>
-            <FormItem>
+            <FormItem onClick={() => openEditField('name')}>
               <FormLabel>Name</FormLabel>
               <FormValueContainer>
                 <FormValue>{profile.name}</FormValue>
@@ -657,15 +966,15 @@ function Profile() {
               </FormValueContainer>
             </FormItem>
 
-            <FormItem>
+            <FormItem onClick={() => openEditField('username')}>
               <FormLabel>Username</FormLabel>
               <FormValueContainer>
-                <FormValue>{profile.username}</FormValue>
+                <FormValue>@{profile.username}</FormValue>
                 <ChevronRight size={20} color="#999" />
               </FormValueContainer>
             </FormItem>
 
-            <FormItem>
+            <FormItem onClick={() => openEditField('bio')}>
               <FormLabel>Bio</FormLabel>
               <FormValueContainer>
                 <FormValue>{profile.bio}</FormValue>
@@ -682,6 +991,40 @@ function Profile() {
           </FormSection>
         </ModalContent>
       </ModalOverlay>
+
+      {/* Input Edit Modal */}
+      <InputModalOverlay show={showInputModal}>
+        <InputModalHeader>
+          <CancelButton onClick={handleCancelEdit}>Cancel</CancelButton>
+          <InputModalTitle>{getFieldTitle(editingField)}</InputModalTitle>
+          <div style={{ width: '60px' }} /> {/* Spacer for center alignment */}
+        </InputModalHeader>
+        
+        <InputModalBody>
+          <InputWrapper>
+            {editingField === 'username' && <InputPrefix>@</InputPrefix>}
+            <Input
+              type="text"
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              placeholder={`Enter ${editingField}`}
+              autoFocus
+            />
+            {tempValue && tempValue !== profile[editingField] && (
+              <CheckIcon>
+                <Check size={16} />
+              </CheckIcon>
+            )}
+          </InputWrapper>
+        </InputModalBody>
+
+        <SaveButton 
+          onClick={handleSaveField}
+          disabled={!tempValue.trim() || tempValue === profile[editingField]}
+        >
+          Save
+        </SaveButton>
+      </InputModalOverlay>
     </>
   );
 }
