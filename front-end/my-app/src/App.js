@@ -7,6 +7,7 @@ import Search from "./pages/Search";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Music from "./pages/Music";
+import Followers from "./pages/Followers";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
               />
             }
           />
+          <Route path="/followers" element={<Followers />} />
         </Routes>
       </div>
       <BottomNavBar />
