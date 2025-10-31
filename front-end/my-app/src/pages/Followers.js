@@ -3,7 +3,7 @@ import './Followers.css';
 import TabButton from '../components/TabButton';
 import UserRow from '../components/UserRow';
 
-function FollowersPage({ profile }) {
+function Followers({ profile }) {
   const [activeTab, setActiveTab] = useState('followers');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -122,4 +122,4 @@ function FollowersPage({ profile }) {
   );
 }
 
-export default FollowersPage;
+export default Followers;
