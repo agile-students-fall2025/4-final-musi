@@ -13,7 +13,7 @@ const NavContainer = styled.nav`
   display: flex;
   justify-content: space-around;
   padding: 12px 0;
-  z-index: 1000;
+  z-index: 600;
 `;
 
 const NavItem = styled.button`
