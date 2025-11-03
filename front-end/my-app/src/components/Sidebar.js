@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { X, Settings, Edit, LogOut } from 'lucide-react';
 import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
+import ConfirmOverlay from '../components/ConfirmOverlay';
 
 const SidebarOverlay = styled.div`
   position: fixed;
@@ -11,7 +12,7 @@ const SidebarOverlay = styled.div`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 9999; /* Increased z-index to ensure it's above everything */
+  z-index: 799; /* Increased z-index to ensure it's above everything */
   display: ${props => props.isOpen ? 'block' : 'none'};
   opacity: ${props => props.isOpen ? 1 : 0};
   transition: opacity 0.3s ease-in-out;
@@ -24,7 +25,7 @@ const SidebarContainer = styled.div`
   height: 100vh;
   width: 320px;
   background: white;
-  z-index: 10000; /* Higher z-index than overlay and bottom nav */
+  z-index: 800; /* Higher z-index than overlay and bottom nav */
   transform: translateX(${props => props.isOpen ? '0' : '100%'});
   transition: transform 0.3s ease-in-out;
   display: flex;
@@ -99,9 +100,10 @@ const MenuText = styled.span`
 
 function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleSettingsClick = () => {
-    navigate('/settings');
+    navigate('/app/settings');
     onClose();
   };
 
@@ -111,8 +113,14 @@ function Sidebar({ isOpen, onClose }) {
   };
 
   const handleLogOutClick = () => {
-    navigate('/login');
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
     onClose();
+    navigate('/');
+    console.log('User logged out');
   };
 
   const handleOverlayClick = (e) => {
@@ -131,7 +139,7 @@ function Sidebar({ isOpen, onClose }) {
             <X size={20} color="#666" />
           </CloseButton>
         </SidebarHeader>
-        
+
         <MenuList>
           <MenuItem onClick={handleSettingsClick}>
             <MenuIcon>
@@ -139,14 +147,14 @@ function Sidebar({ isOpen, onClose }) {
             </MenuIcon>
             <MenuText>Settings</MenuText>
           </MenuItem>
-          
+
           <MenuItem onClick={handleEditProfileClick}>
             <MenuIcon>
               <Edit size={20} />
             </MenuIcon>
             <MenuText>Edit profile</MenuText>
           </MenuItem>
-          
+
           <MenuItem onClick={handleLogOutClick}>
             <MenuIcon>
               <LogOut size={20} />
@@ -155,6 +163,16 @@ function Sidebar({ isOpen, onClose }) {
           </MenuItem>
         </MenuList>
       </SidebarContainer>
+
+      <ConfirmOverlay
+        open={showLogoutConfirm}
+        title="Are you sure you want to logout?"
+        confirmLabel="Logout of my account"
+        confirmDestructive={false}
+        confirmDisabled={false}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </>
   );
 }
