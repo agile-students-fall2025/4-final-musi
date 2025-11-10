@@ -1,0 +1,25 @@
+{
+  "name": "musi",
+  "version": "1.0.0",
+  "description": "musi app",
+  "main": "server.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agile-students-fall2025/4-final-musi.git"
+  },
+  "keywords": [
+    "musi"
+  ],
+  "author": "na",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/agile-students-fall2025/4-final-musi/issues"
+  },
+  "homepage": "https://github.com/agile-students-fall2025/4-final-musi#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
