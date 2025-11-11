@@ -60,7 +60,7 @@ const tabToApi = (key) => {
   }
 };
 
-export default function Lists({ setSelectedMusic }) {
+export default function Lists() {
   const [activeTab, setActiveTab] = useState("listened");
   const [tabs, setTabs] = useState([]);
   const [songs, setSongs] = useState([]);
@@ -106,8 +106,7 @@ export default function Lists({ setSelectedMusic }) {
   }, [activeTab]);
 
   const goToMusic = (song) => {
-    setSelectedMusic(song);
-    navigate("/app/music");
+    navigate(`/app/music/Song/${encodeURIComponent(song.artist)}/${encodeURIComponent(song.title)}`);
   };
 
   if (loadingTabs || loadingSongs) {

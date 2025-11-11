@@ -307,7 +307,7 @@ const FEATURED_LISTS = [
   },
 ];
 
-function Feed({ setSelectedMusic }) {
+function Feed() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("trending");
@@ -497,8 +497,7 @@ function Feed({ setSelectedMusic }) {
   };
   
   const goToMusic = (music) => {
-    setSelectedMusic(music);
-    navigate("/app/music");
+    navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
   };
   return (
     <Container>

@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from "react";
 import AlbumSong from "./AlbumSong";
+import axios from "axios";
 import "./AlbumList.css";
 
 function AlbumList({ artist, title, onRatingClick }) {
   const [album, setAlbum] = useState([]);
 
   useEffect(() => {
-    const mockAlbumSongs = [
-      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-    ];
-    setAlbum(mockAlbumSongs);
-  }, []);
+    if (!artist || !title) {
+      return; 
+    }
+    const encodedArtist = encodeURIComponent(artist);
+    const encodedTitle = encodeURIComponent(title);
+
+    const API_URL = `http://localhost:3000/api/albumlist/${encodedArtist}/${encodedTitle}`;
+
+    axios.get(API_URL)
+      .then(response => {
+        setAlbum(response.data);
+      })
+      .catch(error => {
+        console.error("Error fetching album songs:", error);
+        setAlbum([]);
+      });
+
+  }, [artist, title]);
 
   return (
     <div className="album-list-container">

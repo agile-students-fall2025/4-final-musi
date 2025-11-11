@@ -149,5 +149,18 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
     res.json(responseData);
 });
 
-
+app.get('/api/albumlist/:artist/:title', (req, res) => {
+    const { artist, title } = req.params;
+    const songList = [
+      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+    ];
+    if (songList) {
+        res.json(songList);
+    } else {
+        res.json([]);
+    }
+});
 module.exports = app
