@@ -259,6 +259,21 @@ app.post("/api/feed/:id/like", (req, res) => {
   res.json({ ok: true, id });
 });
 
+app.post('/api/onboarding', (req, res) => {
+  const { answers } = req.body;
+  
+  console.log('Onboarding answers received:', answers);
+  
+  if (!answers) {
+    return res.status(400).json({ error: 'Onboarding answers are required' });
+  }
+  
+  res.json({ 
+    message: 'Onboarding completed successfully',
+    data: answers
+  });
+});
+
 
 
 
