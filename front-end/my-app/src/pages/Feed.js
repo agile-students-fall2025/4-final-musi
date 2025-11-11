@@ -70,7 +70,55 @@ const FeedScoreContainer = styled.div`
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
 
-function Feed({ setSelectedMusic }) {
+const Button = styled.button`
+  background-color: ${theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 0.85;
+  }
+`;
+
+const FEATURED_LISTS = [
+  {
+    title: "Study flow",
+    tracks: [
+      { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
+      { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
+      { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
+      { id: 4, title: "Ain’t Nobody", subtitle: "Song • Chaka Khan" },
+      { id: 5, title: "Le Freak", subtitle: "Song • CHIC" },
+    ],
+  },
+  {
+    title: "RapCaviar",
+    tracks: [
+      { id: 11, title: "Meltdown", subtitle: "Song • Travis Scott, Drake" },
+      { id: 12, title: "First Person Shooter", subtitle: "Song • Drake, J. Cole" },
+      { id: 13, title: "Rich Flex", subtitle: "Song • Drake, 21 Savage" },
+      { id: 14, title: "BROTHER STONE", subtitle: "Song • Don Toliver" },
+      { id: 15, title: "Knife Talk", subtitle: "Song • Drake, 21 Savage, Project Pat" },
+    ],
+  },
+  {
+    title: "Teenage Fever",
+    tracks: [
+      { id: 21, title: "drivers license", subtitle: "Song • Olivia Rodrigo" },
+      { id: 22, title: "Heather", subtitle: "Song • Conan Gray" },
+      { id: 23, title: "Telepatía", subtitle: "Song • Kali Uchis" },
+      { id: 24, title: "Sweater Weather", subtitle: "Song • The Neighbourhood" },
+      { id: 25, title: "Someone You Loved", subtitle: "Song • Lewis Capaldi" },
+    ],
+  },
+];
+
+function Feed() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("trending");
@@ -122,8 +170,7 @@ function Feed({ setSelectedMusic }) {
   };
 
   const goToMusic = (music) => {
-    setSelectedMusic(music);
-    navigate("/app/music");
+    navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
   };
 
   if (loading) return <Container><Section><div>Loading…</div></Section></Container>;

@@ -9,14 +9,12 @@ import Profile from "./pages/Profile";
 import User from "./pages/User";
 import Music from "./pages/Music";
 import FeaturedList from './pages/FeaturedList';
-import { useState } from 'react';
 import Followers from "./pages/Followers";
 import Settings from "./pages/Settings";
 import UpdateEmail from "./pages/UpdateEmail";
 import UpdatePassword from "./pages/UpdatePassword";
 
 function App() {
-  const [selectedMusic, setSelectedMusic] = useState(null);
   const location = useLocation();
 
   const hideNavPaths = [
@@ -35,16 +33,16 @@ function App() {
       <div style={{ paddingBottom: '80px' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/app/feed" replace />} />
-          <Route path="/feed" element={<Feed setSelectedMusic={setSelectedMusic} />} />
-          <Route path="/lists" element={<Lists setSelectedMusic={setSelectedMusic} />} />  {/* Changed route */}
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/lists" element={<Lists />} /> 
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/featuredlist/:title" element={<FeaturedList />} />
           <Route path="/user" element={<User />} />
-          <Route path="/music" element={
-            <Music {...selectedMusic} isRated={false} />
-          } />
+          <Route path="/music/:musicType/:artist/:title" 
+            element={<Music />} 
+          />
           <Route path="/followers" element={<Followers />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/email" element={<UpdateEmail />} />

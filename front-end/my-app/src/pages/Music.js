@@ -7,9 +7,11 @@ import AlbumList from "../components/AlbumList";
 import RatingModal from "../components/RatingModal.js";
 import SpotifySample from "../components/SpotifySample";
 import axios from "axios";
+import { useParams } from 'react-router-dom'; 
 import "./Music.css";
 
-function Music({ musicType, artist, title }) {
+function Music() {
+  const { musicType, artist, title } = useParams();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedSong, setSelectedSong] = useState(null);
   const [musicData, setMusicData] = useState(null);

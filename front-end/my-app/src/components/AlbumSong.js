@@ -5,7 +5,7 @@ import "./AlbumSong.css";
 function AlbumSong({ id, title, artist, isRated, score, onRatingClick }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [rated, setRated] = useState(isRated);
-  const songPath = `/music/song/${encodeURIComponent(artist)}/${encodeURIComponent(title)}}`;
+  const songPath = `/app/music/Song/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
 
   return (
     <div className="album-song-item">
