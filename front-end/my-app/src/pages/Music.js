@@ -98,7 +98,7 @@ function Music({ musicType, artist, title }) {
       <Scores title={title} artist={artist} isRated={musicData?.isRated} />
 
       {musicType === "Album" && (
-        <AlbumList title={title} artist={artist} onRatingClick={handleRatingClick} />
+        <AlbumList musicType={musicType} title={title} artist={artist} onRatingClick={handleRatingClick} />
       )}
       <FriendScore artist={artist} title={title} />
       <BottomNavBar />
