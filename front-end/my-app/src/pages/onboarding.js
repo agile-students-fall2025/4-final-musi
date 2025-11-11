@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { RiCloseCircleLine } from "react-icons/ri";
 import { theme } from "../theme";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const questions = [
   {
@@ -159,7 +160,7 @@ function Onboarding() {
   const [answers, setAnswers] = useState({
     genres: [],
     listen_time: "",
-    listen_location: "", 
+    listen_location: "",
     decade: "",
   });
 
@@ -184,14 +185,27 @@ function Onboarding() {
 
   const navigate = useNavigate();
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      navigate("/app");
+      try {
+        const response = await axios.post(
+          "http://localhost:3001/api/onboarding",
+          {
+            answers: answers,
+          }
+        );
+
+        console.log("Onboarding submitted successfully:", response.data);
+        navigate("/app");
+      } catch (error) {
+        console.error("Error submitting onboarding:", error);
+        // Handle error gracefully
+        navigate("/app"); // Still navigate even if backend fails
+      }
     }
   };
-
   return (
     <Container>
       <ProgressContainer>
