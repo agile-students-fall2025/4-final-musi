@@ -149,6 +149,10 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
     res.json(responseData);
 });
 
+app.get('/api/search', (req, res) => {
+  //console.log("GET /api/search request received");
+  res.json(MOCK_SONGS);
+});
 app.get('/api/albumlist/:artist/:title', (req, res) => {
     const { artist, title } = req.params;
     const songList = [
