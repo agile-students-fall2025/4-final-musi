@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/agile-students-fall2025/4-final-musi#readme",
   "dependencies": {
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
     "express": "^5.1.0"
   }
 }

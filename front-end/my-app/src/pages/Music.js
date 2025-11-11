@@ -6,13 +6,15 @@ import Scores from "../components/Scores";
 import AlbumList from "../components/AlbumList";
 import RatingModal from "../components/RatingModal.js";
 import SpotifySample from "../components/SpotifySample";
+import axios from "axios";
 import "./Music.css";
 
 function Music({ musicType, artist, title }) {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedSong, setSelectedSong] = useState(null);
   const [musicData, setMusicData] = useState(null);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const handleRatingClick = (songTitle, songArtist, type, rated) => {
     setSelectedSong({
       title: songTitle,
@@ -42,21 +44,43 @@ function Music({ musicType, artist, title }) {
   };
 
   useEffect(() => {
-    const mockData = {
-      imageUrl: "/olivia-album.jpg",
-      title: title || "SOUR",
-      artist: artist || "Olivia Rodrigo",
-      avgScore: 8.4,
-      totalRatings: 1250,
-      isRated: false, 
-      musicType: musicType || "Album",
-      vibe: ["heartbreak", "pop", "emotional"],
-      genre: ["pop", "indie pop"],
-      year: 2021,
-    };
+  if (!musicType || !artist || !title) {
+    setLoading(false);
+    return; 
+  }
+  setLoading(true);
+  setError(null);
 
-    setTimeout(() => setMusicData(mockData), 500); 
-  }, [artist, title]);
+  const encodedArtist = encodeURIComponent(artist);
+  const encodedTitle = encodeURIComponent(title);
+  
+  const API_URL = `http://localhost:3000/api/music/${musicType}/${encodedArtist}/${encodedTitle}`;
+
+  axios.get(API_URL)
+      .then(response => {
+        setMusicData(response.data);
+      })
+      .catch(err => {
+        console.error("Error fetching music data:", err);
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
+}, [musicType, artist, title]);
+
+  if (loading) {
+    return <div className="Music-loading">Loading...</div>; // Or a spinner component
+  }
+
+  if (error) {
+    return <div className="Music-error">Error: {error}</div>;
+  }
+
+  if (!musicData) {
+    return <div className="Music-error">No data found.</div>;
+  }
 
   return (
     <div className="Music">
