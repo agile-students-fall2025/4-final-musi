@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { theme } from '../theme';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import { theme } from "../theme";
 import SectionHeader from "../components/SectionHeader";
 import Tabs from "../components/Tabs";
 import SongItem from "../components/SongItem";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Container = styled.div`
   min-height: 100vh;
@@ -47,105 +48,76 @@ const Main = styled.main`
   padding: 20px;
 `;
 
-const MOCK_SONGS = [
-  {
-    id: 1,
-    title: "As It Was",
-    artist: "Harry Styles",
-    tags: ["Pop", "Indie Pop", "UK"],
-    score: 8.2,
-    musicType: "Song",
-  },
-  {
-    id: 2,
-    title: "Flowers",
-    artist: "Miley Cyrus",
-    tags: ["Pop", "Dance", "Contemporary"],
-    score: 7.9,
-    musicType: "Song",
-  },
-  {
-    id: 3,
-    title: "Kill Bill",
-    artist: "SZA",
-    tags: ["R&B", "Soul", "Alt R&B"],
-    score: 8.7,
-    musicType: "Song",
-  },
-  {
-    id: 4,
-    title: "About Damn Time",
-    artist: "Lizzo",
-    tags: ["Funk Pop", "Disco", "Soul"],
-    score: 8.0,
-    musicType: "Song",
-  },
-  {
-    id: 5,
-    title: "Blinding Lights",
-    artist: "The Weeknd",
-    tags: ["Synthpop", "Pop", "R&B"],
-    score: 9.1,
-    musicType: "Song",
-  },
-  {
-    id: 6,
-    title: "Levitating",
-    artist: "Dua Lipa",
-    tags: ["Disco Pop", "Dance", "Funk"],
-    score: 8.4,
-    musicType: "Song",
-  },
-  {
-    id: 7,
-    title: "Got to Be Real",
-    artist: "Cheryl Lynn",
-    tags: ["Disco", "R&B / Soul", "Funk"],
-    score: 9.0,
-  musicType: "Song",
-  },
-  {
-    id: 8,
-    title: "Superstition",
-    artist: "Stevie Wonder",
-    tags: ["Funk", "Soul", "Classic"],
-    score: 9.5,
-    musicType: "Song",
-  },
-  {
-    id: 9,
-    title: "Dreams",
-    artist: "Fleetwood Mac",
-    tags: ["Soft Rock", "Pop Rock", "Classic"],
-    score: 9.2,
-    musicType: "Song",
-  },
-  {
-    id: 10,
-    title: "Good as Hell",
-    artist: "Lizzo",
-    tags: ["Pop Soul", "Empowerment", "Funk"],
-    score: 8.3,
-    musicType: "Song",
-  },
-];
+// Convert UI tab labels to backend `tab` keys
+const tabToApi = (key) => {
+  switch (key) {
+    case "recs from friends":
+      return "friends";
+    case "new releases":
+      return "new";
+    default:
+      return key; // listened, want, recs, trending
+  }
+};
 
-const TAB_DATA = [
-  { key: "listened", label: "Listened", count: 204 },
-  { key: "want", label: "Want to listen", count: 10 },
-  { key: "recs", label: "Recs" },
-  { key: "trending", label: "Trending" },
-  { key: "recs from friends", label: "Recs from friends" },
-  { key: "new releases", label: "New releases" },
-];
-
-export default function Lists({setSelectedMusic}) {
+export default function Lists({ setSelectedMusic }) {
   const [activeTab, setActiveTab] = useState("listened");
+  const [tabs, setTabs] = useState([]);
+  const [songs, setSongs] = useState([]);
+  const [loadingTabs, setLoadingTabs] = useState(true);
+  const [loadingSongs, setLoadingSongs] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    setLoadingTabs(true);
+    axios
+      .get("/api/tabs")
+      .then((response) => {
+        setTabs(response.data || []);
+      })
+      .catch((err) => {
+        console.error("Error fetching tabs:", err);
+      })
+      .finally(() => setLoadingTabs(false));
+  }, []);
+
+  // Fetch songs list whenever the active tab changes
+  useEffect(() => {
+    setLoadingSongs(true);
+    setError(null);
+
+    const params = { tab: tabToApi(activeTab), limit: 50, offset: 0 };
+
+    axios
+      .get("/api/lists", { params })
+      .then((response) => {
+        const items = Array.isArray(response.data?.items)
+          ? response.data.items
+          : [];
+        setSongs(items);
+      })
+      .catch((err) => {
+        console.error("Error fetching songs:", err);
+        setError(err.message || "Failed to load songs");
+      })
+      .finally(() => setLoadingSongs(false));
+  }, [activeTab]);
+
   const goToMusic = (song) => {
-    setSelectedMusic(song); 
+    setSelectedMusic(song);
     navigate("/app/music");
   };
+
+  if (loadingTabs || loadingSongs) {
+    return <div style={{ padding: 16 }}>Loading…</div>;
+  }
+
+  if (error) {
+    return <div style={{ padding: 16, color: "#e5534b" }}>Error: {error}</div>;
+  }
+
   return (
     <Container>
       <TopBar>
@@ -160,15 +132,21 @@ export default function Lists({setSelectedMusic}) {
 
       <Main>
         <SectionHeader title="Songs" />
-        <Tabs tabs={TAB_DATA} activeKey={activeTab} onChange={setActiveTab} />
+        {tabs.length > 0 && (
+          <Tabs tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
+        )}
 
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {MOCK_SONGS.map((song, i) => (
-            <li key={song.id} onClick={() => goToMusic(song)} style={{ cursor: "pointer" }}>
+          {songs.map((song, i) => (
+            <li
+              key={`${song.id ?? `${song.artist}-${song.title}`}-${i}`}
+              onClick={() => goToMusic(song)}
+              style={{ cursor: "pointer" }}
+            >
               <SongItem
                 title={song.title}
-                subtitle={`Song • ${song.artist}`}
-                meta={song.tags.join(", ")}
+                subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
+                meta={(song.tags ?? []).join(", ")}
                 score={song.score}
                 dividerTop={i > 0}
               />
