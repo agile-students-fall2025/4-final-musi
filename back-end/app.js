@@ -246,4 +246,74 @@ app.post("/api/feed/:id/like", (req, res) => {
 });
 
 
+
+
+let PROFILE = {
+  name: 'Andy Cabindol',
+  username: 'andycabindol',
+  bio: 'love listening to R&B',
+  memberSince: 'August 1, 2025',
+  followers: 2,
+  following: 6,
+  rank: 2,
+  streakDays: 2,
+  listenedCount: 1,
+  wantCount: 0,
+};
+
+let PROFILE_ACTIVITY = [
+  { id: 1, user: "You", activity: "ranked Cheryl Lynn's 'Got to Be Real'", rating: "7.6", time: "Today", review: "The song was awesome", likes: 0, bookmarks: 0, isLiked: false },
+];
+
+const PROFILE_TASTE = {
+  genres: [
+    { name: 'R&B',     value: 32, color: '#4A4A4A' },
+    { name: 'Pop',     value: 28, color: '#C0C0C0' },
+    { name: 'Hip Hop', value: 24, color: '#6B6B6B' },
+    { name: 'Rock',    value: 16, color: '#E8E8E8' },
+  ],
+  topTracks: [
+    { id: 1, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
+    { id: 2, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
+    { id: 3, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
+  ],
+  insights: {
+    artistsListened: 32,
+    songsRated: 156,
+  }
+};
+
+// GET full profile bundle
+app.get('/api/profile', (req, res) => {
+  res.json({
+    profile: PROFILE,
+    activity: PROFILE_ACTIVITY,
+    taste: PROFILE_TASTE,
+  });
+});
+
+// PUT partial update (name, username, bio)
+app.put('/api/profile', (req, res) => {
+  const allowed = ['name', 'username', 'bio'];
+  for (const k of allowed) {
+    if (typeof req.body?.[k] === 'string') {
+      PROFILE[k] = req.body[k];
+    }
+  }
+  res.json({ ok: true, profile: PROFILE });
+});
+
+// POST like toggle on activity item
+app.post('/api/profile/activity/:id/like', (req, res) => {
+  const id = Number(req.params.id);
+  PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
+    if (it.id !== id) return it;
+    const wasLiked = it.isLiked;
+    return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
+  });
+  res.json({ ok: true, id });
+});
+
+
+
 module.exports = app
