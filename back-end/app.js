@@ -149,5 +149,9 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
     res.json(responseData);
 });
 
+app.get('/api/search', (req, res) => {
+  //console.log("GET /api/search request received");
+  res.json(MOCK_SONGS);
+});
 
 module.exports = app
