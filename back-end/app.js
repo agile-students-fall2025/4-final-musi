@@ -27,4 +27,37 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
     }
 })
 
+app.get('/api/scores/:type/:artist/:title', (req, res) => {
+    const { type, artist, title } = req.params;
+    
+    const { isRated } = req.query; 
+
+    let responseData = {};
+
+    if (isRated === 'true') {
+        responseData = {
+            scores: [9.2, 7.6, 7.8], 
+            counts: [1, 2, 12],
+            scoreTitles: ["Your Musi Rating", "Friend Score", "User Score"],
+            descriptions: [
+                "#<strong>1</strong> on your list of music", 
+                "What your <strong>friends</strong> think", 
+                "Average score from <strong>all</strong> users"
+            ]
+        };
+    } else {
+        responseData = {
+            scores: [7.6, 7.6, 7.8],
+            counts: [101, 2, 12],
+            scoreTitles: ["Rec Score", "Friend Score", "User Score"],
+            descriptions: [
+                "How much we think <strong>you</strong> will like it",
+                "What your <strong>friends</strong> think", 
+                "Average score from <strong>all</strong> users"
+            ]
+        };
+    }
+
+    res.json(responseData);
+});
 module.exports = app

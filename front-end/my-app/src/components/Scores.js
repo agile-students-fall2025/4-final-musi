@@ -1,30 +1,31 @@
 import {react, useState, useEffect} from "react";
 import Score from "./Score";
+import axios from "axios";
 import "./Score.css";
 
-function Scores({title, artist, isRated}) {
+function Scores({musicType, title, artist, isRated}) {
     const [scores, setScores] = useState([0, 0, 0]);
     const [counts, setCounts] = useState([0, 0, 0]);
     const [scoreTitles, setScoreTitles] = useState(["","",""])
     const [descriptions, setDescriptions] = useState(["", "", ""]);
-    const [rank, setRank] = useState(0)
     useEffect(() => {
-        setScores([7.6, 7.6, 7.8]);
-        setCounts([101, 2, 12]);
-        setScoreTitles(["Rec Score", "Friend Score", "User Score"]);
-        setDescriptions([
-            "How much we think <strong>you</strong> will like it",
-            "What your <strong>friends</strong> think", 
-            "Average score from <strong>all</strong> users"
-        ]);
-        if (isRated===true) {
-            setRank(1);
-            setScoreTitles(["Your Musi Rating", "Friend Score", "User Score"]);
-            setDescriptions([`#<strong>${rank}</strong> on your list of music`,
-            "What your <strong>friends</strong> think", 
-            "Average score from <strong>all</strong> users"])
-        }
-    }, [isRated, rank]);
+        if (!artist || !title) return;
+
+        const API_URL = `http://localhost:3000/api/scores/${musicType}/${artist}/${title}?isRated=${isRated}`;
+
+        axios.get(API_URL)
+            .then(response => {
+                const { scores, counts, scoreTitles, descriptions } = response.data;
+                setScores(scores);
+                setCounts(counts);
+                setScoreTitles(scoreTitles);
+                setDescriptions(descriptions);
+            })
+            .catch(error => {
+                console.error("Error fetching scores data:", error);
+            });
+            
+    }, [artist, title, isRated]);
     return (
         <div className="scores-section">
             <h3 className="scores-title">Scores</h3>
