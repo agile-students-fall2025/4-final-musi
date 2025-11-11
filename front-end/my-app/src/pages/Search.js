@@ -11,7 +11,7 @@ function Search() {
     const fetchSongs = async () => {
       try {
         
-        const response = await fetch('http://localhost:3001/api/search');
+        const response = await fetch('http://localhost:3000/api/search');
         
         const data = await response.json();
         setAllSongs(data);
@@ -43,8 +43,9 @@ function Search() {
       <h2>Musi</h2>
       <SearchBar onSearch={handleSearch} placeholder="Search a song, album, or user" />
       <div>
-        {results.map((song, index) => (
+        {results.map((song) => (
             <SongItem
+              key={song.id}
               title={song.title}
               subtitle={`Song • ${song.artist}`}
               meta={song.tags.join(", ")}
