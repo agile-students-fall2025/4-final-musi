@@ -1,45 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import SongItem from "../components/SongItem";
-import { data } from 'react-router-dom';
 
 function Search() {
   const [results, setResults] = useState([]);
   const [allSongs, setAllSongs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
 
     useEffect(() => {
     const fetchSongs = async () => {
       try {
-        setLoading(true);
-        setError(null);
         
         const response = await fetch('http://localhost:3001/api/search');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         
         const data = await response.json();
         setAllSongs(data);
         setResults(data);
         
-      } catch (e) {
-        console.error("Failed to fetch songs:", e);
-        setError("Failed to load songs. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+      } 
+      catch (e){}
     };
 
     fetchSongs();
   }, []);
 
   const handleSearch = (term) => {
-    const filteredData = data.filter(item =>
-      item.title.toLowerCase().includes(term.toLowerCase())
+    if (term.trim() === '') {
+      setResults(allSongs);
+      return;
+    }
+    
+    const lowerCaseTerm = term.toLowerCase();
+    const filteredData = allSongs.filter(item =>
+      item.title.toLowerCase().includes(lowerCaseTerm) ||
+      item.artist.toLowerCase().includes(lowerCaseTerm) ||
+      item.tags.some(tag => tag.toLowerCase().includes(lowerCaseTerm))
     );
     setResults(filteredData);
   };
