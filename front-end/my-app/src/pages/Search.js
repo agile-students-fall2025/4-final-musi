@@ -33,8 +33,7 @@ function Search() {
     const lowerCaseTerm = term.toLowerCase();
     const filteredData = allSongs.filter(item =>
       item.title.toLowerCase().includes(lowerCaseTerm) ||
-      item.artist.toLowerCase().includes(lowerCaseTerm) ||
-      item.tags.some(tag => tag.toLowerCase().includes(lowerCaseTerm))
+      item.artist.toLowerCase().includes(lowerCaseTerm)
     );
     setResults(filteredData);
   };
