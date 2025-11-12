@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './Followers.css';
 import TabButton from '../components/TabButton';
 import UserRow from '../components/UserRow';
+import axios from 'axios';
+import { useParams, Link } from 'react-router-dom';
 
-function Followers({ profile }) {
+function Followers() {
+  const { username } = useParams();
   const [activeTab, setActiveTab] = useState('followers');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -11,26 +14,25 @@ function Followers({ profile }) {
   const [following, setFollowing] = useState([]); 
 
   useEffect(() => {
-    const mockFollowersData = [
-      { id: 'user1', name: 'David', username: '@dvd', mutual: true },
-      { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
-      { id: 'user3', name: 'Julz', username: '@julz', mutual: true },
-    ];
-    
-    const mockFollowingData = [
-      { id: 'user4', name: 'Ian', username: '@ian' },
-      { id: 'user5', name: 'Lana', username: '@lana' },
-      { id: 'user6', name: 'Patrick', username: '@patrick' },
-      { id: 'user7', name: 'Tobey', username: '@tobey' },
-      { id: 'user8', name: 'Liam', username: '@liam' },
-      { id: 'user1', name: 'David', username: '@david' },
-    ];
+    if (!username) {
+      return; 
+    }
+    const encodedUsername = encodeURIComponent(username);
 
-    setTimeout(() => {
-      setFollowers(mockFollowersData);
-      setFollowing(mockFollowingData);
-    }, 500); 
-  }, []); 
+    const API_URL = `http://localhost:3001/api/followers/${encodedUsername}`;
+
+    axios.get(API_URL)
+      .then(response => {
+        setFollowers(response.data.followers);
+        setFollowing(response.data.following);
+      })
+      .catch(error => {
+        console.error("Error fetching followers and following:", error);
+        setFollowers([]);
+        setFollowing([]);
+      });
+  }, [username]);
+
 
   const handleUnfollow = (userId) => {
     setFollowing(currentFollowing => 
@@ -67,13 +69,13 @@ function Followers({ profile }) {
   return (
     <div className="followers-page">
       <header className="followers-header">
-        <a href="/app/profile" className="back-link">
+        <Link to="/app/profile" className="back-link">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12L15.41 7.41Z" fill="currentColor"/>
           </svg>
-        </a>
+        </Link>
         <h1 className="header-title">
-          {profile?.username ? profile.username.replace('@', '') : 'Profile'}
+          {username ? username.replace('@', '') : 'Profile'}
         </h1>
       </header>
 
