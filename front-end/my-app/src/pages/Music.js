@@ -31,13 +31,24 @@ function Music() {
   const handleRatingSubmit = (ratingInfo) => {
     console.log("Rating submitted!", ratingInfo);
 
-    setMusicData(prevData => ({
-      ...prevData,
-      isRated: true 
-    }));
+    axios.post('http://localhost:3000/api/rate', ratingInfo)
+      .then(response => {
+        console.log('Rating saved to DB:', response.data);
 
-    setShowRatingModal(false);
-    setSelectedSong(null);
+        setMusicData(prevData => ({
+          ...prevData,
+          isRated: true,
+          avgScore: response.data.newAvgScore, 
+          totalRatings: response.data.newTotalRatings 
+        }));
+      })
+      .catch(err => {
+        console.error('Failed to save rating:', err);
+      })
+      .finally(() => {
+        setShowRatingModal(false);
+        setSelectedSong(null);
+      });
   };
   
   const handleCancelModal = () => {
@@ -73,7 +84,7 @@ function Music() {
 }, [musicType, artist, title]);
 
   if (loading) {
-    return <div className="Music-loading">Loading...</div>; // Or a spinner component
+    return <div className="Music-loading">Loading...</div>; 
   }
 
   if (error) {

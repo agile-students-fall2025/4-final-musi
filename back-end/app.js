@@ -565,6 +565,22 @@ app.post('/api/streak/reset', (req, res) => {
   });
 });
 
+app.post('/api/rate', (req, res) => {
+    const ratingInfo = req.body;
+    
+    console.log('LOG: Received new rating:', ratingInfo);
+
+  
+    const newAvgScore = 8.5; 
+    const newTotalRatings = 1251;
+
+    res.status(201).json({
+        message: 'Rating saved successfully!',
+        newAvgScore: newAvgScore,
+        newTotalRatings: newTotalRatings
+    });
+});
+
 app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
     const { type, artist, title } = req.params;
     
