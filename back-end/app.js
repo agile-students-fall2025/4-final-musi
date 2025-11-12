@@ -348,5 +348,144 @@ app.post('/api/profile/activity/:id/like', (req, res) => {
 });
 
 
+//mock data for our profile
+let userData = {
+  profile: {
+    name: "John Doe",
+    username: "johndoe",
+    bio: "Music lover 🎵",
+    memberSince: "January 2024",
+    followers: 1234,
+    following: 567,
+    rank: 42,
+    streakDays: 7, // Current streak
+    lastActivity: new Date().toISOString().split('T')[0], // Today's date
+    listenedCount: 89,
+    wantCount: 23
+  },
+  streakHistory: [
+    { date: "2024-11-11", activity: "listened" },
+    { date: "2024-11-10", activity: "listened" },
+    { date: "2024-11-09", activity: "listened" },
+    { date: "2024-11-08", activity: "listened" },
+    { date: "2024-11-07", activity: "listened" },
+    { date: "2024-11-06", activity: "listened" },
+    { date: "2024-11-05", activity: "listened" }
+  ]
+};
+
+function calculateCurrentStreak(streakHistory) {
+  if (!streakHistory || streakHistory.length === 0) return 0;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const sortedHistory = streakHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  let streak = 0;
+  let currentDate = new Date(today);
+  
+  for (const record of sortedHistory) {
+    const recordDate = record.date;
+    const expectedDate = currentDate.toISOString().split('T')[0];
+    
+    if (recordDate === expectedDate) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  
+  return streak;
+}
+
+app.get('/api/profile', (req, res) => {
+  // Recalculate streak before sending response
+  const currentStreak = calculateCurrentStreak(userData.streakHistory);
+  userData.profile.streakDays = currentStreak;
+  
+  res.json({
+    profile: userData.profile,
+    activity: [
+      {
+        id: 1,
+        user: userData.profile.name,
+        activity: "listened to an album",
+        time: "2 hours ago",
+        rating: "4.5",
+        review: "Amazing vocals and production quality!",
+        likes: 12,
+        bookmarks: 3,
+        isLiked: false
+      }
+    ],
+    taste: {
+      genres: [
+        { name: "Pop", value: 35.5, color: "#FF6B6B" },
+        { name: "Rock", value: 28.2, color: "#4ECDC4" },
+        { name: "Hip Hop", value: 20.1, color: "#45B7D1" },
+        { name: "Electronic", value: 16.2, color: "#96CEB4" }
+      ],
+      topTracks: [
+        { id: 1, title: "Blinding Lights", artist: "The Weeknd", tags: ["Pop", "Synthwave"], score: 4.8 },
+        { id: 2, title: "Good 4 U", artist: "Olivia Rodrigo", tags: ["Pop Rock"], score: 4.6 }
+      ],
+      insights: {
+        artistsListened: 156,
+        songsRated: 89
+      }
+    }
+  });
+});
+
+app.get('/api/streak', (req, res) => {
+  const currentStreak = calculateCurrentStreak(userData.streakHistory);
+  userData.profile.streakDays = currentStreak;
+  
+  res.json({
+    currentStreak: currentStreak,
+    lastActivity: userData.profile.lastActivity,
+    streakHistory: userData.streakHistory
+  });
+});
+
+// Add activity to maintain streak
+app.post('/api/streak/activity', (req, res) => {
+  const { activity } = req.body; // "listened", "rated", etc.
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Check if user already has activity today
+  const existingToday = userData.streakHistory.find(record => record.date === today);
+  if (!existingToday) {
+    // Add today's activity
+    userData.streakHistory.push({
+      date: today,
+      activity: activity || "listened"
+    });
+    
+    // Update last activity
+    userData.profile.lastActivity = today;
+  }
+  
+  // Recalculate streak
+  const currentStreak = calculateCurrentStreak(userData.streakHistory);
+  userData.profile.streakDays = currentStreak;
+  
+  res.json({
+    message: "Activity recorded successfully",
+    currentStreak: currentStreak,
+    streakMaintained: true
+  });
+});
+
+// Reset streak (for testing)
+app.post('/api/streak/reset', (req, res) => {
+  userData.streakHistory = [];
+  userData.profile.streakDays = 0;
+  
+  res.json({
+    message: "Streak reset successfully",
+    currentStreak: 0
+  });
+});
 
 module.exports = app
