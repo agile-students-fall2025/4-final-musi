@@ -488,4 +488,19 @@ app.post('/api/streak/reset', (req, res) => {
   });
 });
 
+app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
+    const { type, artist, title } = req.params;
+    
+    const friendScores = [
+      { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
+      { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },
+      { id: 3, name: 'Andy Cabindol', handle: '@andycabindol', score: 3.4, rating: 2, imgUrl: '' },
+      { id: 4, name: 'Zuhair', handle: '@zuhair', score: 6.7, rating: 3, imgUrl: '' },
+    ];
+    if (friendScores) {
+        res.json(friendScores);
+    } else {
+        res.json([]);
+    }
+});
 module.exports = app
