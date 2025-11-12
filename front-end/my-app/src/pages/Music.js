@@ -113,7 +113,7 @@ function Music() {
       {musicType === "Album" && (
         <AlbumList musicType={musicType} title={title} artist={artist} onRatingClick={handleRatingClick} />
       )}
-      <FriendScore artist={artist} title={title} />
+      <FriendScore musicType={musicType} artist={artist} title={title} />
       <BottomNavBar />
 
       {showRatingModal && (

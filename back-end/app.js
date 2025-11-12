@@ -27,6 +27,29 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
     }
 })
 
+app.get('/api/followers/:username', (req, res) => {
+    const { username } = req.params;
+    const followers = [
+      { id: 'user1', name: 'David', username: '@dvd', mutual: true },
+      { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
+      { id: 'user3', name: 'Julz', username: '@julz', mutual: true },
+    ];
+    
+    const following = [
+      { id: 'user4', name: 'Ian', username: '@ian' },
+      { id: 'user5', name: 'Lana', username: '@lana' },
+      { id: 'user6', name: 'Patrick', username: '@patrick' },
+      { id: 'user7', name: 'Tobey', username: '@tobey' },
+      { id: 'user8', name: 'Liam', username: '@liam' },
+      { id: 'user1', name: 'David', username: '@david' },
+    ];
+    if (followers && following) {
+        res.json({ followers, following });
+    } else {
+        res.status(404).json({ error: "User not found" });
+    }
+});
+
 // --- MOCK DATA (replace with DB later) ---
 const MOCK_SONGS = [
   { id: 1,  title: "As It Was",         artist: "Harry Styles",   tags: ["Pop","Indie Pop","UK"],        score: 8.2, musicType: "Song" },
@@ -153,6 +176,60 @@ app.get('/api/search', (req, res) => {
   //console.log("GET /api/search request received");
   res.json(MOCK_SONGS);
 });
+
+app.get('/api/leaderboard', (req, res) => {
+    
+  const reviewData = [
+    { rank: 1, username: "@dvd", score: 640 },
+    { rank: 2, username: "@andycabindol", score: 569 },
+    { rank: 3, username: "@julz", score: 467 },
+    { rank: 4, username: "@ian", score: 428 },
+    { rank: 5, username: "@zuhair", score: 304 },
+    { rank: 6, username: "@beef", score: 237 },
+    { rank: 7, username: "@fish", score: 220 },
+    { rank: 8, username: "@tofu", score: 96 },
+    { rank: 9, username: "@salmon", score: 90 },
+    { rank: 10, username: "@trash", score: 9 },
+    { rank: 11, username: "@slop", score: 1 },
+  ];
+
+  const albumData = [
+    { rank: 1, username: "@tea", score: 190 },
+    { rank: 2, username: "@egg", score: 179 },
+    { rank: 3, username: "@julz", score: 167 },
+    { rank: 4, username: "@ian", score: 128 },
+    { rank: 5, username: "@zuhair", score: 104 },
+    { rank: 6, username: "@beef", score: 100 },
+    { rank: 7, username: "@fish", score: 99 },
+    { rank: 8, username: "@andycabindol", score: 96 },
+    { rank: 9, username: "@salmon", score: 29 },
+    { rank: 10, username: "@trash", score: 14 },
+    { rank: 11, username: "@slop", score: 1 },
+  ];
+
+  const songData = [
+    { rank: 1, username: "@ian", score: 1640 },
+    { rank: 2, username: "@andycabindol", score: 1569 },
+    { rank: 3, username: "@julz", score: 1467 },
+    { rank: 4, username: "@andy", score: 1428 },
+    { rank: 5, username: "@zuhair", score: 1304 },
+    { rank: 6, username: "@beef", score: 1237 },
+    { rank: 7, username: "@fish", score: 1220 },
+    { rank: 8, username: "@jules", score: 1096 },
+    { rank: 9, username: "@salmon", score: 1029 },
+    { rank: 10, username: "@trash", score: 814 },
+    { rank: 11, username: "@slop", score: 451 },
+  ];
+
+  const dataMap = {
+    reviews: reviewData,
+    songs: songData,
+    albums: albumData,
+  };
+
+  res.json(dataMap);
+});
+
 app.get('/api/albumlist/:artist/:title', (req, res) => {
     const { artist, title } = req.params;
     const songList = [
@@ -504,4 +581,19 @@ app.post('/api/rate', (req, res) => {
     });
 });
 
+app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
+    const { type, artist, title } = req.params;
+    
+    const friendScores = [
+      { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
+      { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },
+      { id: 3, name: 'Andy Cabindol', handle: '@andycabindol', score: 3.4, rating: 2, imgUrl: '' },
+      { id: 4, name: 'Zuhair', handle: '@zuhair', score: 6.7, rating: 3, imgUrl: '' },
+    ];
+    if (friendScores) {
+        res.json(friendScores);
+    } else {
+        res.json([]);
+    }
+});
 module.exports = app

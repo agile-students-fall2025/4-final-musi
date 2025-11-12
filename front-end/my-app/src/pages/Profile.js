@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Scores from "../components/Scores";
+
 import {
   Share,
   Menu,
@@ -575,8 +577,9 @@ function Profile() {
   }, []);
 
   // nav handlers
-  const handleFollowersClick = () => navigate("/app/followers");
-  const handleFollowingClick = () => navigate("/app/followers");
+
+  const handleFollowersClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
+  const handleFollowingClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
 
   // likes (optimistic)
   const handleLike = (id) => {

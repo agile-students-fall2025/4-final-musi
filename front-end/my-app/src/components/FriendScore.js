@@ -1,18 +1,26 @@
 import "./FriendScore.css";
 import React, {useEffect, useState} from 'react';
+import axios from "axios";
 
-function FriendScore({ artist, title }) {
+function FriendScore({ musicType, artist, title }) {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchedData = [
-      { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
-      { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },
-      { id: 3, name: 'Andy Cabindol', handle: '@andycabindol', score: 3.4, rating: 2, imgUrl: '' },
-      { id: 4, name: 'Zuhair', handle: '@zuhair', score: 6.7, rating: 3, imgUrl: '' },
-    ];
-    setData(fetchedData);
-  }, []); 
+    if (!musicType || !artist || !title) {
+      return;
+    }
+
+    const API_URL = `http://localhost:3000/api/friendscores/${encodeURIComponent(musicType)}/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
+
+    axios.get(API_URL)
+      .then(response => {
+        setData(response.data); 
+      })
+      .catch(error => {
+        console.error("Error fetching friend scores:", error);
+      });
+  }, [musicType, artist, title]);
+
   function getScoreColorClass(rating) {
     if (rating === 3) return 'score-green';
     if (rating === 2) return 'score-yellow';
