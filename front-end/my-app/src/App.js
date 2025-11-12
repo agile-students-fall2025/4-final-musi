@@ -43,7 +43,7 @@ function App() {
           <Route path="/music/:musicType/:artist/:title" 
             element={<Music />} 
           />
-          <Route path="/followers" element={<Followers />} />
+          <Route path="/followers/:username" element={<Followers />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/settings/email" element={<UpdateEmail />} />
           <Route path="/settings/password" element={<UpdatePassword />} />

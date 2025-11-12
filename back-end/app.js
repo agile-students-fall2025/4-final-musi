@@ -27,6 +27,29 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
     }
 })
 
+app.get('/api/followers/:username', (req, res) => {
+    const { username } = req.params;
+    const followers = [
+      { id: 'user1', name: 'David', username: '@dvd', mutual: true },
+      { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
+      { id: 'user3', name: 'Julz', username: '@julz', mutual: true },
+    ];
+    
+    const following = [
+      { id: 'user4', name: 'Ian', username: '@ian' },
+      { id: 'user5', name: 'Lana', username: '@lana' },
+      { id: 'user6', name: 'Patrick', username: '@patrick' },
+      { id: 'user7', name: 'Tobey', username: '@tobey' },
+      { id: 'user8', name: 'Liam', username: '@liam' },
+      { id: 'user1', name: 'David', username: '@david' },
+    ];
+    if (followers && following) {
+        res.json({ followers, following });
+    } else {
+        res.status(404).json({ error: "User not found" });
+    }
+});
+
 // --- MOCK DATA (replace with DB later) ---
 const MOCK_SONGS = [
   { id: 1,  title: "As It Was",         artist: "Harry Styles",   tags: ["Pop","Indie Pop","UK"],        score: 8.2, musicType: "Song" },
