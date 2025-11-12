@@ -11,7 +11,7 @@ function Search() {
     const fetchSongs = async () => {
       try {
         
-        const response = await fetch('http://localhost:3000/api/search');
+        const response = await fetch('http://localhost:3001/api/search');
         
         const data = await response.json();
         setAllSongs(data);
