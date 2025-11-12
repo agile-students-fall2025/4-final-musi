@@ -18,7 +18,7 @@ function Leaderboard() {
 
   fetchSongs();
 
-  const currentData = dataMap[activeTab];
+  const currentData = leaderboardData ? (leaderboardData[activeTab] || []) : [];
 
   return (
     <div className="leaderboard-page-container">
