@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { theme } from "../theme";
 import SongItem from "../components/SongItem";
 import Sidebar from "../components/Sidebar";
+import "../components/Score.css";
 import axios from "axios";
 
 /* ===== styled components unchanged from your file (shortened for brevity) ===== */
@@ -294,14 +295,9 @@ const TimeStamp = styled.div`
   color: #999;
   text-align: left;
 `;
-const Rating = styled.div`
-  background: #333;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-left: auto;
+const FeedScoreContainer = styled.div`
+  .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
+  .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
 const AlbumGrid = styled.div`
   display: flex;
@@ -581,6 +577,51 @@ function Profile() {
   const handleFollowersClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
   const handleFollowingClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
 
+  // Navigate to music page from feed item
+  const goToMusicFromFeed = (item) => {
+    const musicType = item.musicType || "Song";
+    navigate(`/app/music/${encodeURIComponent(musicType)}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`);
+  };
+
+  // Navigate to music page from top track
+  const goToTrack = (track) => {
+    navigate(`/app/music/Song/${encodeURIComponent(track.artist)}/${encodeURIComponent(track.title)}`);
+  };
+
+  // Render review with clickable album/song titles
+  const renderReviewWithLinks = (item) => {
+    const review = item.review || "";
+    const title = item.title || "";
+    
+    if (!title || !review.includes(title)) {
+      // If title not in review, just return plain text
+      return <>Notes: {review}</>;
+    }
+
+    // Split review by the title and make title clickable
+    const parts = review.split(title);
+    return (
+      <>
+        Notes: {parts[0]}
+        <span
+          style={{ 
+            color: theme.colors.accent, 
+            cursor: "pointer", 
+            fontWeight: 600,
+            textDecoration: "underline"
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            goToMusicFromFeed(item);
+          }}
+        >
+          {title}
+        </span>
+        {parts[1]}
+      </>
+    );
+  };
+
   // likes (optimistic)
   const handleLike = (id) => {
     setActivity((prev) =>
@@ -792,10 +833,31 @@ function Profile() {
                   <FeedAvatar />
                   <UserDetails>
                     <FeedUserName>{item.user}</FeedUserName>
-                    <ActivityText>{item.activity}</ActivityText>
+                    <ActivityText>
+                      {item.activity}{" "}
+                      <span
+                        style={{ 
+                          color: theme.colors.accent, 
+                          cursor: "pointer", 
+                          fontWeight: 600 
+                        }}
+                        onClick={() => goToMusicFromFeed(item)}
+                      >
+                        {item.title}
+                      </span>{" "}
+                      by {item.artist}
+                    </ActivityText>
                     <TimeStamp>{item.time}</TimeStamp>
                   </UserDetails>
-                  <Rating>{item.rating}</Rating>
+                  <FeedScoreContainer>
+                    <div className="score-item">
+                      <div className="score-circle-container">
+                        <div className="score-circle">
+                          <span className="score-number">{item.rating}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </FeedScoreContainer>
                 </UserInfo>
 
                 <AlbumGrid>
@@ -803,7 +865,7 @@ function Profile() {
                   <AlbumCover />
                   <AlbumCover />
                 </AlbumGrid>
-                <ReviewText>Notes: {item.review}</ReviewText>
+                <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
 
                 <InteractionBar>
                   <InteractionLeft>
@@ -895,7 +957,11 @@ function Profile() {
             <SectionTitle>YOUR TOP TRACKS</SectionTitle>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {topTracks.map((t, i) => (
-                <li key={t.id}>
+                <li 
+                  key={t.id}
+                  onClick={() => goToTrack(t)}
+                  style={{ cursor: "pointer" }}
+                >
                   <SongItem
                     title={t.title}
                     subtitle={`Song • ${t.artist}`}
