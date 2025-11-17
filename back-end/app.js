@@ -253,7 +253,7 @@ const FEATURED_LISTS = [
       { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
       { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
       { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
-      { id: 4, title: "Ain’t Nobody", subtitle: "Song • Chaka Khan" },
+      { id: 4, title: "Ain't Nobody", subtitle: "Song • Chaka Khan" },
       { id: 5, title: "Le Freak", subtitle: "Song • CHIC" }
     ],
   },
@@ -355,8 +355,7 @@ app.post('/api/onboarding', (req, res) => {
   });
 });
 
-
-
+// ===== PROFILE ROUTES (ENHANCED) =====
 
 let PROFILE = {
   name: 'Andy Cabindol',
@@ -371,8 +370,22 @@ let PROFILE = {
   wantCount: 0,
 };
 
+// UPDATED: Added missing fields for front-end integration
 let PROFILE_ACTIVITY = [
-  { id: 1, user: "You", activity: "ranked Cheryl Lynn's 'Got to Be Real'", rating: "7.6", time: "Today", review: "The song was awesome", likes: 0, bookmarks: 0, isLiked: false },
+  { 
+    id: 1, 
+    user: "Andy Cabindol", 
+    activity: "ranked", 
+    rating: "7.6", 
+    time: "Today", 
+    review: "The song was awesome - Got to Be Real is a classic!", 
+    likes: 0, 
+    bookmarks: 0, 
+    isLiked: false,
+    artist: "Cheryl Lynn",
+    title: "Got to Be Real",
+    musicType: "Song"
+  },
 ];
 
 const PROFILE_TASTE = {
@@ -393,37 +406,74 @@ const PROFILE_TASTE = {
   }
 };
 
-// GET full profile bundle
+// GET full profile bundle - ENHANCED with error handling
 app.get('/api/profile', (req, res) => {
-  res.json({
-    profile: PROFILE,
-    activity: PROFILE_ACTIVITY,
-    taste: PROFILE_TASTE,
-  });
-});
-
-// PUT partial update (name, username, bio)
-app.put('/api/profile', (req, res) => {
-  const allowed = ['name', 'username', 'bio'];
-  for (const k of allowed) {
-    if (typeof req.body?.[k] === 'string') {
-      PROFILE[k] = req.body[k];
-    }
+  try {
+    res.json({
+      profile: PROFILE,
+      activity: PROFILE_ACTIVITY,
+      taste: PROFILE_TASTE,
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
-  res.json({ ok: true, profile: PROFILE });
 });
 
-// POST like toggle on activity item
+// PUT partial update (name, username, bio) - ENHANCED with validation
+app.put('/api/profile', (req, res) => {
+  try {
+    const allowed = ['name', 'username', 'bio'];
+    const updates = {};
+    
+    for (const k of allowed) {
+      if (typeof req.body?.[k] === 'string' && req.body[k].trim()) {
+        PROFILE[k] = req.body[k].trim();
+        updates[k] = PROFILE[k];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    res.json({ 
+      ok: true, 
+      profile: PROFILE,
+      updated: updates 
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// POST like toggle on activity item - ENHANCED with 404 handling
 app.post('/api/profile/activity/:id/like', (req, res) => {
-  const id = Number(req.params.id);
-  PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
-    if (it.id !== id) return it;
-    const wasLiked = it.isLiked;
-    return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
-  });
-  res.json({ ok: true, id });
+  try {
+    const id = Number(req.params.id);
+    let found = false;
+
+    PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
+      if (it.id !== id) return it;
+      
+      found = true;
+      const wasLiked = it.isLiked;
+      return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
+    });
+
+    if (!found) {
+      return res.status(404).json({ error: 'Activity item not found' });
+    }
+
+    res.json({ ok: true, id });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
 });
 
+// ===== STREAK ROUTES (ENHANCED) =====
 
 //mock data for our profile
 let userData = {
@@ -475,83 +525,59 @@ function calculateCurrentStreak(streakHistory) {
   return streak;
 }
 
-app.get('/api/profile', (req, res) => {
-  // Recalculate streak before sending response
-  const currentStreak = calculateCurrentStreak(userData.streakHistory);
-  userData.profile.streakDays = currentStreak;
-  
-  res.json({
-    profile: userData.profile,
-    activity: [
-      {
-        id: 1,
-        user: userData.profile.name,
-        activity: "listened to an album",
-        time: "2 hours ago",
-        rating: "4.5",
-        review: "Amazing vocals and production quality!",
-        likes: 12,
-        bookmarks: 3,
-        isLiked: false
-      }
-    ],
-    taste: {
-      genres: [
-        { name: "Pop", value: 35.5, color: "#FF6B6B" },
-        { name: "Rock", value: 28.2, color: "#4ECDC4" },
-        { name: "Hip Hop", value: 20.1, color: "#45B7D1" },
-        { name: "Electronic", value: 16.2, color: "#96CEB4" }
-      ],
-      topTracks: [
-        { id: 1, title: "Blinding Lights", artist: "The Weeknd", tags: ["Pop", "Synthwave"], score: 4.8 },
-        { id: 2, title: "Good 4 U", artist: "Olivia Rodrigo", tags: ["Pop Rock"], score: 4.6 }
-      ],
-      insights: {
-        artistsListened: 156,
-        songsRated: 89
-      }
-    }
-  });
-});
-
+// GET streak - ENHANCED with error handling
 app.get('/api/streak', (req, res) => {
-  const currentStreak = calculateCurrentStreak(userData.streakHistory);
-  userData.profile.streakDays = currentStreak;
-  
-  res.json({
-    currentStreak: currentStreak,
-    lastActivity: userData.profile.lastActivity,
-    streakHistory: userData.streakHistory
-  });
+  try {
+    const currentStreak = calculateCurrentStreak(userData.streakHistory);
+    PROFILE.streakDays = currentStreak;
+    
+    res.json({
+      currentStreak: currentStreak,
+      lastActivity: userData.profile.lastActivity,
+      streakHistory: userData.streakHistory
+    });
+  } catch (error) {
+    console.error('Error fetching streak:', error);
+    res.status(500).json({ error: 'Failed to fetch streak data' });
+  }
 });
 
-// Add activity to maintain streak
+// POST activity - ENHANCED with validation
 app.post('/api/streak/activity', (req, res) => {
-  const { activity } = req.body; // "listened", "rated", etc.
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Check if user already has activity today
-  const existingToday = userData.streakHistory.find(record => record.date === today);
-  if (!existingToday) {
-    // Add today's activity
-    userData.streakHistory.push({
-      date: today,
-      activity: activity || "listened"
-    });
+  try {
+    const { activity } = req.body;
+    const today = new Date().toISOString().split('T')[0];
     
-    // Update last activity
-    userData.profile.lastActivity = today;
+    if (!activity) {
+      return res.status(400).json({ error: 'Activity type is required' });
+    }
+    
+    // Check if user already has activity today
+    const existingToday = userData.streakHistory.find(record => record.date === today);
+    if (!existingToday) {
+      // Add today's activity
+      userData.streakHistory.push({
+        date: today,
+        activity: activity || "listened"
+      });
+      
+      // Update last activity
+      userData.profile.lastActivity = today;
+    }
+    
+    // Recalculate streak
+    const currentStreak = calculateCurrentStreak(userData.streakHistory);
+    userData.profile.streakDays = currentStreak;
+    
+    res.json({
+      message: "Activity recorded successfully",
+      currentStreak: currentStreak,
+      streakMaintained: true
+    });
+  } catch (error) {
+    console.error('Error recording activity:', error);
+    res.status(500).json({ error: 'Failed to record activity' });
   }
-  
-  // Recalculate streak
-  const currentStreak = calculateCurrentStreak(userData.streakHistory);
-  userData.profile.streakDays = currentStreak;
-  
-  res.json({
-    message: "Activity recorded successfully",
-    currentStreak: currentStreak,
-    streakMaintained: true
-  });
 });
 
 // Reset streak (for testing)
@@ -596,4 +622,5 @@ app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
         res.json([]);
     }
 });
+
 module.exports = app
