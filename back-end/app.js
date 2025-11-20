@@ -1,6 +1,24 @@
 const express = require("express") 
 const cors = require('cors');
+const mongoose = require('mongoose');
 const app = express() 
+
+// MongoDB connection
+const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || '<db_password>';
+const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
+
+// Connect to MongoDB using Mongoose
+async function connectToMongoDB() {
+  try {
+    await mongoose.connect(MONGODB_URI);
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+  }
+}
+
+// Initialize connection
+connectToMongoDB();
 
 app.use(cors());
 app.use(express.json());
