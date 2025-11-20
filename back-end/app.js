@@ -45,6 +45,29 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
     }
 })
 
+app.get('/api/followers/:username', (req, res) => {
+    const { username } = req.params;
+    const followers = [
+      { id: 'user1', name: 'David', username: '@dvd', mutual: true },
+      { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
+      { id: 'user3', name: 'Julz', username: '@julz', mutual: true },
+    ];
+    
+    const following = [
+      { id: 'user4', name: 'Ian', username: '@ian' },
+      { id: 'user5', name: 'Lana', username: '@lana' },
+      { id: 'user6', name: 'Patrick', username: '@patrick' },
+      { id: 'user7', name: 'Tobey', username: '@tobey' },
+      { id: 'user8', name: 'Liam', username: '@liam' },
+      { id: 'user1', name: 'David', username: '@david' },
+    ];
+    if (followers && following) {
+        res.json({ followers, following });
+    } else {
+        res.status(404).json({ error: "User not found" });
+    }
+});
+
 // --- MOCK DATA (replace with DB later) ---
 const MOCK_SONGS = [
   { id: 1,  title: "As It Was",         artist: "Harry Styles",   tags: ["Pop","Indie Pop","UK"],        score: 8.2, musicType: "Song" },
@@ -167,6 +190,78 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
     res.json(responseData);
 });
 
+app.get('/api/search', (req, res) => {
+  //console.log("GET /api/search request received");
+  res.json(MOCK_SONGS);
+});
+
+app.get('/api/leaderboard', (req, res) => {
+    
+  const reviewData = [
+    { rank: 1, username: "@dvd", score: 640 },
+    { rank: 2, username: "@andycabindol", score: 569 },
+    { rank: 3, username: "@julz", score: 467 },
+    { rank: 4, username: "@ian", score: 428 },
+    { rank: 5, username: "@zuhair", score: 304 },
+    { rank: 6, username: "@beef", score: 237 },
+    { rank: 7, username: "@fish", score: 220 },
+    { rank: 8, username: "@tofu", score: 96 },
+    { rank: 9, username: "@salmon", score: 90 },
+    { rank: 10, username: "@trash", score: 9 },
+    { rank: 11, username: "@slop", score: 1 },
+  ];
+
+  const albumData = [
+    { rank: 1, username: "@tea", score: 190 },
+    { rank: 2, username: "@egg", score: 179 },
+    { rank: 3, username: "@julz", score: 167 },
+    { rank: 4, username: "@ian", score: 128 },
+    { rank: 5, username: "@zuhair", score: 104 },
+    { rank: 6, username: "@beef", score: 100 },
+    { rank: 7, username: "@fish", score: 99 },
+    { rank: 8, username: "@andycabindol", score: 96 },
+    { rank: 9, username: "@salmon", score: 29 },
+    { rank: 10, username: "@trash", score: 14 },
+    { rank: 11, username: "@slop", score: 1 },
+  ];
+
+  const songData = [
+    { rank: 1, username: "@ian", score: 1640 },
+    { rank: 2, username: "@andycabindol", score: 1569 },
+    { rank: 3, username: "@julz", score: 1467 },
+    { rank: 4, username: "@andy", score: 1428 },
+    { rank: 5, username: "@zuhair", score: 1304 },
+    { rank: 6, username: "@beef", score: 1237 },
+    { rank: 7, username: "@fish", score: 1220 },
+    { rank: 8, username: "@jules", score: 1096 },
+    { rank: 9, username: "@salmon", score: 1029 },
+    { rank: 10, username: "@trash", score: 814 },
+    { rank: 11, username: "@slop", score: 451 },
+  ];
+
+  const dataMap = {
+    reviews: reviewData,
+    songs: songData,
+    albums: albumData,
+  };
+
+  res.json(dataMap);
+});
+
+app.get('/api/albumlist/:artist/:title', (req, res) => {
+    const { artist, title } = req.params;
+    const songList = [
+      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
+    ];
+    if (songList) {
+        res.json(songList);
+    } else {
+        res.json([]);
+    }
+});
 
 // ---- FEATURED LISTS (mock) ----
 const FEATURED_LISTS = [
@@ -176,7 +271,7 @@ const FEATURED_LISTS = [
       { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
       { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
       { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
-      { id: 4, title: "Ain’t Nobody", subtitle: "Song • Chaka Khan" },
+      { id: 4, title: "Ain't Nobody", subtitle: "Song • Chaka Khan" },
       { id: 5, title: "Le Freak", subtitle: "Song • CHIC" }
     ],
   },
@@ -263,8 +358,22 @@ app.post("/api/feed/:id/like", (req, res) => {
   res.json({ ok: true, id });
 });
 
+app.post('/api/onboarding', (req, res) => {
+  const { answers } = req.body;
+  
+  console.log('Onboarding answers received:', answers);
+  
+  if (!answers) {
+    return res.status(400).json({ error: 'Onboarding answers are required' });
+  }
+  
+  res.json({ 
+    message: 'Onboarding completed successfully',
+    data: answers
+  });
+});
 
-
+// ===== PROFILE ROUTES (ENHANCED) =====
 
 let PROFILE = {
   name: 'Andy Cabindol',
@@ -279,8 +388,22 @@ let PROFILE = {
   wantCount: 0,
 };
 
+// UPDATED: Added missing fields for front-end integration
 let PROFILE_ACTIVITY = [
-  { id: 1, user: "You", activity: "ranked Cheryl Lynn's 'Got to Be Real'", rating: "7.6", time: "Today", review: "The song was awesome", likes: 0, bookmarks: 0, isLiked: false },
+  { 
+    id: 1, 
+    user: "Andy Cabindol", 
+    activity: "ranked", 
+    rating: "7.6", 
+    time: "Today", 
+    review: "The song was awesome - Got to Be Real is a classic!", 
+    likes: 0, 
+    bookmarks: 0, 
+    isLiked: false,
+    artist: "Cheryl Lynn",
+    title: "Got to Be Real",
+    musicType: "Song"
+  },
 ];
 
 const PROFILE_TASTE = {
@@ -301,37 +424,221 @@ const PROFILE_TASTE = {
   }
 };
 
-// GET full profile bundle
+// GET full profile bundle - ENHANCED with error handling
 app.get('/api/profile', (req, res) => {
-  res.json({
-    profile: PROFILE,
-    activity: PROFILE_ACTIVITY,
-    taste: PROFILE_TASTE,
-  });
+  try {
+    res.json({
+      profile: PROFILE,
+      activity: PROFILE_ACTIVITY,
+      taste: PROFILE_TASTE,
+    });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
 });
 
-// PUT partial update (name, username, bio)
+// PUT partial update (name, username, bio) - ENHANCED with validation
 app.put('/api/profile', (req, res) => {
-  const allowed = ['name', 'username', 'bio'];
-  for (const k of allowed) {
-    if (typeof req.body?.[k] === 'string') {
-      PROFILE[k] = req.body[k];
+  try {
+    const allowed = ['name', 'username', 'bio'];
+    const updates = {};
+    
+    for (const k of allowed) {
+      if (typeof req.body?.[k] === 'string' && req.body[k].trim()) {
+        PROFILE[k] = req.body[k].trim();
+        updates[k] = PROFILE[k];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    res.json({ 
+      ok: true, 
+      profile: PROFILE,
+      updated: updates 
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// POST like toggle on activity item - ENHANCED with 404 handling
+app.post('/api/profile/activity/:id/like', (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    let found = false;
+
+    PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
+      if (it.id !== id) return it;
+      
+      found = true;
+      const wasLiked = it.isLiked;
+      return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
+    });
+
+    if (!found) {
+      return res.status(404).json({ error: 'Activity item not found' });
+    }
+
+    res.json({ ok: true, id });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+// ===== STREAK ROUTES (ENHANCED) =====
+
+//mock data for our profile
+let userData = {
+  profile: {
+    name: "John Doe",
+    username: "johndoe",
+    bio: "Music lover 🎵",
+    memberSince: "January 2024",
+    followers: 1234,
+    following: 567,
+    rank: 42,
+    streakDays: 7, // Current streak
+    lastActivity: new Date().toISOString().split('T')[0], // Today's date
+    listenedCount: 89,
+    wantCount: 23
+  },
+  streakHistory: [
+    { date: "2024-11-11", activity: "listened" },
+    { date: "2024-11-10", activity: "listened" },
+    { date: "2024-11-09", activity: "listened" },
+    { date: "2024-11-08", activity: "listened" },
+    { date: "2024-11-07", activity: "listened" },
+    { date: "2024-11-06", activity: "listened" },
+    { date: "2024-11-05", activity: "listened" }
+  ]
+};
+
+function calculateCurrentStreak(streakHistory) {
+  if (!streakHistory || streakHistory.length === 0) return 0;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const sortedHistory = streakHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  let streak = 0;
+  let currentDate = new Date(today);
+  
+  for (const record of sortedHistory) {
+    const recordDate = record.date;
+    const expectedDate = currentDate.toISOString().split('T')[0];
+    
+    if (recordDate === expectedDate) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      break;
     }
   }
-  res.json({ ok: true, profile: PROFILE });
+  
+  return streak;
+}
+
+// GET streak - ENHANCED with error handling
+app.get('/api/streak', (req, res) => {
+  try {
+    const currentStreak = calculateCurrentStreak(userData.streakHistory);
+    PROFILE.streakDays = currentStreak;
+    
+    res.json({
+      currentStreak: currentStreak,
+      lastActivity: userData.profile.lastActivity,
+      streakHistory: userData.streakHistory
+    });
+  } catch (error) {
+    console.error('Error fetching streak:', error);
+    res.status(500).json({ error: 'Failed to fetch streak data' });
+  }
 });
 
-// POST like toggle on activity item
-app.post('/api/profile/activity/:id/like', (req, res) => {
-  const id = Number(req.params.id);
-  PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
-    if (it.id !== id) return it;
-    const wasLiked = it.isLiked;
-    return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
+// POST activity - ENHANCED with validation
+app.post('/api/streak/activity', (req, res) => {
+  try {
+    const { activity } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!activity) {
+      return res.status(400).json({ error: 'Activity type is required' });
+    }
+    
+    // Check if user already has activity today
+    const existingToday = userData.streakHistory.find(record => record.date === today);
+    if (!existingToday) {
+      // Add today's activity
+      userData.streakHistory.push({
+        date: today,
+        activity: activity || "listened"
+      });
+      
+      // Update last activity
+      userData.profile.lastActivity = today;
+    }
+    
+    // Recalculate streak
+    const currentStreak = calculateCurrentStreak(userData.streakHistory);
+    userData.profile.streakDays = currentStreak;
+    
+    res.json({
+      message: "Activity recorded successfully",
+      currentStreak: currentStreak,
+      streakMaintained: true
+    });
+  } catch (error) {
+    console.error('Error recording activity:', error);
+    res.status(500).json({ error: 'Failed to record activity' });
+  }
+});
+
+// Reset streak (for testing)
+app.post('/api/streak/reset', (req, res) => {
+  userData.streakHistory = [];
+  userData.profile.streakDays = 0;
+  
+  res.json({
+    message: "Streak reset successfully",
+    currentStreak: 0
   });
-  res.json({ ok: true, id });
 });
 
+app.post('/api/rate', (req, res) => {
+    const ratingInfo = req.body;
+    
+    console.log('LOG: Received new rating:', ratingInfo);
 
+  
+    const newAvgScore = 8.5; 
+    const newTotalRatings = 1251;
+
+    res.status(201).json({
+        message: 'Rating saved successfully!',
+        newAvgScore: newAvgScore,
+        newTotalRatings: newTotalRatings
+    });
+});
+
+app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
+    const { type, artist, title } = req.params;
+    
+    const friendScores = [
+      { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
+      { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },
+      { id: 3, name: 'Andy Cabindol', handle: '@andycabindol', score: 3.4, rating: 2, imgUrl: '' },
+      { id: 4, name: 'Zuhair', handle: '@zuhair', score: 6.7, rating: 3, imgUrl: '' },
+    ];
+    if (friendScores) {
+        res.json(friendScores);
+    } else {
+        res.json([]);
+    }
+});
 
 module.exports = app

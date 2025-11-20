@@ -1,28 +1,29 @@
 {
-  "name": "musi",
+  "name": "music-rating-app-backend",
   "version": "1.0.0",
-  "description": "musi app",
-  "main": "server.js",
+  "description": "Back-end API for music rating application",
+  "main": "app.js",
   "scripts": {
-    "test": "test"
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "mocha test/**/*.test.js --timeout 5000 --exit",
+    "test:coverage": "c8 --reporter=text --reporter=html npm test",
+    "test:watch": "mocha test/**/*.test.js --watch"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/agile-students-fall2025/4-final-musi.git"
-  },
-  "keywords": [
-    "musi"
-  ],
-  "author": "na",
-  "license": "UNLICENSED",
-  "bugs": {
-    "url": "https://github.com/agile-students-fall2025/4-final-musi/issues"
-  },
-  "homepage": "https://github.com/agile-students-fall2025/4-final-musi#readme",
+  "keywords": ["music", "rating", "express", "api"],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "axios": "^1.13.2",
-    "cors": "^2.8.5",
     "express": "^5.1.0",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.10",
+    "chai-http": "^4.4.0",
+    "c8": "^8.0.1",
+    "nodemon": "^3.0.1"
   }
 }

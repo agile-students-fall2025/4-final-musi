@@ -1,58 +1,24 @@
 import React, { useState } from "react";
 import LeaderboardItem from "../components/LeaderboardItem";
 
-const reviewData = [
-  { rank: 1, username: "@dvd", score: 640 },
-  { rank: 2, username: "@andycabindol", score: 569 },
-  { rank: 3, username: "@julz", score: 467 },
-  { rank: 4, username: "@ian", score: 428 },
-  { rank: 5, username: "@zuhair", score: 304 },
-  { rank: 6, username: "@beef", score: 237 },
-  { rank: 7, username: "@fish", score: 220 },
-  { rank: 8, username: "@tofu", score: 96 },
-  { rank: 9, username: "@salmon", score: 90 },
-  { rank: 10, username: "@trash", score: 9 },
-  { rank: 11, username: "@slop", score: 1 },
-];
-
-const albumData = [
-  { rank: 1, username: "@tea", score: 190 },
-  { rank: 2, username: "@egg", score: 179 },
-  { rank: 3, username: "@julz", score: 167 },
-  { rank: 4, username: "@ian", score: 128 },
-  { rank: 5, username: "@zuhair", score: 104 },
-  { rank: 6, username: "@beef", score: 100 },
-  { rank: 7, username: "@fish", score: 99 },
-  { rank: 8, username: "@andycabindol", score: 96 },
-  { rank: 9, username: "@salmon", score: 29 },
-  { rank: 10, username: "@trash", score: 14 },
-  { rank: 11, username: "@slop", score: 1 },
-];
-
-const songData = [
-  { rank: 1, username: "@ian", score: 1640 },
-  { rank: 2, username: "@andycabindol", score: 1569 },
-  { rank: 3, username: "@julz", score: 1467 },
-  { rank: 4, username: "@andy", score: 1428 },
-  { rank: 5, username: "@zuhair", score: 1304 },
-  { rank: 6, username: "@beef", score: 1237 },
-  { rank: 7, username: "@fish", score: 1220 },
-  { rank: 8, username: "@jules", score: 1096 },
-  { rank: 9, username: "@salmon", score: 1029 },
-  { rank: 10, username: "@trash", score: 814 },
-  { rank: 11, username: "@slop", score: 451 },
-];
-
-const dataMap = {
-  reviews: reviewData,
-  songs: songData,
-  albums: albumData,
-};
-
 function Leaderboard() {
   const [activeTab, setActiveTab] = useState("reviews");
+  const [leaderboardData, setLeaderboardData] = useState(null);
 
-  const currentData = dataMap[activeTab];
+  const fetchSongs = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/leaderboard');
+      const data = await response.json();
+      setLeaderboardData(data); 
+    } 
+    catch (e) {
+      console.error('Error fetching leaderboard data:', e);
+    }
+  };
+
+  fetchSongs();
+
+  const currentData = leaderboardData ? (leaderboardData[activeTab] || []) : [];
 
   return (
     <div className="leaderboard-page-container">

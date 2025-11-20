@@ -7,9 +7,11 @@ import AlbumList from "../components/AlbumList";
 import RatingModal from "../components/RatingModal.js";
 import SpotifySample from "../components/SpotifySample";
 import axios from "axios";
+import { useParams } from 'react-router-dom'; 
 import "./Music.css";
 
-function Music({ musicType, artist, title }) {
+function Music() {
+  const { musicType, artist, title } = useParams();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedSong, setSelectedSong] = useState(null);
   const [musicData, setMusicData] = useState(null);
@@ -29,13 +31,24 @@ function Music({ musicType, artist, title }) {
   const handleRatingSubmit = (ratingInfo) => {
     console.log("Rating submitted!", ratingInfo);
 
-    setMusicData(prevData => ({
-      ...prevData,
-      isRated: true 
-    }));
+    axios.post('http://localhost:3000/api/rate', ratingInfo)
+      .then(response => {
+        console.log('Rating saved to DB:', response.data);
 
-    setShowRatingModal(false);
-    setSelectedSong(null);
+        setMusicData(prevData => ({
+          ...prevData,
+          isRated: true,
+          avgScore: response.data.newAvgScore, 
+          totalRatings: response.data.newTotalRatings 
+        }));
+      })
+      .catch(err => {
+        console.error('Failed to save rating:', err);
+      })
+      .finally(() => {
+        setShowRatingModal(false);
+        setSelectedSong(null);
+      });
   };
   
   const handleCancelModal = () => {
@@ -71,7 +84,7 @@ function Music({ musicType, artist, title }) {
 }, [musicType, artist, title]);
 
   if (loading) {
-    return <div className="Music-loading">Loading...</div>; // Or a spinner component
+    return <div className="Music-loading">Loading...</div>; 
   }
 
   if (error) {
@@ -100,7 +113,7 @@ function Music({ musicType, artist, title }) {
       {musicType === "Album" && (
         <AlbumList musicType={musicType} title={title} artist={artist} onRatingClick={handleRatingClick} />
       )}
-      <FriendScore artist={artist} title={title} />
+      <FriendScore musicType={musicType} artist={artist} title={title} />
       <BottomNavBar />
 
       {showRatingModal && (

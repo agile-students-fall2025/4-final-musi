@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Home, List, Search, BarChart3, User } from 'lucide-react';
+import { theme } from '../theme';
 
 const NavContainer = styled.nav`
   position: fixed;
