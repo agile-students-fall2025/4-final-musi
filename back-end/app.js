@@ -1,19 +1,27 @@
+require('dotenv').config();
 const express = require("express") 
 const cors = require('cors');
 const mongoose = require('mongoose');
 const app = express() 
 
 // MongoDB connection
-const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || '<db_password>';
-const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
+// const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || '<db_password>';
+// const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/musi';
 
 // Connect to MongoDB using Mongoose
 async function connectToMongoDB() {
   try {
+    if (!MONGODB_URI) {
+      console.log('No MONGODB_URI found in .env - running without database');
+      return;
+    }
+    
     await mongoose.connect(MONGODB_URI);
     console.log('Connected to MongoDB');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error:', error.message);
   }
 }
 
