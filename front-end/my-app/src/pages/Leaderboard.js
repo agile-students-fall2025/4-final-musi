@@ -1,22 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; 
+import axios from "axios"; 
 import LeaderboardItem from "../components/LeaderboardItem";
 
 function Leaderboard() {
   const [activeTab, setActiveTab] = useState("reviews");
   const [leaderboardData, setLeaderboardData] = useState(null);
 
-  const fetchSongs = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/leaderboard');
-      const data = await response.json();
-      setLeaderboardData(data); 
-    } 
-    catch (e) {
-      console.error('Error fetching leaderboard data:', e);
-    }
-  };
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/leaderboard');
+        setLeaderboardData(response.data); 
+      } 
+      catch (e) {
+        console.error('Error fetching leaderboard data:', e);
+      }
+    };
 
-  fetchSongs();
+    fetchLeaderboard();
+  }, []); 
 
   const currentData = leaderboardData ? (leaderboardData[activeTab] || []) : [];
 
@@ -61,7 +63,7 @@ function Leaderboard() {
 
         <main>
           <ol className="leaderboard-list">
-            {currentData.map((user) => (
+            {currentData && currentData.map((user) => (
               <LeaderboardItem
                 key={user.rank}
                 rank={user.rank}

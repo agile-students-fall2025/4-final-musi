@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../components/BackArrow";
 import { theme } from "../theme";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { AuthContext } from "../context/AuthContext";
 
 const Container = styled.div`
   display: flex;
@@ -116,15 +117,39 @@ const LinkText = styled.span`
   cursor: pointer;
 `;
 
+const ErrorMessage = styled.div`
+  color: #ff4d4d;
+  background-color: rgba(255, 77, 77, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+`;
+
 function Login() {
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate("/app");
+    setError("");
+    setLoading(true);
+
+    try {
+      await login(email, password);
+      
+      navigate("/app");
+    } catch (errMsg) {
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -137,12 +162,13 @@ function Login() {
       </LogoWrapper>
       <Subtitle>Welcome back, we missed you!</Subtitle>
       <Title>Let's sign you in.</Title>
+      {error && <ErrorMessage>{error}</ErrorMessage>}
       <Form onSubmit={handleSubmit}>
         <Input
           type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Username or Email"
+          placeholder="Email"
           required
         />
         <InputWrapper>
