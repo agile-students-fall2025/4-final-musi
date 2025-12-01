@@ -21,6 +21,13 @@ async function connectToMongoDB() {
   }
 }
 
+// Connect to Spotify
+async function getSpotifyAccessToken() {
+    const authString = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+    const tokenUrl = 'https://accounts.spotify.com/api/token';
+
+}
+
 // Initialize connection
 connectToMongoDB();
 
