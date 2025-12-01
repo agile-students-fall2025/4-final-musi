@@ -1,11 +1,15 @@
 const express = require("express") 
 const cors = require('cors');
+const axios = require('axios');
 const mongoose = require('mongoose');
 const app = express() 
 
 // MongoDB connection
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || '<db_password>';
 const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
+// Spotify connection
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID';
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET';
 
 // Connect to MongoDB using Mongoose
 async function connectToMongoDB() {
@@ -192,6 +196,7 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
 
 app.get('/api/search', (req, res) => {
   //console.log("GET /api/search request received");
+
   res.json(MOCK_SONGS);
 });
 
