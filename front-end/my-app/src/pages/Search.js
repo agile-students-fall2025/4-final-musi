@@ -64,11 +64,32 @@ const ResultsContainer = styled.div`
   margin-top: 16px;
 `;
 
-function Search() {
+async function Search() {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const handleSearch = (term) => {
-    const query = searchTerm.trim();
+  const [results, setResults] = useState([]);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
+    const url = `/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`;
+
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Search failed');
+      }
+
+      const data = await response.json();
+      setResults(data);
+      setError(null);
+
+    } catch (err) {
+      console.error("Fetch Error:", err.message);
+      setError(err.message);
+      setResults(null);
+    }
   };
 
   return (
