@@ -7,6 +7,7 @@ import Welcome from './pages/welcome';
 import Login from './pages/login'; 
 import Signup from './pages/signup';
 import Onboarding from './pages/onboarding'; 
+import OnboardingResults from './pages/OnboardingResults';
 import ForgotPassword from './pages/forgot'; 
 import reportWebVitals from './reportWebVitals'; 
 import { ThemeProvider } from 'styled-components'; 
@@ -24,6 +25,7 @@ root.render(
           <Route path="/forgot" element={<ForgotPassword />} /> 
           <Route path="/onboarding" element={<Onboarding />} /> 
           <Route path="/app/*" element={<App />} />  {/* Changed from /app to /app/* */}
+          <Route path="/onboarding/results" element={<OnboardingResults />} />
         </Routes>
       </Router>
     </ThemeProvider>
