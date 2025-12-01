@@ -56,6 +56,7 @@ async function getSpotifyAccessToken() {
 
 // Initialize connection
 connectToMongoDB();
+accessToken = getSpotifyAccessToken();
 
 app.use(cors());
 app.use(express.json());
@@ -235,8 +236,6 @@ app.get('/search', async (req, res) => {
   }
 
   try {
-    const accessToken = await getSpotifyAccessToken();
-
     const searchUrl = 'https://api.spotify.com/v1/search';
     const limit = req.query.limit || 10;
 
