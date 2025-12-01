@@ -4,7 +4,6 @@ import { FiSearch } from 'react-icons/fi';
 import SongItem from "../components/SongItem";
 import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -73,10 +72,12 @@ function Search() {
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/search');
         
-        setAllSongs(response.data);
-        setResults(response.data);
+        const response = await fetch('http://localhost:3001/api/search');
+        
+        const data = await response.json();
+        setAllSongs(data);
+        setResults(data);
       } 
       catch (e) {
         console.error('Error fetching songs:', e);
