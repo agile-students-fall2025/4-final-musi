@@ -227,10 +227,44 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
     res.json(responseData);
 });
 
-app.get('/api/search', (req, res) => {
-  //console.log("GET /api/search request received");
+app.get('/search', async (req, res) => {
+  const { q, type } = req.query;
 
-  res.json(MOCK_SONGS);
+  if (!q || !type) {
+      return res.status(400).json({ error: 'Missing required query parameters: q (query) and type (e.g., artist, track).' });
+  }
+
+  try {
+    const accessToken = await getSpotifyAccessToken();
+
+    const searchUrl = 'https://api.spotify.com/v1/search';
+    const limit = req.query.limit || 10;
+
+    const spotifyResponse = await axios.get(searchUrl, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        },
+        params: {
+            q: q,
+            type: type,
+            limit: limit,
+        }
+    });
+
+    res.json({
+        query: q,
+        type: type,
+        data: spotifyResponse.data,
+    });
+
+  } catch (error) {
+      console.error('API Call Error:', error.message);
+      const statusCode = error.response ? error.response.status : 500;
+      res.status(statusCode).json({
+          error: 'Failed spotify search.',
+          details: error.message
+      });
+  }
 });
 
 app.get('/api/leaderboard', (req, res) => {
