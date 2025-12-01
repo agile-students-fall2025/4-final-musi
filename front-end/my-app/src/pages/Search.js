@@ -66,41 +66,9 @@ const ResultsContainer = styled.div`
 
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState([]);
-  const [allSongs, setAllSongs] = useState([]);
-
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        
-        const response = await fetch('http://localhost:3001/api/search');
-        
-        const data = await response.json();
-        setAllSongs(data);
-        setResults(data);
-      } 
-      catch (e) {
-        console.error('Error fetching songs:', e);
-      }
-    };
-
-    fetchSongs();
-  }, []);
-
+  
   const handleSearch = (term) => {
-    setSearchTerm(term);
-    
-    if (term.trim() === '') {
-      setResults(allSongs);
-      return;
-    }
-    
-    const lowerCaseTerm = term.toLowerCase();
-    const filteredData = allSongs.filter(item =>
-      item.title.toLowerCase().includes(lowerCaseTerm) ||
-      item.artist.toLowerCase().includes(lowerCaseTerm)
-    );
-    setResults(filteredData);
+    const query = searchTerm.trim();
   };
 
   return (
