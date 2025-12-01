@@ -26,6 +26,24 @@ async function getSpotifyAccessToken() {
     const authString = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const tokenUrl = 'https://accounts.spotify.com/api/token';
 
+    try {
+        const response = await axios({
+            method: 'POST',
+            url: tokenUrl,
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            data: 'grant_type=client_credentials',
+        });
+
+        const accessToken = response.data.access_token;
+        return accessToken;
+
+    } catch (error) {
+        console.error('Error fetching Spotify access token:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to authenticate with Spotify API.');
+    }
 }
 
 // Initialize connection
