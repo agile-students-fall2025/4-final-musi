@@ -239,11 +239,11 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
 });
 
 app.get('/api/search', (req, res) => {
-  const userId = req.user.id;
   //console.log("GET /api/search request received");
 
   res.json(MOCK_SONGS);
 });
+
 
 app.get('/api/leaderboard', (req, res) => {
   const userId = req.user.id;
