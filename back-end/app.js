@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require("express") 
 const cors = require('cors');
+const axios = require('axios');
 const mongoose = require('mongoose');
 const app = express() 
 
@@ -9,6 +10,9 @@ const app = express()
 // const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/musi';
+// Spotify connection
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID';
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET';
 
 // Connect to MongoDB using Mongoose
 async function connectToMongoDB() {
@@ -23,6 +27,31 @@ async function connectToMongoDB() {
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
   }
+}
+
+// Connect to Spotify
+async function getSpotifyAccessToken() {
+    const authString = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+    const tokenUrl = 'https://accounts.spotify.com/api/token';
+
+    try {
+        const response = await axios({
+            method: 'POST',
+            url: tokenUrl,
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            data: 'grant_type=client_credentials',
+        });
+
+        const accessToken = response.data.access_token;
+        return accessToken;
+
+    } catch (error) {
+        console.error('Error fetching Spotify access token:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to authenticate with Spotify API.');
+    }
 }
 
 // Initialize connection
@@ -200,6 +229,7 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
 
 app.get('/api/search', (req, res) => {
   //console.log("GET /api/search request received");
+
   res.json(MOCK_SONGS);
 });
 
