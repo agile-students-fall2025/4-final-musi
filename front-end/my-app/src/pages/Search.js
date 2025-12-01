@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FiSearch } from 'react-icons/fi';
-import SongItem from "../components/SongItem";
 import { theme } from '../theme';
-import { useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -64,31 +62,25 @@ const ResultsContainer = styled.div`
   margin-top: 16px;
 `;
 
-async function Search() {
-  const [searchTerm, setSearchTerm] = useState('');
+function Search() {
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState('track');
   const [results, setResults] = useState([]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-
+    
     const url = `/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`;
+    console.log(url);    
 
     try {
       const response = await fetch(url);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Search failed');
-      }
 
       const data = await response.json();
       setResults(data);
-      setError(null);
 
     } catch (err) {
-      console.error("Fetch Error:", err.message);
-      setError(err.message);
-      setResults(null);
+      console.error('spotify API Call Error with url:', url);
     }
   };
 
@@ -98,33 +90,41 @@ async function Search() {
         <LogoContainer>
           <Logo src="/assets/images/logo.png" alt="musi logo" />
         </LogoContainer>
-        
-        <SearchContainer>
-          <SearchWrapper>
-            <SearchIcon>
-              <FiSearch />
-            </SearchIcon>
-            <SearchInput
-              type="text"
-              placeholder="Search a song, album or user..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-          </SearchWrapper>
-        </SearchContainer>
-      </Header>
+        <form onSubmit={handleSearch}>
+          <h2>Search Spotify</h2>
+          
+          <SearchContainer>
+            <SearchWrapper>
+              <SearchIcon>
+                <FiSearch />
+              </SearchIcon>
+              <SearchInput
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="e.g., Bohemian Rhapsody"
+                required
+              />
+            </SearchWrapper>
+          </SearchContainer>
+          
+          <SearchContainer>
+            Search Type (type):
+            <select value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="artist">Artist</option>
+              <option value="track">Track</option>
+              <option value="album">Album</option>
+            </select>
+          </SearchContainer>
+          
+          <button type="submit">Search</button>
+        </form>
+      </Header>    
 
       <ResultsContainer>
-        {results.map((song) => (
-          <SongItem
-            key={song.id}
-            title={song.title}
-            subtitle={`Song • ${song.artist}`}
-            meta={song.tags.join(", ")}
-            score={song.score}
-          />
-        ))}
+        {JSON.stringify(results, null, 2)}
       </ResultsContainer>
+
     </Container>
   );
 }
