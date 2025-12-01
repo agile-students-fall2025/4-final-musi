@@ -198,11 +198,13 @@ function Onboarding() {
         );
 
         console.log("Onboarding submitted successfully:", response.data);
-        navigate("/app");
+
+        // Navigate to results page with answers
+        navigate("/onboarding/results", { state: { answers } });
       } catch (error) {
         console.error("Error submitting onboarding:", error);
-        // Handle error gracefully
-        navigate("/app"); // Still navigate even if backend fails
+        // Still show results even if backend fails
+        navigate("/onboarding/results", { state: { answers } });
       }
     }
   };
