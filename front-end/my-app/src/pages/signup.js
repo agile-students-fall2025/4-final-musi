@@ -82,6 +82,17 @@ const PasswordRequirements = styled.div`
   margin: 8px 0 4px 0;
 `;
 
+const Requirement = styled.div`
+  color: ${(props) => (props.met ? "#4CAF50" : theme.colors.text_secondary)};
+  transition: color 0.2s ease;
+
+  &::before {
+    content: "${(props) => (props.met ? "✓" : "✗")}";
+    margin-right: 8px;
+    font-weight: bold;
+  }
+`;
+
 const Button = styled.button`
   padding: 18px 0;
   background-color: ${theme.colors.accent};
@@ -127,14 +138,31 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
+  // Password validation checks
+  const hasValidLength = password.length >= 8 && password.length <= 20;
+  const hasLetters = /[a-zA-Z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+  const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const hasAllRequired = hasLetters && hasNumbers && hasSpecialChars;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!hasValidLength) {
+      return setError("Password must be 8-20 characters long.");
+    }
+
+    if (!hasAllRequired) {
+      return setError(
+        "Password must contain letters, numbers, and special characters."
+      );
+    }
 
     if (password !== confirmPassword) {
       return setError("Passwords do not match.");
@@ -144,7 +172,8 @@ function Signup() {
 
     try {
       await register(username, email, password);
-      
+
+      // Go directly to onboarding after signup
       navigate("/onboarding");
     } catch (errMsg) {
       setError(errMsg);
@@ -163,7 +192,8 @@ function Signup() {
       </LogoWrapper>
       <Title>Welcome to Musi.</Title>
       <Subtitle>
-        Create an account to start exploring playlists, rate songs, and connect through sound.
+        Create an account to start exploring playlists, rate songs, and connect
+        through sound.
       </Subtitle>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <Form onSubmit={handleSubmit}>
@@ -206,17 +236,21 @@ function Signup() {
           </EyeIcon>
         </InputWrapper>
         <PasswordRequirements>
-          <div><b>Your password must have:</b></div>
-          <div>✓ 8 to 20 characters</div>
-          <div>✓ Letters, numbers, and special characters</div>
+          <div style={{ marginBottom: "8px" }}>
+            <b>Your password must have:</b>
+          </div>
+          <Requirement met={hasValidLength}>8 to 20 characters</Requirement>
+          <Requirement met={hasAllRequired}>
+            Letters, numbers, and special characters
+          </Requirement>
         </PasswordRequirements>
-        <Button type="submit">Create account</Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Create account"}
+        </Button>
       </Form>
       <BottomText>
         Already have an account?{" "}
-        <LinkText onClick={() => navigate("/login")}>
-          Login now
-        </LinkText>
+        <LinkText onClick={() => navigate("/login")}>Login now</LinkText>
       </BottomText>
     </Container>
   );
