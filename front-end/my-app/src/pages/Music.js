@@ -17,33 +17,48 @@ function Music() {
   const [musicData, setMusicData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const handleRatingClick = (songTitle, songArtist, type, rated) => {
+
+  const handleRatingClick = (songTitle, songArtist, type, rated, id) => {
+    const testId = `${type}-${songArtist}-${songTitle}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const finalId = id || musicData.spotifyId || musicData._id || musicData.id || testId;
+
     setSelectedSong({
       title: songTitle,
       artist: songArtist,
       musicType: type,
       isRated: rated,
-      imageUrl: musicData.imageUrl, 
+      imageUrl: musicData.imageUrl,
+      spotifyId: finalId
     });
     setShowRatingModal(true);
   };
 
   const handleRatingSubmit = (ratingInfo) => {
-    console.log("Rating submitted!", ratingInfo);
+    const payload = {
+      ...ratingInfo,
+      reviewText: ratingInfo.comment,
+      targetId: ratingInfo.targetId || ratingInfo.spotifyId 
+    };
 
-    axios.post('http://localhost:3000/api/rate', ratingInfo)
+    if (!payload.targetId) {
+      alert("Error: Missing Target ID. Cannot save rating.");
+      return;
+    }
+
+    axios.post('http://localhost:3001/api/reviews/rate-ranked', payload)
       .then(response => {
-        console.log('Rating saved to DB:', response.data);
-
         setMusicData(prevData => ({
           ...prevData,
           isRated: true,
-          avgScore: response.data.newAvgScore, 
-          totalRatings: response.data.newTotalRatings 
+          avgScore: response.data.score || prevData.avgScore, 
         }));
+        
+        alert(`Successfully ranked #${response.data.rank} on your list!`);
       })
       .catch(err => {
         console.error('Failed to save rating:', err);
+        const serverMsg = err.response ? err.response.data : err.message;
+        alert(`Failed to save rating: ${JSON.stringify(serverMsg)}`);
       })
       .finally(() => {
         setShowRatingModal(false);
@@ -57,31 +72,31 @@ function Music() {
   };
 
   useEffect(() => {
-  if (!musicType || !artist || !title) {
-    setLoading(false);
-    return; 
-  }
-  setLoading(true);
-  setError(null);
+    if (!musicType || !artist || !title) {
+      setLoading(false);
+      return; 
+    }
+    setLoading(true);
+    setError(null);
 
-  const encodedArtist = encodeURIComponent(artist);
-  const encodedTitle = encodeURIComponent(title);
-  
-  const API_URL = `http://localhost:3000/api/music/${musicType}/${encodedArtist}/${encodedTitle}`;
+    const encodedArtist = encodeURIComponent(artist);
+    const encodedTitle = encodeURIComponent(title);
+    
+    const API_URL = `http://localhost:3001/api/music/${musicType}/${encodedArtist}/${encodedTitle}`;
 
-  axios.get(API_URL)
-      .then(response => {
-        setMusicData(response.data);
-      })
-      .catch(err => {
-        console.error("Error fetching music data:", err);
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    axios.get(API_URL)
+        .then(response => {
+          setMusicData(response.data);
+        })
+        .catch(err => {
+          console.error("Error fetching music data:", err);
+          setError(err.message);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
 
-}, [musicType, artist, title]);
+  }, [musicType, artist, title]);
 
   if (loading) {
     return <div className="Music-loading">Loading...</div>; 
@@ -97,7 +112,10 @@ function Music() {
 
   return (
     <div className="Music">
-      <ImageHeader {...musicData} onRatingClick={handleRatingClick}/>
+      <ImageHeader 
+        {...musicData} 
+        onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
+      />
       <div className="description">
         <div className="vibe">
           {musicData?.vibe?.join(" • ")}
@@ -111,12 +129,17 @@ function Music() {
       <Scores title={title} artist={artist} isRated={musicData?.isRated} />
 
       {musicType === "Album" && (
-        <AlbumList musicType={musicType} title={title} artist={artist} onRatingClick={handleRatingClick} />
+        <AlbumList 
+          musicType={musicType} 
+          title={title} 
+          artist={artist} 
+          onRatingClick={handleRatingClick} 
+        />
       )}
       <FriendScore musicType={musicType} artist={artist} title={title} />
       <BottomNavBar />
 
-      {showRatingModal && (
+      {showRatingModal && selectedSong && (
         <RatingModal 
           { ...selectedSong } 
           onClose={handleCancelModal}  

@@ -73,6 +73,7 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
     const userId = req.user.id;
     const data = { 
         imageUrl: "/olivia-album.jpg",
+        spotifyId: `${type}-${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         title: title || "SOUR",
         artist: artist || "Olivia Rodrigo",
         avgScore: 8.4,
@@ -674,20 +675,7 @@ app.post('/api/streak/activity', async (req, res) => {
   }
 });
 
-app.post('/api/rate', (req, res) => {
-    const ratingInfo = req.body;
-    const userId = req.user.id;
-    console.log('LOG: Received new rating:', ratingInfo);
-
-    const newAvgScore = 8.5; 
-    const newTotalRatings = 1251;
-
-    res.status(201).json({
-        message: 'Rating saved successfully!',
-        newAvgScore: newAvgScore,
-        newTotalRatings: newTotalRatings
-    });
-});
+app.use('/api/reviews', require('./routes/reviews'));
 
 app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
     const { type, artist, title } = req.params;
