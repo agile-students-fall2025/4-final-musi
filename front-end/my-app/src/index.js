@@ -27,7 +27,7 @@ root.render(
             <Route path="/forgot" element={<ForgotPassword />} /> 
             <Route path="/onboarding" element={<Onboarding />} /> 
             <Route path="/app/*" element={<App />} />
-            <Route path="/onboarding/results" element={<OnboardingResults />} />
+            <Route path="/onboarding-results" element={<OnboardingResults />} />
           </Routes>
         </Router>
       </AuthProvider>

@@ -1,17 +1,16 @@
 require('dotenv').config();
-const express = require("express") 
+const express = require("express");
 const cors = require('cors');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
-const app = express() 
+const { User } = require('./models');
+const app = express();
 
 // MongoDB connection
-// const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || '<db_password>';
-// const MONGODB_URI = `mongodb+srv://musi_app:${MONGODB_PASSWORD}@musi-cluster.dpcphbe.mongodb.net/?appName=musi-cluster`;
-
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/musi';
+
 // Spotify connection
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID';
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET';
@@ -20,7 +19,7 @@ const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_
 async function connectToMongoDB() {
   try {
     if (!MONGODB_URI) {
-      console.log('No MONGODB_URI found in .env - running without database');
+      console.log('⚠️ No MONGODB_URI found in .env - running without database');
       return;
     }
     
@@ -28,6 +27,7 @@ async function connectToMongoDB() {
     console.log('Connected to MongoDB');
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
+    console.log('Continuing without database...');
   }
 }
 
@@ -62,8 +62,10 @@ connectToMongoDB();
 app.use(cors());
 app.use(express.json());
 
+// Public routes (no auth required)
 app.use('/api/auth', authRoutes);
 
+// Protected routes (auth required)
 app.use(authMiddleware);
 
 app.get('/api/music/:type/:artist/:title', (req, res) => {
@@ -80,14 +82,14 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
         vibe: ["heartbreak", "pop", "emotional"],
         genre: ["pop", "indie pop"],
         year: 2021,
-    }
+    };
 
     if (data) {
         res.json(data);
     } else {
         res.status(404).json({ error: "Music not found" });
     }
-})
+});
 
 app.get('/api/followers/:username', (req, res) => {
     const { username } = req.params;
@@ -128,7 +130,6 @@ const MOCK_SONGS = [
 ];
 
 // --- /api/lists ---
-// GET /api/lists?tab=listened|want|recs|trending|friends|new&q=...&limit=10&offset=0
 app.get('/api/lists', (req, res) => {
   const {
     tab = 'listened',
@@ -240,8 +241,6 @@ app.get('/api/scores/:type/:artist/:title', (req, res) => {
 
 app.get('/api/search', (req, res) => {
   const userId = req.user.id;
-  //console.log("GET /api/search request received");
-
   res.json(MOCK_SONGS);
 });
 
@@ -426,102 +425,177 @@ app.post('/api/onboarding', (req, res) => {
   });
 });
 
-// ===== PROFILE ROUTES (ENHANCED) =====
+// ===== PROFILE ROUTES - FETCH FROM MONGODB =====
 
-let PROFILE = {
-  name: 'Andy Cabindol',
-  username: 'andycabindol',
-  bio: 'love listening to R&B',
-  memberSince: 'August 1, 2025',
-  followers: 2,
-  following: 6,
-  rank: 2,
-  streakDays: 2,
-  listenedCount: 1,
-  wantCount: 0,
-};
-
-// UPDATED: Added missing fields for front-end integration
-let PROFILE_ACTIVITY = [
-  { 
-    id: 1, 
-    user: "Andy Cabindol", 
-    activity: "ranked", 
-    rating: "7.6", 
-    time: "Today", 
-    review: "The song was awesome - Got to Be Real is a classic!", 
-    likes: 0, 
-    bookmarks: 0, 
-    isLiked: false,
-    artist: "Cheryl Lynn",
-    title: "Got to Be Real",
-    musicType: "Song"
-  },
-];
-
-const PROFILE_TASTE = {
-  genres: [
-    { name: 'R&B',     value: 32, color: '#4A4A4A' },
-    { name: 'Pop',     value: 28, color: '#C0C0C0' },
-    { name: 'Hip Hop', value: 24, color: '#6B6B6B' },
-    { name: 'Rock',    value: 16, color: '#E8E8E8' },
-  ],
-  topTracks: [
-    { id: 1, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
-    { id: 2, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
-    { id: 3, title: "Got to Be Real", artist: "Cheryl Lynn", tags: ["Disco","R&B / Soul","Funk"], score: 9.0 },
-  ],
-  insights: {
-    artistsListened: 32,
-    songsRated: 156,
-  }
-};
-
-// GET full profile bundle - ENHANCED with error handling
-app.get('/api/profile', (req, res) => {
+// GET full profile bundle from MongoDB
+app.get('/api/profile', async (req, res) => {
   try {
     const userId = req.user.id;
-    res.json({
-      profile: PROFILE,
-      activity: PROFILE_ACTIVITY,
-      taste: PROFILE_TASTE,
+    
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate('followers', 'username name')
+      .populate('following', 'username name');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Calculate member since date
+    const memberSince = new Date(user.dateJoined || user.createdAt).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
+
+    const profile = {
+      name: user.name || user.username,
+      username: user.username,
+      bio: user.bio || 'No bio yet',
+      memberSince: memberSince,
+      followers: user.followers?.length || 0,
+      following: user.following?.length || 0,
+      rank: 2, // TODO: Calculate actual rank from leaderboard
+      streakDays: user.currentStreak || 0,
+      listenedCount: user.reviews?.length || 0,
+      wantCount: 0, // TODO: Implement want list
+    };
+
+    // Mock activity data (replace with real reviews later)
+    const activity = [
+      {
+        id: 1,
+        user: user.name || user.username,
+        activity: "ranked",
+        rating: "7.6",
+        time: "Today",
+        review: "Great song!",
+        likes: 0,
+        bookmarks: 0,
+        isLiked: false,
+        artist: "Sample Artist",
+        title: "Sample Song",
+        musicType: "Song"
+      }
+    ];
+
+    // Mock taste data (replace with real data later)
+    const taste = {
+      genres: [
+        { name: 'R&B', value: 32, color: '#4A4A4A' },
+        { name: 'Pop', value: 28, color: '#C0C0C0' },
+        { name: 'Hip Hop', value: 24, color: '#6B6B6B' },
+        { name: 'Rock', value: 16, color: '#E8E8E8' }
+      ],
+      topTracks: [
+        { id: 1, title: "Sample Track", artist: "Sample Artist", tags: ["Pop"], score: 8.0 }
+      ],
+      insights: {
+        artistsListened: 10,
+        songsRated: user.reviews?.length || 0
+      }
+    };
+
+    res.json({
+      profile,
+      activity,
+      taste
+    });
+
   } catch (error) {
     console.error('Error fetching profile:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 });
 
-// PUT partial update (name, username, bio) - ENHANCED with validation
-app.put('/api/profile', (req, res) => {
+// PUT partial update (name, username, bio)
+app.put('/api/profile', async (req, res) => {
   try {
     const userId = req.user.id;
-    const allowed = ['name', 'username', 'bio'];
-    const updates = {};
-    
-    for (const k of allowed) {
-      if (typeof req.body?.[k] === 'string' && req.body[k].trim()) {
-        PROFILE[k] = req.body[k].trim();
-        updates[k] = PROFILE[k];
-      }
+    const { name, username, bio } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update' });
+    // Update allowed fields
+    if (name !== undefined && name.trim()) {
+      user.name = name.trim();
     }
+    
+    if (username !== undefined && username.trim()) {
+      // Check if username is already taken by another user
+      const existingUser = await User.findOne({ 
+        username: username.trim(), 
+        _id: { $ne: userId } 
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+      
+      user.username = username.trim();
+    }
+    
+    if (bio !== undefined) {
+      user.bio = bio.trim();
+    }
+
+    await user.save();
+
+    // Return updated profile
+    const memberSince = new Date(user.dateJoined || user.createdAt).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const profile = {
+      name: user.name || user.username,
+      username: user.username,
+      bio: user.bio || 'No bio yet',
+      memberSince: memberSince,
+      followers: user.followers?.length || 0,
+      following: user.following?.length || 0,
+      rank: 2,
+      streakDays: user.currentStreak || 0,
+      listenedCount: user.reviews?.length || 0,
+      wantCount: 0,
+    };
 
     res.json({ 
       ok: true, 
-      profile: PROFILE,
-      updated: updates 
+      profile,
+      message: 'Profile updated successfully'
     });
+
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 
-// POST like toggle on activity item - ENHANCED with 404 handling
+// Mock activity like toggle (will be replaced with real data)
+let PROFILE_ACTIVITY = [
+  { 
+    id: 1, 
+    user: "User", 
+    activity: "ranked", 
+    rating: "7.6", 
+    time: "Today", 
+    review: "Great song!", 
+    likes: 0, 
+    bookmarks: 0, 
+    isLiked: false,
+    artist: "Sample Artist",
+    title: "Sample Song",
+    musicType: "Song"
+  },
+];
+
+// POST like toggle on activity item
 app.post('/api/profile/activity/:id/like', (req, res) => {
   try {
     const userId = req.user.id;
@@ -547,69 +621,25 @@ app.post('/api/profile/activity/:id/like', (req, res) => {
   }
 });
 
-// ===== STREAK ROUTES (ENHANCED) =====
+// ===== STREAK ROUTES =====
 
-//mock data for our profile
-let userData = {
-  profile: {
-    name: "John Doe",
-    username: "johndoe",
-    bio: "Music lover 🎵",
-    memberSince: "January 2024",
-    followers: 1234,
-    following: 567,
-    rank: 42,
-    streakDays: 7, // Current streak
-    lastActivity: new Date().toISOString().split('T')[0], // Today's date
-    listenedCount: 89,
-    wantCount: 23
-  },
-  streakHistory: [
-    { date: "2024-11-11", activity: "listened" },
-    { date: "2024-11-10", activity: "listened" },
-    { date: "2024-11-09", activity: "listened" },
-    { date: "2024-11-08", activity: "listened" },
-    { date: "2024-11-07", activity: "listened" },
-    { date: "2024-11-06", activity: "listened" },
-    { date: "2024-11-05", activity: "listened" }
-  ]
-};
-
-function calculateCurrentStreak(streakHistory) {
-  if (!streakHistory || streakHistory.length === 0) return 0;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const sortedHistory = streakHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  let streak = 0;
-  let currentDate = new Date(today);
-  
-  for (const record of sortedHistory) {
-    const recordDate = record.date;
-    const expectedDate = currentDate.toISOString().split('T')[0];
-    
-    if (recordDate === expectedDate) {
-      streak++;
-      currentDate.setDate(currentDate.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-  
-  return streak;
-}
-
-// GET streak - ENHANCED with error handling
-app.get('/api/streak', (req, res) => {
+// GET streak from MongoDB
+app.get('/api/streak', async (req, res) => {
   try {
     const userId = req.user.id;
-    const currentStreak = calculateCurrentStreak(userData.streakHistory);
-    PROFILE.streakDays = currentStreak;
     
+    const user = await User.findById(userId)
+      .select('currentStreak longestStreak lastLoginDate totalLogins');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     res.json({
-      currentStreak: currentStreak,
-      lastActivity: userData.profile.lastActivity,
-      streakHistory: userData.streakHistory
+      currentStreak: user.currentStreak || 0,
+      longestStreak: user.longestStreak || 0,
+      lastLoginDate: user.lastLoginDate,
+      totalLogins: user.totalLogins || 0
     });
   } catch (error) {
     console.error('Error fetching streak:', error);
@@ -617,38 +647,26 @@ app.get('/api/streak', (req, res) => {
   }
 });
 
-// POST activity - ENHANCED with validation
-app.post('/api/streak/activity', (req, res) => {
+// POST activity to update streak
+app.post('/api/streak/activity', async (req, res) => {
   try {
     const userId = req.user.id;
-    const { activity } = req.body;
-    const today = new Date().toISOString().split('T')[0];
     
-    if (!activity) {
-      return res.status(400).json({ error: 'Activity type is required' });
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
     
-    // Check if user already has activity today
-    const existingToday = userData.streakHistory.find(record => record.date === today);
-    if (!existingToday) {
-      // Add today's activity
-      userData.streakHistory.push({
-        date: today,
-        activity: activity || "listened"
-      });
-      
-      // Update last activity
-      userData.profile.lastActivity = today;
-    }
-    
-    // Recalculate streak
-    const currentStreak = calculateCurrentStreak(userData.streakHistory);
-    userData.profile.streakDays = currentStreak;
+    // Update streak
+    const streakUpdate = user.updateStreak();
+    await user.save();
     
     res.json({
       message: "Activity recorded successfully",
-      currentStreak: currentStreak,
-      streakMaintained: true
+      currentStreak: user.currentStreak,
+      longestStreak: user.longestStreak,
+      streakUpdate: streakUpdate
     });
   } catch (error) {
     console.error('Error recording activity:', error);
@@ -656,23 +674,11 @@ app.post('/api/streak/activity', (req, res) => {
   }
 });
 
-// Reset streak (for testing)
-app.post('/api/streak/reset', (req, res) => {
-  userData.streakHistory = [];
-  userData.profile.streakDays = 0;
-  
-  res.json({
-    message: "Streak reset successfully",
-    currentStreak: 0
-  });
-});
-
 app.post('/api/rate', (req, res) => {
     const ratingInfo = req.body;
     const userId = req.user.id;
     console.log('LOG: Received new rating:', ratingInfo);
 
-  
     const newAvgScore = 8.5; 
     const newTotalRatings = 1251;
 
@@ -699,4 +705,4 @@ app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
     }
 });
 
-module.exports = app
+module.exports = app;

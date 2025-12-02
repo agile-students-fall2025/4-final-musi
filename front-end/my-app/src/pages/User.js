@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, X } from 'lucide-react';
+import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
+import axios from 'axios';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -86,15 +87,15 @@ const ButtonGroup = styled.div`
   margin-bottom: 24px;
 `;
 
-const Button = styled.button`
-  flex: 1;
-  padding: 10px 20px;
-  border: 1px solid #e0e0e0;
-  background: white;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-`;
+// const Button = styled.button`
+//   flex: 1;
+//   padding: 10px 20px;
+//   border: 1px solid #e0e0e0;
+//   background: white;
+//   border-radius: 8px;
+//   font-size: 0.9rem;
+//   cursor: pointer;
+// `;
 
 const StatsRow = styled.div`
   display: flex;
@@ -420,10 +421,65 @@ function User() {
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
   const [profile, setProfile] = useState({
-    name: 'Julz Liang',
-    username: '@julz',
-    bio: 'nyu',
+    name: '',
+    username: '',
+    bio: '',
+    email: '',
+    followers: 0,
+    following: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    dateJoined: null,
+    totalLogins: 0
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error('No token found');
+          return;
+        }
+
+        const response = await axios.get('http://localhost:3001/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const userData = response.data.user;
+        
+        setProfile({
+          name: userData.name || 'User',
+          username: userData.username || '@user',
+          bio: userData.bio || 'No bio yet',
+          email: userData.email,
+          followers: userData.followers?.length || 0,
+          following: userData.following?.length || 0,
+          currentStreak: userData.currentStreak || 0,
+          longestStreak: userData.longestStreak || 0,
+          dateJoined: userData.dateJoined || userData.createdAt,
+          totalLogins: userData.totalLogins || 0
+        });
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const formatDate = (date) => {
+    if (!date) return 'Recently';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
 
   const genreData = [
     { name: 'R&B', value: 32, color: '#4A4A4A' },
@@ -438,14 +494,24 @@ function User() {
     { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
   ];
 
+  if (loading) {
+    return (
+      <Container>
+        <p style={{ textAlign: 'center', padding: '40px 0', color: theme.colors.text_secondary }}>
+          Loading profile...
+        </p>
+      </Container>
+    );
+  }
+
   return (
     <>
       <Container>
         <Header>
           <div>
             <IconButton>
-            <ChevronLeft size={22} />
-          </IconButton>
+              <ChevronLeft size={22} />
+            </IconButton>
           </div>
           <UserName>{profile.name}</UserName>
           <div>
@@ -460,9 +526,9 @@ function User() {
               <Edit size={16} />
             </EditIcon>
           </Avatar>
-          <Username>{profile.username}</Username>
+          <Username>@{profile.username}</Username>
           <Bio>{profile.bio}</Bio>
-          <MemberSince>Member since August 1, 2025</MemberSince>
+          <MemberSince>Member since {formatDate(profile.dateJoined)}</MemberSince>
 
           <ButtonGroup>
             <FollowButton />
@@ -471,11 +537,11 @@ function User() {
 
         <StatsRow>
           <StatItem>
-            <StatValue>2</StatValue>
+            <StatValue>{profile.followers}</StatValue>
             <StatLabel>Followers</StatLabel>
           </StatItem>
           <StatItem>
-            <StatValue>6</StatValue>
+            <StatValue>{profile.following}</StatValue>
             <StatLabel>Following</StatLabel>
           </StatItem>
           <StatItem>
@@ -523,7 +589,7 @@ function User() {
           <Card>
             <Flame size={20} />
             <CardLabel>Current streak</CardLabel>
-            <CardValue>2 days</CardValue>
+            <CardValue>{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</CardValue>
           </Card>
         </CardRow>
 
@@ -626,12 +692,12 @@ function User() {
             <SectionTitle>INSIGHTS</SectionTitle>
             <InsightsGrid>
               <InsightCard>
-                <InsightLabel>Artists Listened</InsightLabel>
-                <InsightValue>32</InsightValue>
+                <InsightLabel>Total Logins</InsightLabel>
+                <InsightValue>{profile.totalLogins}</InsightValue>
               </InsightCard>
               <InsightCard>
-                <InsightLabel>Songs Rated</InsightLabel>
-                <InsightValue>156</InsightValue>
+                <InsightLabel>Longest Streak</InsightLabel>
+                <InsightValue>{profile.longestStreak}</InsightValue>
               </InsightCard>
             </InsightsGrid>
           </TabContent>
@@ -665,7 +731,7 @@ function User() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormValueContainer>
-                <FormValue>{profile.username}</FormValue>
+                <FormValue>@{profile.username}</FormValue>
                 <ChevronRight size={20} color="#999" />
               </FormValueContainer>
             </FormItem>
