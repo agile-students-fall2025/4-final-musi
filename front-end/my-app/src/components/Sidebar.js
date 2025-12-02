@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { X, Settings, Edit, LogOut } from 'lucide-react';
 import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
 import ConfirmOverlay from '../components/ConfirmOverlay';
+import { AuthContext } from '../context/AuthContext';
 
 const SidebarOverlay = styled.div`
   position: fixed;
@@ -100,6 +101,7 @@ const MenuText = styled.span`
 
 function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleSettingsClick = () => {
@@ -119,6 +121,7 @@ function Sidebar({ isOpen, onClose }) {
   const handleConfirmLogout = () => {
     setShowLogoutConfirm(false);
     onClose();
+    logout();
     navigate('/');
     console.log('User logged out');
   };

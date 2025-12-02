@@ -1,13 +1,15 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Mail, Lock, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SettingsRow from "../components/SettingsRow";
 import ConfirmOverlay from "../components/ConfirmOverlay";
+import { AuthContext } from "../context/AuthContext"; 
 
 export default function Settings() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { logout, deleteAccount } = useContext(AuthContext);
 
   const [email, setEmail] = useState("andy.cabindol@gmail.com");
   const [showDelete, setShowDelete] = useState(false);
@@ -25,18 +27,22 @@ export default function Settings() {
 
   const handleChangePassword = () => navigate("/app/settings/password");
   
-  const handleConfirmDelete = () => {
-    setShowDelete(false);
-    navigate('/')
-    // TODO: call delete API
-    console.log("Account deleted");
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteAccount(); 
+      setShowDelete(false);
+      navigate('/'); 
+      console.log("Account deleted");
+    } catch (error) {
+      alert("Failed to delete account: " + error);
+    }
   };
 
   const handleConfirmLogout = () => {
     setShowLogout(false);
-    navigate('/')
-    // TODO: perform logout
-    console.log("Logged out");
+    
+    logout(); 
+    navigate('/'); 
   };
 
   return (
@@ -79,7 +85,6 @@ export default function Settings() {
         />
       </div>
 
-      {/* Delete confirmation overlay */}
       <ConfirmOverlay
         open={showDelete}
         title="Are you sure you want to delete your account?"
@@ -91,7 +96,6 @@ export default function Settings() {
         onConfirm={handleConfirmDelete}
       />
 
-      {/* Logout confirmation overlay */}
       <ConfirmOverlay
         open={showLogout}
         title="Are you sure you want to logout?"

@@ -5,6 +5,8 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
+const User = require('./models').User;
+const Review = require('./models').Review;
 const app = express() 
 
 // MongoDB connection
@@ -544,6 +546,21 @@ app.post('/api/profile/activity/:id/like', (req, res) => {
   } catch (error) {
     console.error('Error toggling like:', error);
     res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+app.delete('/api/profile', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    await User.findByIdAndDelete(userId);
+
+    await Review.deleteMany({ userId: userId }); 
+
+    res.json({ msg: "Account deleted successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 
