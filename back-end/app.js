@@ -3,6 +3,8 @@ const express = require("express")
 const cors = require('cors');
 const axios = require('axios');
 const mongoose = require('mongoose');
+const authMiddleware = require('./middleware/auth');
+const authRoutes = require('./routes/auth');
 const app = express() 
 
 // MongoDB connection
@@ -61,8 +63,13 @@ accessToken = getSpotifyAccessToken();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/auth', authRoutes);
+
+app.use(authMiddleware);
+
 app.get('/api/music/:type/:artist/:title', (req, res) => {
     const { type, artist, title } = req.params;
+    const userId = req.user.id;
     const data = { 
         imageUrl: "/olivia-album.jpg",
         title: title || "SOUR",
@@ -85,6 +92,7 @@ app.get('/api/music/:type/:artist/:title', (req, res) => {
 
 app.get('/api/followers/:username', (req, res) => {
     const { username } = req.params;
+    const userId = req.user.id;
     const followers = [
       { id: 'user1', name: 'David', username: '@dvd', mutual: true },
       { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
@@ -129,6 +137,8 @@ app.get('/api/lists', (req, res) => {
     limit = '50',
     offset = '0',
   } = req.query;
+
+  const userId = req.user.id;
 
   const lim = Math.max(1, Math.min(parseInt(limit, 10) || 50, 100));
   const off = Math.max(0, parseInt(offset, 10) || 0);
@@ -183,6 +193,7 @@ app.get('/api/lists', (req, res) => {
 
 // --- /api/tabs route ---
 app.get('/api/tabs', (req, res) => {
+  const userId = req.user.id;
   const tabs = [
     { key: "listened", label: "Listened", count: 204 },
     { key: "want", label: "Want to listen", count: 10 },
@@ -196,7 +207,7 @@ app.get('/api/tabs', (req, res) => {
 
 app.get('/api/scores/:type/:artist/:title', (req, res) => {
     const { type, artist, title } = req.params;
-    
+    const userId = req.user.id;
     const { isRated } = req.query; 
 
     let responseData = {};
@@ -267,6 +278,7 @@ app.get('/search', async (req, res) => {
 });
 
 app.get('/api/leaderboard', (req, res) => {
+  const userId = req.user.id;
     
   const reviewData = [
     { rank: 1, username: "@dvd", score: 640 },
@@ -321,6 +333,7 @@ app.get('/api/leaderboard', (req, res) => {
 
 app.get('/api/albumlist/:artist/:title', (req, res) => {
     const { artist, title } = req.params;
+    const userId = req.user.id;
     const songList = [
       { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
       { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
@@ -413,6 +426,7 @@ const FEED_SETS = {
 };
 
 app.get("/api/feed", (req, res) => {
+  const userId = req.user.id;
   const { tab = "trending" } = req.query;
   const items = FEED_SETS[tab] || [];
   res.json({ tab, total: items.length, items });
@@ -498,6 +512,7 @@ const PROFILE_TASTE = {
 // GET full profile bundle - ENHANCED with error handling
 app.get('/api/profile', (req, res) => {
   try {
+    const userId = req.user.id;
     res.json({
       profile: PROFILE,
       activity: PROFILE_ACTIVITY,
@@ -512,6 +527,7 @@ app.get('/api/profile', (req, res) => {
 // PUT partial update (name, username, bio) - ENHANCED with validation
 app.put('/api/profile', (req, res) => {
   try {
+    const userId = req.user.id;
     const allowed = ['name', 'username', 'bio'];
     const updates = {};
     
@@ -540,6 +556,7 @@ app.put('/api/profile', (req, res) => {
 // POST like toggle on activity item - ENHANCED with 404 handling
 app.post('/api/profile/activity/:id/like', (req, res) => {
   try {
+    const userId = req.user.id;
     const id = Number(req.params.id);
     let found = false;
 
@@ -617,6 +634,7 @@ function calculateCurrentStreak(streakHistory) {
 // GET streak - ENHANCED with error handling
 app.get('/api/streak', (req, res) => {
   try {
+    const userId = req.user.id;
     const currentStreak = calculateCurrentStreak(userData.streakHistory);
     PROFILE.streakDays = currentStreak;
     
@@ -634,6 +652,7 @@ app.get('/api/streak', (req, res) => {
 // POST activity - ENHANCED with validation
 app.post('/api/streak/activity', (req, res) => {
   try {
+    const userId = req.user.id;
     const { activity } = req.body;
     const today = new Date().toISOString().split('T')[0];
     
@@ -682,7 +701,7 @@ app.post('/api/streak/reset', (req, res) => {
 
 app.post('/api/rate', (req, res) => {
     const ratingInfo = req.body;
-    
+    const userId = req.user.id;
     console.log('LOG: Received new rating:', ratingInfo);
 
   
@@ -698,7 +717,7 @@ app.post('/api/rate', (req, res) => {
 
 app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
     const { type, artist, title } = req.params;
-    
+    const userId = req.user.id;
     const friendScores = [
       { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
       { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FiSearch } from 'react-icons/fi';
 import { theme } from '../theme';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Container = styled.div`
   background: ${theme.colors.background};

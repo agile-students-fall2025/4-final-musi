@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const { Schema } = mongoose;
 
 /* ============================
@@ -8,6 +9,8 @@ const userSchema = new Schema(
   {
     username: { type: String, required: true, unique: true },
     name: String,
+    email: { type: String, required: true, unique: true, match: [/.+\@.+\..+/, "Please fill a valid email address"]},
+    password: { type: String, required: true },
     dateJoined: { type: Date, default: Date.now },
 
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
@@ -18,7 +21,16 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.index({ username: 1 }, { unique: true });
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 
 /* ============================
@@ -46,8 +58,6 @@ const songSchema = new Schema(
   { timestamps: true }
 );
 
-songSchema.index({ spotifyId: 1 }, { unique: true });
-
 
 /* ============================
     ALBUM
@@ -67,8 +77,6 @@ const albumSchema = new Schema(
   },
   { timestamps: true }
 );
-
-albumSchema.index({ spotifyId: 1 }, { unique: true });
 
 
 /* ============================
