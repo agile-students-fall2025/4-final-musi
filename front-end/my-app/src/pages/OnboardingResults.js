@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { theme } from "../theme";
 import { Check } from "lucide-react";
+import TutorialCarousel from "../components/TutorialCarousel";
 
 const Container = styled.div`
   display: flex;
@@ -115,58 +116,68 @@ function OnboardingResults() {
   const navigate = useNavigate();
   const location = useLocation();
   const answers = location.state?.answers || {};
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const handleContinue = () => {
+    setShowTutorial(true);
+  };
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
     navigate("/app");
   };
 
   return (
-    <Container>
-      <CheckmarkCircle>
-        <Check size={40} color="white" strokeWidth={3} />
-      </CheckmarkCircle>
+    <>
+      <Container>
+        <CheckmarkCircle>
+          <Check size={40} color="white" strokeWidth={3} />
+        </CheckmarkCircle>
 
-      <Title>All Set! 🎉</Title>
-      <Subtitle>
-        Your music profile is ready. Let's start discovering songs that match your vibe!
-      </Subtitle>
+        <Title>All Set! 🎉</Title>
+        <Subtitle>
+          Your music profile is ready. Let's start discovering songs that match your vibe!
+        </Subtitle>
 
-      <ResultsSection>
-        {answers.genres && answers.genres.length > 0 && (
-          <ResultItem>
-            <ResultLabel>Genres to Avoid</ResultLabel>
-            <ResultList>
-              {answers.genres.map((genre) => (
-                <Tag key={genre}>{genre}</Tag>
-              ))}
-            </ResultList>
-          </ResultItem>
-        )}
+        <ResultsSection>
+          {answers.genres && answers.genres.length > 0 && (
+            <ResultItem>
+              <ResultLabel>Genres to Avoid</ResultLabel>
+              <ResultList>
+                {answers.genres.map((genre) => (
+                  <Tag key={genre}>{genre}</Tag>
+                ))}
+              </ResultList>
+            </ResultItem>
+          )}
 
-        {answers.listen_time && (
-          <ResultItem>
-            <ResultLabel>Listening Time</ResultLabel>
-            <ResultValue>{answers.listen_time}</ResultValue>
-          </ResultItem>
-        )}
+          {answers.listen_time && (
+            <ResultItem>
+              <ResultLabel>Listening Time</ResultLabel>
+              <ResultValue>{answers.listen_time}</ResultValue>
+            </ResultItem>
+          )}
 
-        {answers.listen_location && (
-          <ResultItem>
-            <ResultLabel>Listening Location</ResultLabel>
-            <ResultValue>{answers.listen_location}</ResultValue>
-          </ResultItem>
-        )}
+          {answers.listen_location && (
+            <ResultItem>
+              <ResultLabel>Listening Location</ResultLabel>
+              <ResultValue>{answers.listen_location}</ResultValue>
+            </ResultItem>
+          )}
 
-        {answers.decade && (
-          <ResultItem>
-            <ResultLabel>Favorite Decade</ResultLabel>
-            <ResultValue>{answers.decade}</ResultValue>
-          </ResultItem>
-        )}
-      </ResultsSection>
+          {answers.decade && (
+            <ResultItem>
+              <ResultLabel>Favorite Decade</ResultLabel>
+              <ResultValue>{answers.decade}</ResultValue>
+            </ResultItem>
+          )}
+        </ResultsSection>
 
-      <Button onClick={handleContinue}>Start Exploring</Button>
-    </Container>
+        <Button onClick={handleContinue}>Start Exploring</Button>
+      </Container>
+
+      {showTutorial && <TutorialCarousel onComplete={handleTutorialComplete} />}
+    </>
   );
 }
 

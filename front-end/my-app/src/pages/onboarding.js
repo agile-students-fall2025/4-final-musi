@@ -4,6 +4,7 @@ import { RiCloseCircleLine } from "react-icons/ri";
 import { theme } from "../theme";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import TutorialCarousel from "../components/TutorialCarousel";
 
 const questions = [
   {
@@ -163,6 +164,7 @@ function Onboarding() {
     listen_location: "",
     decade: "",
   });
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const currentQuestion = questions[step];
   const progress = ((step + 1) / questions.length) * 100;
@@ -200,55 +202,62 @@ function Onboarding() {
         console.log("Onboarding submitted successfully:", response.data);
 
         // Navigate to results page with answers
-        navigate("/onboarding/results", { state: { answers } });
+        navigate("/onboarding-results", { state: { answers } });
       } catch (error) {
         console.error("Error submitting onboarding:", error);
-        // Still show results even if backend fails
-        navigate("/onboarding/results", { state: { answers } });
+        // Still navigate to results even if backend fails
+        navigate("/onboarding-results", { state: { answers } });
       }
     }
   };
-  return (
-    <Container>
-      <ProgressContainer>
-        <ProgressBar>
-          <ProgressFill progress={progress} />
-        </ProgressBar>
-        {/* <ProgressText>
-          {step + 1} of {questions.length}
-        </ProgressText> */}
-      </ProgressContainer>
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    // Go to app after tutorial
+    navigate("/app");
+  };
 
-      <Title>{currentQuestion.title}</Title>
-      <CategoryList>
-        {currentQuestion.type === "multi" &&
-          currentQuestion.options.map((cat) => (
-            <CategoryItem
-              key={cat}
-              selected={answers.genres.includes(cat)}
-              onClick={() => toggleGenre(cat)}
-            >
-              {cat}
-              <IconWrapper>
-                <RiCloseCircleLine />
-              </IconWrapper>
-            </CategoryItem>
-          ))}
-        {currentQuestion.type === "single" &&
-          currentQuestion.options.map((option) => (
-            <OptionItem
-              key={option}
-              selected={answers[currentQuestion.id] === option}
-              onClick={() => selectOption(currentQuestion.id, option)}
-            >
-              {option}
-            </OptionItem>
-          ))}
-      </CategoryList>
-      <ContinueButton onClick={handleContinue}>
-        {step < questions.length - 1 ? "Continue" : "Submit"}
-      </ContinueButton>
-    </Container>
+  return (
+    <>
+      <Container>
+        <ProgressContainer>
+          <ProgressBar>
+            <ProgressFill progress={progress} />
+          </ProgressBar>
+        </ProgressContainer>
+
+        <Title>{currentQuestion.title}</Title>
+        <CategoryList>
+          {currentQuestion.type === "multi" &&
+            currentQuestion.options.map((cat) => (
+              <CategoryItem
+                key={cat}
+                selected={answers.genres.includes(cat)}
+                onClick={() => toggleGenre(cat)}
+              >
+                {cat}
+                <IconWrapper>
+                  <RiCloseCircleLine />
+                </IconWrapper>
+              </CategoryItem>
+            ))}
+          {currentQuestion.type === "single" &&
+            currentQuestion.options.map((option) => (
+              <OptionItem
+                key={option}
+                selected={answers[currentQuestion.id] === option}
+                onClick={() => selectOption(currentQuestion.id, option)}
+              >
+                {option}
+              </OptionItem>
+            ))}
+        </CategoryList>
+        <ContinueButton onClick={handleContinue}>
+          {step < questions.length - 1 ? "Continue" : "Submit"}
+        </ContinueButton>
+      </Container>
+
+      {showTutorial && <TutorialCarousel onComplete={handleTutorialComplete} />}
+    </>
   );
 }
 
