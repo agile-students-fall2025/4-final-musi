@@ -16,7 +16,11 @@ const userSchema = new Schema(
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
-    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }]
+    reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    lastLoginDate: { type: Date, default: null },
+    totalLogins: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
@@ -32,6 +36,52 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// ===== STREAK METHOD =====
+userSchema.methods.updateStreak = function() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // If no last login, start streak at 1
+  if (!this.lastLoginDate) {
+    this.currentStreak = 1;
+    this.longestStreak = 1;
+    this.lastLoginDate = today;
+    this.totalLogins = 1;
+    return { streakIncreased: true, newStreak: true };
+  }
+
+  const lastLogin = new Date(this.lastLoginDate);
+  const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+  
+  const daysDifference = Math.floor((today - lastLoginDay) / (1000 * 60 * 60 * 24));
+
+  // Same day - don't update streak
+  if (daysDifference === 0) {
+    return { streakIncreased: false, sameDay: true };
+  }
+
+  // Consecutive day - increment streak
+  if (daysDifference === 1) {
+    this.currentStreak += 1;
+    this.lastLoginDate = today;
+    this.totalLogins += 1;
+
+    if (this.currentStreak > this.longestStreak) {
+      this.longestStreak = this.currentStreak;
+    }
+    
+    return { streakIncreased: true, consecutive: true };
+  } 
+  
+  // Missed days - reset streak
+  if (daysDifference > 1) {
+    this.currentStreak = 1;
+    this.lastLoginDate = today;
+    this.totalLogins += 1;
+    
+    return { streakIncreased: false, streakBroken: true };
+  }
+};
 
 /* ============================
     SONG

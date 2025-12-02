@@ -13,7 +13,6 @@ export default function ConfirmOverlay({
 }) {
   const cardRef = useRef(null);
 
-  // Close on ESC and lock body scroll while open
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onCancel?.();
@@ -72,7 +71,7 @@ export default function ConfirmOverlay({
           padding: 20px;
         }
         .confirm-card {
-        z-index: 1000;
+          z-index: 1000;
           width: 100%;
           max-width: 400px;
           background: #fff;
@@ -110,11 +109,11 @@ export default function ConfirmOverlay({
           color: #111;
         }
         .btn-confirm {
-          color: #b0b0b0; /* default muted (like your mock) */
+          color: #b0b0b0;
           font-weight: 500;
         }
-        .btn-confirm.destructive:not(:disabled) {
-          color: #C53B37; /* destructive red when enabled */
+        .btn-confirm.destructive {
+          color: #ff3b30 !important;
           font-weight: 600;
         }
         .btn-confirm:disabled {
