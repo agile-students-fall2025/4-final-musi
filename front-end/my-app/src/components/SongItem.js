@@ -95,6 +95,7 @@ export default function SongItem({
   onBookmarkClick,
   bookmarked = false,
   imageUrl,
+  onPlusClick,
 }) {
   return (
     <Card onClick={onClick}>
@@ -116,7 +117,13 @@ export default function SongItem({
       <RightSection>
         {showScore && <Score>{score}</Score>}
         {showPlus && (
-          <CircleIconButton aria-label="Add">
+          <CircleIconButton
+            aria-label="Add"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onPlusClick) onPlusClick();
+            }}
+          >
             <Plus size={20} color={theme.colors.text} />
           </CircleIconButton>
         )}

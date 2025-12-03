@@ -292,30 +292,44 @@ app.get('/api/lists', async (req, res) => {
       const wantIds = Array.isArray(user?.wantList) ? user.wantList : [];
 
       if (wantIds.length) {
-        const [songs, albums] = await Promise.all([
+        const [songs, albums, reviews] = await Promise.all([
           Song.find({ spotifyId: { $in: wantIds } }).lean().exec(),
           Album.find({ spotifyId: { $in: wantIds } }).lean().exec(),
+          Review.find({ userId }).select('targetId').lean().exec(),
         ]);
 
+        const reviewedIds = new Set(reviews.map((r) => r.targetId));
+
+        const slugify = (type, artistName, titleName) =>
+          `${type}-${artistName}-${titleName}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
+
         rows = [
-          ...songs.map((s) => ({
-            id: s._id,
-            title: s.title || 'Unknown',
-            artist: s.artist || 'Unknown',
-            imageUrl: s.coverUrl || '',
-            tags: [],
-            score: null,
-            musicType: 'Song',
-          })),
-          ...albums.map((a) => ({
-            id: a._id,
-            title: a.title || 'Unknown',
-            artist: a.artist || 'Unknown',
-            imageUrl: a.coverUrl || '',
-            tags: [],
-            score: null,
-            musicType: 'Album',
-          })),
+          ...songs
+            .filter((s) => !reviewedIds.has(slugify('Song', s.artist || '', s.title || '')))
+            .map((s) => ({
+              id: s._id,
+              spotifyId: s.spotifyId,
+              title: s.title || 'Unknown',
+              artist: s.artist || 'Unknown',
+              imageUrl: s.coverUrl || '',
+              tags: [],
+              score: null,
+              musicType: 'Song',
+            })),
+          ...albums
+            .filter((a) => !reviewedIds.has(slugify('Album', a.artist || '', a.title || '')))
+            .map((a) => ({
+              id: a._id,
+              spotifyId: a.spotifyId,
+              title: a.title || 'Unknown',
+              artist: a.artist || 'Unknown',
+              imageUrl: a.coverUrl || '',
+              tags: [],
+              score: null,
+              musicType: 'Album',
+            })),
         ];
       }
     } else {
@@ -384,6 +398,24 @@ app.post('/api/want', async (req, res) => {
       coverUrl: imageUrl,
     };
 
+    // If this item is already reviewed, don't keep it in wantList
+    const slugBase = `${(musicType || 'Song')}-${artist}-${title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    const alreadyReviewed = await Review.findOne({
+      userId,
+      targetId: slugBase,
+    }).lean().exec();
+
+    if (alreadyReviewed) {
+      // Ensure it's removed from wantList if present
+      user.wantList = (user.wantList || []).filter(
+        (id) => id !== spotifyId && id !== slugBase
+      );
+      await user.save();
+      return res.json({ ok: true, wantList: user.wantList });
+    }
+
     if (normalizedType === 'Song') {
       await Song.findOneAndUpdate(
         { spotifyId },
@@ -443,16 +475,22 @@ app.get('/api/tabs', async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [listenedCount, user] = await Promise.all([
+    const [listenedCount, user, reviews] = await Promise.all([
       Review.countDocuments({ userId }),
       User.findById(userId).select('wantList').lean().exec(),
+      Review.find({ userId }).select('targetId').lean().exec(),
     ]);
 
-    const wantCount = Array.isArray(user?.wantList) ? user.wantList.length : 0;
+    const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+    const reviewedIds = new Set(reviews.map((r) => r.targetId));
+
+    // Count only want-list items that are NOT already in listened
+    const effectiveWantCount = wantList.filter((id) => !reviewedIds.has(id))
+      .length;
 
     const tabs = [
       { key: "listened", label: "Listened", count: listenedCount },
-      { key: "want", label: "Want to listen", count: wantCount },
+      { key: "want", label: "Want to listen", count: effectiveWantCount },
       { key: "recs", label: "Recs" },
       { key: "trending", label: "Trending" },
       { key: "recs from friends", label: "Recs from friends" },
