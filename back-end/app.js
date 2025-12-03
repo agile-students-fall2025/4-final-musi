@@ -813,6 +813,7 @@ app.get('/api/profile', async (req, res) => {
       streakDays: user.currentStreak || 0,
       listenedCount: user.reviews?.length || 0,
       wantCount: 0, // TODO: Implement want list
+      profilePictureUrl: user.profilePictureUrl || "",
     };
 
     // Mock activity data (replace with real reviews later)
