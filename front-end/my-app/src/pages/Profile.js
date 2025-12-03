@@ -574,8 +574,15 @@ function Profile() {
 
   // nav handlers
 
-  const handleFollowersClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
-  const handleFollowingClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
+  const handleFollowersClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'followers' },
+    });
+
+  const handleFollowingClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'following' },
+    });
 
   // Navigate to music page from feed item
   const goToMusicFromFeed = (item) => {

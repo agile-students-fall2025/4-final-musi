@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiSearch } from 'react-icons/fi';
 import SongItem from "../components/SongItem";
+import UserRow from "../components/UserRow";
 import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -65,9 +66,20 @@ const ResultsContainer = styled.div`
   margin-top: 16px;
 `;
 
+const SectionTitle = styled.h2`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${theme.colors.text_secondary};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 16px 0 8px;
+  text-align: left;
+`;
+
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
+  const [userResults, setUserResults] = useState([]);
   const navigate = useNavigate();
 
   const handleSearch = async (term) => {
@@ -75,17 +87,25 @@ function Search() {
     
     if (term.trim() === '') {
       setResults([]);
+      setUserResults([]);
       return;
     }
     
     try {
-      const response = await axios.get('http://localhost:3001/api/search', {
+      const [musicRes, userRes] = await Promise.all([
+        axios.get('http://localhost:3001/api/search', {
+          params: { q: term }
+        }),
+        axios.get('http://localhost:3001/api/search/users', {
         params: { q: term }
-      });
-      setResults(response.data || []);
+        })
+      ]);
+      setResults(musicRes.data || []);
+      setUserResults(userRes.data || []);
     } catch (e) {
-      console.error('Error searching songs:', e);
+      console.error('Error searching:', e);
       setResults([]);
+      setUserResults([]);
     }
   };
 
@@ -112,6 +132,27 @@ function Search() {
       </Header>
 
       <ResultsContainer>
+        {userResults.length > 0 && (
+          <>
+            <SectionTitle>Users</SectionTitle>
+            {userResults.map((user) => (
+              <UserRow
+                key={user.id}
+                user={user}
+                activeTab="followers"
+                onUnfollow={() => {}}
+                onFollowBack={() => {}}
+                onClickUser={(u) =>
+                  navigate(`/app/user/${encodeURIComponent(u.username)}`)
+                }
+              />
+            ))}
+          </>
+        )}
+
+        {results.length > 0 && (
+          <SectionTitle>Music</SectionTitle>
+        )}
         {results.map((item) => (
           <SongItem
             key={item.id}

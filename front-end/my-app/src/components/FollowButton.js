@@ -19,13 +19,29 @@ const Button = styled.button`
   }
 `;
 
-export default function FollowButton({ initialFollow = false }) {
+export default function FollowButton({ initialFollow = false, onToggle }) {
   const [isFollowing, setIsFollowing] = useState(initialFollow);
+
+  React.useEffect(() => {
+    setIsFollowing(initialFollow);
+  }, [initialFollow]);
+
+  const handleClick = async () => {
+    if (onToggle) {
+      try {
+        await onToggle(!isFollowing);
+      } catch (e) {
+        // if backend fails, do not flip local state
+        return;
+      }
+    }
+    setIsFollowing((prev) => !prev);
+  };
 
   return (
     <Button
       following={isFollowing}
-      onClick={() => setIsFollowing(!isFollowing)}
+      onClick={handleClick}
     >
       {isFollowing ? 'Following' : 'Follow'}
     </Button>

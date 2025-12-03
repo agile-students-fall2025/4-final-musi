@@ -3,11 +3,17 @@ import './Followers.css';
 import TabButton from '../components/TabButton';
 import UserRow from '../components/UserRow';
 import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 
 function Followers() {
   const { username } = useParams();
-  const [activeTab, setActiveTab] = useState('followers');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const initialTab =
+    (location.state && location.state.initialTab) || 'followers';
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [followers, setFollowers] = useState([]); 
@@ -56,13 +62,21 @@ function Followers() {
     }
   };
 
-  const filteredFollowers = followers.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFollowers = followers.filter(user => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (user.name || '').toLowerCase().includes(term) ||
+      (user.username || '').toLowerCase().includes(term)
+    );
+  });
 
-  const filteredFollowing = following.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFollowing = following.filter(user => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (user.name || '').toLowerCase().includes(term) ||
+      (user.username || '').toLowerCase().includes(term)
+    );
+  });
 
   const listToDisplay = activeTab === 'followers' ? filteredFollowers : filteredFollowing;
   
@@ -117,6 +131,9 @@ function Followers() {
             activeTab={activeTab}
             onUnfollow={() => handleUnfollow(user.id)}
             onFollowBack={() => handleFollowBack(user.id)}
+            onClickUser={(u) =>
+              navigate(`/app/user/${encodeURIComponent(u.username.replace('@', ''))}`)
+            }
           />
         ))}
       </main>
