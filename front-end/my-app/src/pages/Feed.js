@@ -65,7 +65,16 @@ const Avatar = styled.div`
   font-size: 0.9rem;
 `;
 const UserDetails = styled.div`flex: 1;`;
-const UserName = styled.div`font-weight: 600; font-size: 0.9rem; color: #333; text-align: left;`;
+const UserName = styled.div`
+  font-weight: 600; 
+  font-size: 0.9rem; 
+  color: #333; 
+  text-align: left;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
 const ActivityText = styled.div`font-size: 0.85rem; color: #666; margin-bottom: 4px; text-align: left;`;
 const TimeStamp = styled.div`font-size: 0.8rem; color: #999; text-align: left;`;
 const Artwork = styled.div`
@@ -281,7 +290,15 @@ function Feed() {
                   .toUpperCase()}
             </Avatar>
             <UserDetails>
-              <UserName>{item.user}</UserName>
+              <UserName
+                onClick={() => {
+                  if (item.username) {
+                    navigate(`/app/user/${encodeURIComponent(item.username)}`);
+                  }
+                }}
+              >
+                {item.user}
+              </UserName>
               <ActivityText>
                 {item.activity}{" "}
                 <span

@@ -47,6 +47,14 @@ const Avatar = styled.div`
   background: #d3d3d3;
   position: relative;
   margin-bottom: 16px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 2rem;
 `;
 
 const EditIcon = styled.button`
@@ -108,6 +116,14 @@ const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+`;
+
+const StatItemClickable = styled(StatItem)`
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 
 const StatValue = styled.div`
@@ -535,6 +551,16 @@ function User() {
     );
   };
 
+  const handleFollowersClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'followers' },
+    });
+
+  const handleFollowingClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'following' },
+    });
+
   return (
     <>
       <Container>
@@ -552,32 +578,53 @@ function User() {
         </Header>
 
         <ProfileSection>
-          <Avatar>
-            <EditIcon onClick={() => setShowEditModal(true)}>
-              <Edit size={16} />
-            </EditIcon>
+          <Avatar
+            style={
+              profile.profilePictureUrl
+                ? {
+                    backgroundImage: `url(${profile.profilePictureUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : {
+                    backgroundColor: profile.avatarColor || "#666",
+                  }
+            }
+          >
+            {!profile.profilePictureUrl &&
+              (profile.name || profile.username || "")
+                .trim()
+                .charAt(0)
+                .toUpperCase()}
+            {profile.isCurrentUser && (
+              <EditIcon onClick={() => setShowEditModal(true)}>
+                <Edit size={16} />
+              </EditIcon>
+            )}
           </Avatar>
           <Username>@{profile.username}</Username>
           <Bio>{profile.bio}</Bio>
           <MemberSince>Member since {formatDate(profile.dateJoined)}</MemberSince>
 
-          <ButtonGroup>
-            <FollowButton
-              initialFollow={isFollowing}
-              onToggle={handleToggleFollow}
-            />
-          </ButtonGroup>
+          {!profile.isCurrentUser && (
+            <ButtonGroup>
+              <FollowButton
+                initialFollow={isFollowing}
+                onToggle={handleToggleFollow}
+              />
+            </ButtonGroup>
+          )}
         </ProfileSection>
 
         <StatsRow>
-          <StatItem>
+          <StatItemClickable onClick={handleFollowersClick}>
             <StatValue>{profile.followers}</StatValue>
             <StatLabel>Followers</StatLabel>
-          </StatItem>
-          <StatItem>
+          </StatItemClickable>
+          <StatItemClickable onClick={handleFollowingClick}>
             <StatValue>{profile.following}</StatValue>
             <StatLabel>Following</StatLabel>
-          </StatItem>
+          </StatItemClickable>
           <StatItem>
             <StatValue>#2</StatValue>
             <StatLabel>Rank on Musi</StatLabel>

@@ -1,8 +1,45 @@
 import "./UserRow.css";
 
-function UserRow({ user, activeTab, onUnfollow, onFollowBack, onClickUser }) {
+function UserRow({ user, activeTab, onUnfollow, onFollowBack, onClickUser, context }) {
   let button;
-  if (activeTab === 'followers') {
+
+  // Search context: show Follow / Following / Follow back based on relationship flags
+  if (context === "search") {
+    const isFollowing = !!user.isFollowing;
+    const isFollower = !!user.isFollower;
+
+    if (isFollowing) {
+      // Already following -> "Following"
+      button = (
+        <button
+          onClick={onUnfollow}
+          className="user-action-btn following"
+        >
+          Following
+        </button>
+      );
+    } else if (isFollower) {
+      // They follow you but you don't follow them -> "Follow back"
+      button = (
+        <button
+          onClick={onFollowBack}
+          className="user-action-btn follow-back"
+        >
+          Follow back
+        </button>
+      );
+    } else {
+      // Neither follows the other yet -> "Follow"
+      button = (
+        <button
+          onClick={onFollowBack}
+          className="user-action-btn follow-back"
+        >
+          Follow
+        </button>
+      );
+    }
+  } else if (activeTab === 'followers') {
     if (user.mutual) {
       button = (
         <button 

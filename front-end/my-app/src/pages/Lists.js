@@ -48,6 +48,38 @@ const Main = styled.main`
   padding: 20px;
 `;
 
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: ${theme.colors.text_secondary};
+`;
+
+const EmptyStateText = styled.p`
+  font-size: 1rem;
+  margin-bottom: 16px;
+  color: ${theme.colors.text_secondary};
+`;
+
+const EmptyStateButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background-color: #000;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+`;
+
 // Convert UI tab labels to backend `tab` keys
 const tabToApi = (key) => {
   switch (key) {
@@ -140,8 +172,22 @@ export default function Lists() {
           <Tabs tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
         )}
 
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {songs.map((song, i) => (
+        {songs.length === 0 && (activeTab === "listened" || activeTab === "want") ? (
+          <EmptyState>
+            <EmptyStateText>
+              {activeTab === "listened"
+                ? "You haven't reviewed any songs yet"
+                : "Your Want to listen list is empty"}
+            </EmptyStateText>
+            <EmptyStateButton onClick={() => navigate("/app/search")}>
+              {activeTab === "listened"
+                ? "Find a song to review"
+                : "Find songs to add"}
+            </EmptyStateButton>
+          </EmptyState>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {songs.map((song, i) => (
             <li
               key={`${song.id ?? `${song.artist}-${song.title}`}-${i}`}
               onClick={() => goToMusic(song)}
@@ -198,7 +244,8 @@ export default function Lists() {
               />
             </li>
           ))}
-        </ul>
+          </ul>
+        )}
       </Main>
     </Container>
   );
