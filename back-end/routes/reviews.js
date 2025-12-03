@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Review, Song, Album } = require('../models'); 
+const { Review, Song, Album, User } = require('../models'); 
 const auth = require('../middleware/auth');
 
 router.get('/my-list', auth, async (req, res) => {
@@ -46,7 +46,8 @@ router.post('/rate-ranked', auth, async (req, res) => {
     ratingIndex,
     title,
     artist,
-    imageUrl
+    imageUrl,
+    spotifyId
   } = req.body; 
   
   const targetId = `${targetType}-${artist}-${title}`
@@ -119,6 +120,69 @@ router.post('/rate-ranked', auth, async (req, res) => {
     });
 
     await Promise.all(updatePromises);
+
+    // Remove from want list if present (handle different ID formats)
+    try {
+      const user = await User.findById(userId);
+      if (user && Array.isArray(user.wantList) && user.wantList.length > 0) {
+        const originalLength = user.wantList.length;
+        
+        // Normalize the targetId for comparison
+        const normalizedTargetId = targetId.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        
+        // Also look up Songs/Albums to find matching spotifyIds
+        // (Song and Album are already imported at the top)
+        const [songs, albums] = await Promise.all([
+          Song.find({ spotifyId: { $in: user.wantList } }).select('spotifyId title artist').lean().exec(),
+          Album.find({ spotifyId: { $in: user.wantList } }).select('spotifyId title artist').lean().exec(),
+        ]);
+        
+        const slugify = (type, artistName, titleName) =>
+          `${type}-${artistName}-${titleName}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
+        
+        // Remove items that match:
+        // 1. Exact match with targetId
+        // 2. Exact match with spotifyId (if provided)
+        // 3. Normalized match (handles different formatting)
+        // 4. Match via Song/Album lookup (generate targetId from stored metadata)
+        user.wantList = user.wantList.filter((id) => {
+          // Exact match with targetId
+          if (id === targetId) return false;
+          
+          // Exact match with spotifyId (if provided)
+          if (spotifyId && id === spotifyId) return false;
+          
+          // Normalized match (handles different formatting)
+          const normalizedId = (id || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+          if (normalizedId === normalizedTargetId) return false;
+          
+          // Check if this spotifyId corresponds to the same song/album via metadata
+          const song = songs.find((s) => s.spotifyId === id);
+          if (song) {
+            const songTargetId = slugify('Song', song.artist || '', song.title || '');
+            if (songTargetId === targetId || songTargetId === normalizedTargetId) return false;
+          }
+          
+          const album = albums.find((a) => a.spotifyId === id);
+          if (album) {
+            const albumTargetId = slugify('Album', album.artist || '', album.title || '');
+            if (albumTargetId === targetId || albumTargetId === normalizedTargetId) return false;
+          }
+          
+          return true; // Keep this item
+        });
+        
+        // Only save if something was actually removed
+        if (user.wantList.length < originalLength) {
+          await user.save();
+        }
+      }
+    } catch (wantListError) {
+      // Don't fail the review creation if want list removal fails
+      console.error('Error removing from want list:', wantListError);
+    }
 
     res.json({ 
       msg: "Ranking updated", 

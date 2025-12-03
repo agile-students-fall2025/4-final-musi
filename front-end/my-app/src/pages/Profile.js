@@ -293,8 +293,16 @@ const UserInfo = styled.div`
 const FeedAvatar = styled.div`
   width: 40px;
   height: 40px;
-  background: #ddd;
   border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
 `;
 const UserDetails = styled.div`
   flex: 1;
@@ -732,6 +740,21 @@ useEffect(() => {
     .finally(() => setLoading(false));
 }, []);
 
+// Listen for review submission events to refresh profile data
+useEffect(() => {
+  const handleReviewSubmitted = () => {
+    // Refresh profile data when a review is submitted
+    fetchProfileData().catch((error) => {
+      console.error('Failed to refresh profile after review:', error);
+    });
+  };
+
+  window.addEventListener('reviewSubmitted', handleReviewSubmitted);
+  return () => {
+    window.removeEventListener('reviewSubmitted', handleReviewSubmitted);
+  };
+}, []);
+
 // NEW: Refresh handler
 const handleRefresh = async () => {
   setRefreshing(true);
@@ -1042,7 +1065,7 @@ if (loading) {
           </StatItemClickable>
         </StatsRow>
 
-        <ListItem>
+        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "listened" } })}>
           <ListItemLeft>
             <span>🎧</span>
             <ListItemText>Listened</ListItemText>
@@ -1053,7 +1076,7 @@ if (loading) {
           </div>
         </ListItem>
 
-        <ListItem>
+        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "want" } })}>
           <ListItemLeft>
             <span>🔖</span>
             <ListItemText>Want to listen</ListItemText>
@@ -1135,7 +1158,14 @@ if (loading) {
               activity.map((item) => (
                 <FeedItem key={item.id} style={{ position: "relative" }}>
                   <UserInfo>
-                    <FeedAvatar />
+                    <FeedAvatar
+                      style={{
+                        backgroundImage: item.userAvatar ? `url(${item.userAvatar})` : 'none',
+                        backgroundColor: item.userAvatar ? 'transparent' : (item.userAvatarColor || '#ddd'),
+                      }}
+                    >
+                      {!item.userAvatar && item.username && item.username.charAt(0).toUpperCase()}
+                    </FeedAvatar>
                     <UserDetails>
                       <FeedUserName>{item.user}</FeedUserName>
                       <ActivityText>
