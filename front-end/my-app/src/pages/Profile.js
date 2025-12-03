@@ -12,6 +12,8 @@ import {
   Check,
   Star,
   Flame,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +50,15 @@ const IconButton = styled.button`
   cursor: pointer;
   padding: 8px;
   color: ${theme.colors.text};
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 const ProfileSection = styled.div`
   display: flex;
@@ -62,6 +73,11 @@ const Avatar = styled.div`
   background: #d3d3d3;
   position: relative;
   margin-bottom: 16px;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
 `;
 const EditIcon = styled.button`
   position: absolute;
@@ -76,6 +92,12 @@ const EditIcon = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 `;
 const Username = styled.div`
   font-size: 1rem;
@@ -86,6 +108,8 @@ const Bio = styled.div`
   font-size: 0.9rem;
   color: ${theme.colors.text_secondary};
   margin-bottom: 8px;
+  text-align: center;
+  max-width: 300px;
 `;
 const MemberSince = styled.div`
   font-size: 0.85rem;
@@ -105,6 +129,16 @@ const Button = styled.button`
   border-radius: 8px;
   font-size: 0.9rem;
   cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #f8f8f8;
+    border-color: #d0d0d0;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 const StatsRow = styled.div`
   display: flex;
@@ -121,6 +155,10 @@ const StatItemClickable = styled(StatItem)`
   transition: opacity 0.2s;
   &:hover {
     opacity: 0.7;
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 `;
 const StatValue = styled.div`
@@ -142,6 +180,12 @@ const ListItem = styled.button`
   background: none;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #f9f9f9;
+  }
+  
   &:last-child {
     border-bottom: none;
   }
@@ -173,6 +217,12 @@ const Card = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
 `;
 const CardLabel = styled.div`
   font-size: 0.85rem;
@@ -198,6 +248,11 @@ const Tab = styled.button`
   font-weight: ${(p) => (p.active ? "600" : "400")};
   cursor: pointer;
   color: ${theme.colors.text};
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #f9f9f9;
+  }
 `;
 const TabContent = styled.div`
   padding-bottom: 20px;
@@ -247,6 +302,11 @@ const InsightCard = styled.div`
   background: white;
   border: 1px solid #f0f0f0;
   border-radius: 12px;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
 `;
 const InsightLabel = styled.div`
   font-size: 0.85rem;
@@ -340,8 +400,14 @@ const LikeButton = styled.button`
   font-size: 0.85rem;
   color: #666;
   padding: 0;
+  transition: all 0.2s;
+  
   &:hover {
     color: #333;
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 `;
 const InteractionRight = styled.div`
@@ -388,6 +454,11 @@ const CloseButton = styled.button`
   color: ${theme.colors.text};
   position: absolute;
   left: 0;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 const ModalTitle = styled.h2`
   font-size: 1rem;
@@ -408,6 +479,11 @@ const EditPhotoButton = styled.button`
   font-size: 1rem;
   cursor: pointer;
   padding: 8px;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 const FormSection = styled.div`
   display: flex;
@@ -424,6 +500,11 @@ const FormItem = styled.button`
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
   text-align: left;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #f9f9f9;
+  }
 `;
 const FormLabel = styled.div`
   font-size: 1rem;
@@ -463,6 +544,11 @@ const CancelButton = styled.button`
   color: ${theme.colors.text};
   font-size: 1rem;
   cursor: pointer;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 const InputModalTitle = styled.h2`
   font-size: 1rem;
@@ -521,9 +607,149 @@ const SaveButton = styled.button`
   bottom: 0;
   left: 0;
   right: 0;
+  transition: opacity 0.2s;
+  
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
   &:disabled {
     background: #ccc;
     cursor: not-allowed;
+  }
+`;
+
+// ===== NEW: Enhanced Components =====
+
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+`;
+
+const EmptyStateIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+`;
+
+const EmptyStateTitle = styled.div`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${theme.colors.text};
+  margin-bottom: 8px;
+`;
+
+const EmptyStateText = styled.div`
+  font-size: 0.9rem;
+  color: ${theme.colors.text_secondary};
+  max-width: 300px;
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+`;
+
+const ErrorIcon = styled(AlertCircle)`
+  color: #e5534b;
+  margin-bottom: 16px;
+`;
+
+const ErrorTitle = styled.div`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${theme.colors.text};
+  margin-bottom: 8px;
+`;
+
+const ErrorText = styled.div`
+  font-size: 0.9rem;
+  color: ${theme.colors.text_secondary};
+  margin-bottom: 24px;
+  max-width: 300px;
+`;
+
+const RetryButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: ${theme.colors.accent};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const SuccessToast = styled.div`
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(${p => p.show ? '0' : '-100px'});
+  background: #4caf50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 4000;
+  opacity: ${p => p.show ? '1' : '0'};
+  transition: all 0.3s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const LoadingSkeleton = styled.div`
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+  border-radius: ${p => p.radius || '4px'};
+  width: ${p => p.width || '100%'};
+  height: ${p => p.height || '20px'};
+  margin: ${p => p.margin || '0'};
+  
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+`;
+
+const RefreshButton = styled(IconButton)`
+  animation: ${p => p.spinning ? 'spin 1s linear infinite' : 'none'};
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -538,39 +764,72 @@ function Profile() {
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // NEW: Success toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // API state
-  const [profile, setProfile] = useState(null); // {name, username, bio, memberSince, followers, following, rank, streak, listenedCount, wantCount}
-  const [activity, setActivity] = useState([]); // feed items
-  const [genres, setGenres] = useState([]); // [{name,value,color}]
-  const [topTracks, setTopTracks] = useState([]); // [{id,title,artist,tags,score}]
-  const [insights, setInsights] = useState({}); // {artistsListened, songsRated}
+  const [profile, setProfile] = useState(null);
+  const [activity, setActivity] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [topTracks, setTopTracks] = useState([]);
+  const [insights, setInsights] = useState({});
+
+  // NEW: Fetch profile data function for reusability
+  const fetchProfileData = async () => {
+    try {
+      const [profileRes, streakRes] = await Promise.all([
+        axios.get("/api/profile"),
+        axios.get("/api/streak")
+      ]);
+
+      const profileData = profileRes.data || {};
+      const streakData = streakRes.data || {};
+
+      const updatedProfile = {
+        ...profileData.profile,
+        streakDays: streakData.currentStreak,
+      };
+
+      setProfile(updatedProfile);
+      setActivity(profileData.activity || []);
+      setGenres(profileData.taste?.genres || []);
+      setTopTracks(profileData.taste?.topTracks || []);
+      setInsights(profileData.taste?.insights || {});
+      setErr(null);
+    } catch (error) {
+      setErr(error.message || "Failed to load profile");
+      throw error;
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
-    setErr(null);
-
-    // Fetch both profile and streak data
-    Promise.all([axios.get("/api/profile"), axios.get("/api/streak")])
-      .then(([profileRes, streakRes]) => {
-        const profileData = profileRes.data || {};
-        const streakData = streakRes.data || {};
-
-        // Update profile with current streak
-        const updatedProfile = {
-          ...profileData.profile,
-          streakDays: streakData.currentStreak,
-        };
-
-        setProfile(updatedProfile);
-        setActivity(profileData.activity || []);
-        setGenres(profileData.taste?.genres || []);
-        setTopTracks(profileData.taste?.topTracks || []);
-        setInsights(profileData.taste?.insights || {});
-      })
-      .catch((e) => setErr(e.message || "Failed to load profile"))
+    fetchProfileData()
       .finally(() => setLoading(false));
   }, []);
+
+  // NEW: Refresh handler
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchProfileData();
+      showSuccess("Profile refreshed!");
+    } catch (error) {
+      // Error already set by fetchProfileData
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // NEW: Success toast helper
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 3000);
+  };
 
   // nav handlers
 
@@ -594,11 +853,9 @@ function Profile() {
     const title = item.title || "";
     
     if (!title || !review.includes(title)) {
-      // If title not in review, just return plain text
       return <>Notes: {review}</>;
     }
 
-    // Split review by the title and make title clickable
     const parts = review.split(title);
     return (
       <>
@@ -663,12 +920,14 @@ function Profile() {
     axios
       .put("/api/profile", payload)
       .then((r) => {
-        setProfile(r.data.profile); // server returns updated profile
+        setProfile(r.data.profile);
         setShowInputModal(false);
         setShowEditModal(true);
+        // NEW: Show success feedback
+        showSuccess("Profile updated successfully!");
       })
       .catch(() => {
-        // if it fails, keep modal open; could show toast
+        // Keep modal open on error
       });
   };
 
@@ -685,18 +944,43 @@ function Profile() {
       ? "Change username"
       : "Change bio";
 
-  if (loading)
+  // NEW: Loading skeleton
+  if (loading) {
     return (
       <Container>
-        <div>Loading…</div>
+        <Header>
+          <LoadingSkeleton width="150px" height="24px" />
+          <HeaderIcons>
+            <LoadingSkeleton width="40px" height="40px" radius="50%" margin="0 4px" />
+            <LoadingSkeleton width="40px" height="40px" radius="50%" margin="0 4px" />
+          </HeaderIcons>
+        </Header>
+        <ProfileSection>
+          <LoadingSkeleton width="120px" height="120px" radius="50%" margin="0 0 16px 0" />
+          <LoadingSkeleton width="150px" height="20px" margin="0 0 8px 0" />
+          <LoadingSkeleton width="200px" height="16px" margin="0 0 24px 0" />
+        </ProfileSection>
+        <LoadingSkeleton width="100%" height="200px" margin="24px 0" />
       </Container>
     );
-  if (err || !profile)
+  }
+
+  // NEW: Enhanced error state with retry
+  if (err || !profile) {
     return (
       <Container>
-        <div style={{ color: "#e5534b" }}>Error: {err || "No profile"}</div>
+        <ErrorContainer>
+          <ErrorIcon size={48} />
+          <ErrorTitle>Oops! Something went wrong</ErrorTitle>
+          <ErrorText>{err || "Unable to load profile data"}</ErrorText>
+          <RetryButton onClick={handleRefresh}>
+            <RefreshCw size={16} />
+            Try Again
+          </RetryButton>
+        </ErrorContainer>
       </Container>
     );
+  }
 
   const recordActivity = async (activity = "listened") => {
     try {
@@ -723,10 +1007,24 @@ function Profile() {
 
   return (
     <>
+      {/* NEW: Success toast */}
+      <SuccessToast show={showSuccessToast}>
+        <Check size={16} />
+        {successMessage}
+      </SuccessToast>
+
       <Container>
         <Header>
           <UserName>{profile.name}</UserName>
           <HeaderIcons>
+            {/* NEW: Refresh button */}
+            <RefreshButton 
+              onClick={handleRefresh} 
+              spinning={refreshing}
+              title="Refresh profile"
+            >
+              <RefreshCw size={20} />
+            </RefreshButton>
             <IconButton>
               <Share size={24} />
             </IconButton>
@@ -827,151 +1125,183 @@ function Profile() {
 
         {activeTab === "activity" && (
           <TabContent>
-            {activity.map((item) => (
-              <FeedItem key={item.id}>
-                <UserInfo>
-                  <FeedAvatar />
-                  <UserDetails>
-                    <FeedUserName>{item.user}</FeedUserName>
-                    <ActivityText>
-                      {item.activity}{" "}
-                      <span
-                        style={{ 
-                          color: theme.colors.accent, 
-                          cursor: "pointer", 
-                          fontWeight: 600 
-                        }}
-                        onClick={() => goToMusicFromFeed(item)}
-                      >
-                        {item.title}
-                      </span>{" "}
-                      by {item.artist}
-                    </ActivityText>
-                    <TimeStamp>{item.time}</TimeStamp>
-                  </UserDetails>
-                  <FeedScoreContainer>
-                    <div className="score-item">
-                      <div className="score-circle-container">
-                        <div className="score-circle">
-                          <span className="score-number">{item.rating}</span>
+            {/* NEW: Empty state for no activity */}
+            {activity.length === 0 ? (
+              <EmptyState>
+                <EmptyStateIcon>📻</EmptyStateIcon>
+                <EmptyStateTitle>No activity yet</EmptyStateTitle>
+                <EmptyStateText>
+                  Start rating songs and albums to see your activity here
+                </EmptyStateText>
+              </EmptyState>
+            ) : (
+              activity.map((item) => (
+                <FeedItem key={item.id}>
+                  <UserInfo>
+                    <FeedAvatar />
+                    <UserDetails>
+                      <FeedUserName>{item.user}</FeedUserName>
+                      <ActivityText>
+                        {item.activity}{" "}
+                        <span
+                          style={{ 
+                            color: theme.colors.accent, 
+                            cursor: "pointer", 
+                            fontWeight: 600 
+                          }}
+                          onClick={() => goToMusicFromFeed(item)}
+                        >
+                          {item.title}
+                        </span>{" "}
+                        by {item.artist}
+                      </ActivityText>
+                      <TimeStamp>{item.time}</TimeStamp>
+                    </UserDetails>
+                    <FeedScoreContainer>
+                      <div className="score-item">
+                        <div className="score-circle-container">
+                          <div className="score-circle">
+                            <span className="score-number">{item.rating}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </FeedScoreContainer>
-                </UserInfo>
+                    </FeedScoreContainer>
+                  </UserInfo>
 
-                <AlbumGrid>
-                  <AlbumCover />
-                  <AlbumCover />
-                  <AlbumCover />
-                </AlbumGrid>
-                <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
+                  <AlbumGrid>
+                    <AlbumCover />
+                    <AlbumCover />
+                    <AlbumCover />
+                  </AlbumGrid>
+                  <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
 
-                <InteractionBar>
-                  <InteractionLeft>
-                    <LikeButton onClick={() => handleLike(item.id)}>
-                      <Heart
-                        size={16}
-                        fill={item.isLiked ? "#ff6b6b" : "none"}
-                        color={item.isLiked ? "#ff6b6b" : "#666"}
-                      />
-                      <span>{item.likes} likes</span>
-                    </LikeButton>
-                  </InteractionLeft>
-                  <InteractionRight>
-                    <span>{item.bookmarks} bookmarks</span>
-                  </InteractionRight>
-                </InteractionBar>
-              </FeedItem>
-            ))}
+                  <InteractionBar>
+                    <InteractionLeft>
+                      <LikeButton onClick={() => handleLike(item.id)}>
+                        <Heart
+                          size={16}
+                          fill={item.isLiked ? "#ff6b6b" : "none"}
+                          color={item.isLiked ? "#ff6b6b" : "#666"}
+                        />
+                        <span>{item.likes} likes</span>
+                      </LikeButton>
+                    </InteractionLeft>
+                    <InteractionRight>
+                      <span>{item.bookmarks} bookmarks</span>
+                    </InteractionRight>
+                  </InteractionBar>
+                </FeedItem>
+              ))
+            )}
           </TabContent>
         )}
 
         {activeTab === "taste" && (
           <TabContent>
             <SectionTitle>YOUR TOP GENRES</SectionTitle>
-            <ChartContainer>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={genres}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {genres.map((g, i) => (
-                      <Cell key={i} fill={g.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+            {/* NEW: Handle empty genres */}
+            {genres.length === 0 ? (
+              <EmptyState>
+                <EmptyStateIcon>🎵</EmptyStateIcon>
+                <EmptyStateTitle>No genre data yet</EmptyStateTitle>
+                <EmptyStateText>
+                  Rate more music to see your top genres
+                </EmptyStateText>
+              </EmptyState>
+            ) : (
+              <ChartContainer>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={genres}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {genres.map((g, i) => (
+                        <Cell key={i} fill={g.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
 
-              {/* simple static legends (match colors from server) */}
-              <ChartLegend
-                style={{
-                  left: "10%",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                {genres.slice(2, 4).map((g, i) => (
-                  <React.Fragment key={`L1-${i}`}>
-                    <LegendItem>
-                      <LegendColor color={g.color} />
-                      <span>{g.name}</span>
-                    </LegendItem>
-                    <LegendItem>
-                      <span style={{ marginLeft: "20px", fontSize: ".8rem" }}>
-                        {g.value.toFixed(2)}%
-                      </span>
-                    </LegendItem>
-                  </React.Fragment>
-                ))}
-              </ChartLegend>
-              <ChartLegend
-                style={{
-                  right: "10%",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                {genres.slice(0, 2).map((g, i) => (
-                  <React.Fragment key={`L2-${i}`}>
-                    <LegendItem>
-                      <LegendColor color={g.color} />
-                      <span>{g.name}</span>
-                    </LegendItem>
-                    <LegendItem>
-                      <span style={{ marginLeft: "20px", fontSize: ".8rem" }}>
-                        {g.value.toFixed(2)}%
-                      </span>
-                    </LegendItem>
-                  </React.Fragment>
-                ))}
-              </ChartLegend>
-            </ChartContainer>
+                <ChartLegend
+                  style={{
+                    left: "10%",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  {genres.slice(2, 4).map((g, i) => (
+                    <React.Fragment key={`L1-${i}`}>
+                      <LegendItem>
+                        <LegendColor color={g.color} />
+                        <span>{g.name}</span>
+                      </LegendItem>
+                      <LegendItem>
+                        <span style={{ marginLeft: "20px", fontSize: ".8rem" }}>
+                          {g.value.toFixed(2)}%
+                        </span>
+                      </LegendItem>
+                    </React.Fragment>
+                  ))}
+                </ChartLegend>
+                <ChartLegend
+                  style={{
+                    right: "10%",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
+                  {genres.slice(0, 2).map((g, i) => (
+                    <React.Fragment key={`L2-${i}`}>
+                      <LegendItem>
+                        <LegendColor color={g.color} />
+                        <span>{g.name}</span>
+                      </LegendItem>
+                      <LegendItem>
+                        <span style={{ marginLeft: "20px", fontSize: ".8rem" }}>
+                          {g.value.toFixed(2)}%
+                        </span>
+                      </LegendItem>
+                    </React.Fragment>
+                  ))}
+                </ChartLegend>
+              </ChartContainer>
+            )}
 
             <SectionTitle>YOUR TOP TRACKS</SectionTitle>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {topTracks.map((t, i) => (
-                <li 
-                  key={t.id}
-                  onClick={() => goToTrack(t)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <SongItem
-                    title={t.title}
-                    subtitle={`Song • ${t.artist}`}
-                    meta={t.tags.join(", ")}
-                    score={t.score}
-                    dividerTop={i > 0}
-                  />
-                </li>
-              ))}
-            </ul>
+            {/* NEW: Handle empty tracks */}
+            {topTracks.length === 0 ? (
+              <EmptyState>
+                <EmptyStateIcon>🎤</EmptyStateIcon>
+                <EmptyStateTitle>No top tracks yet</EmptyStateTitle>
+                <EmptyStateText>
+                  Rate more songs to see your favorites here
+                </EmptyStateText>
+              </EmptyState>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {topTracks.map((t, i) => (
+                  <li 
+                    key={t.id}
+                    onClick={() => goToTrack(t)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <SongItem
+                      title={t.title}
+                      subtitle={`Song • ${t.artist}`}
+                      meta={t.tags.join(", ")}
+                      score={t.score}
+                      dividerTop={i > 0}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <SectionTitle>INSIGHTS</SectionTitle>
             <InsightsGrid>

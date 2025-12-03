@@ -12,8 +12,8 @@ Musi is an app where users can rank their favorite songs, create personal lists,
 Sprint Planning   
 Mondays 4:00-4:30 PM
 
-Spring Reviews
-Thursdays 4:00-4:30PM 
+Sprint Reviews
+Thursdays 4:00-4:30 PM 
 
 ## Why work on Musi
 Musi came to be because current music platforms aren't able to capture the social aspect of music. It might be easy to listen to any song you want on a streaming platform, but it's much harder to know what your friends are listening to. Musi helps you express your music tastes to your friends and let them know what you're listening to. Help us make Musi bettter for you by [contributing to the project](https://github.com/agile-students-fall2025/4-final-musi/blob/master/CONTRIBUTING.md).
