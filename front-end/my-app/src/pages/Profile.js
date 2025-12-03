@@ -12,6 +12,7 @@ import {
   Check,
   Star,
   Flame,
+  RefreshCw,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useNavigate } from "react-router-dom";
@@ -558,6 +559,39 @@ const SaveButton = styled.button`
   }
 `;
 
+// ===== NEW: Loading Skeleton =====
+const LoadingSkeleton = styled.div`
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+  border-radius: ${p => p.radius || '4px'};
+  width: ${p => p.width || '100%'};
+  height: ${p => p.height || '20px'};
+  margin: ${p => p.margin || '0'};
+  
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+`;
+
+const RefreshButton = styled(IconButton)`
+  animation: ${p => p.spinning ? 'spin 1s linear infinite' : 'none'};
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 function Profile() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("activity");
@@ -580,6 +614,7 @@ function Profile() {
   const [activeReviewMenuId, setActiveReviewMenuId] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
   const [editingReviewText, setEditingReviewText] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleEditPhotoClick = () => {
     if (fileInputRef.current) {
@@ -612,31 +647,51 @@ function Profile() {
     reader.readAsDataURL(file);
   };
 
-  useEffect(() => {
-    setLoading(true);
+// NEW: Fetch profile data function for reusability
+const fetchProfileData = async () => {
+  try {
+    const [profileRes, streakRes] = await Promise.all([
+      axios.get("/api/profile"),
+      axios.get("/api/streak")
+    ]);
+
+    const profileData = profileRes.data || {};
+    const streakData = streakRes.data || {};
+
+    const updatedProfile = {
+      ...profileData.profile,
+      streakDays: streakData.currentStreak,
+    };
+
+    setProfile(updatedProfile);
+    setActivity(profileData.activity || []);
+    setGenres(profileData.taste?.genres || []);
+    setTopTracks(profileData.taste?.topTracks || []);
+    setInsights(profileData.taste?.insights || {});
     setErr(null);
+  } catch (error) {
+    setErr(error.message || "Failed to load profile");
+    throw error;
+  }
+};
 
-    // Fetch both profile and streak data
-    Promise.all([axios.get("/api/profile"), axios.get("/api/streak")])
-      .then(([profileRes, streakRes]) => {
-        const profileData = profileRes.data || {};
-        const streakData = streakRes.data || {};
+useEffect(() => {
+  setLoading(true);
+  fetchProfileData()
+    .finally(() => setLoading(false));
+}, []);
 
-        // Update profile with current streak
-        const updatedProfile = {
-          ...profileData.profile,
-          streakDays: streakData.currentStreak,
-        };
-
-        setProfile(updatedProfile);
-        setActivity(profileData.activity || []);
-        setGenres(profileData.taste?.genres || []);
-        setTopTracks(profileData.taste?.topTracks || []);
-        setInsights(profileData.taste?.insights || {});
-      })
-      .catch((e) => setErr(e.message || "Failed to load profile"))
-      .finally(() => setLoading(false));
-  }, []);
+// NEW: Refresh handler
+const handleRefresh = async () => {
+  setRefreshing(true);
+  try {
+    await fetchProfileData();
+  } catch (error) {
+    // Error already set by fetchProfileData
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   // nav handlers
 
@@ -758,12 +813,25 @@ function Profile() {
       ? "Change username"
       : "Change bio";
 
-  if (loading)
-    return (
-      <Container>
-        <div>Loading…</div>
-      </Container>
-    );
+if (loading) {
+  return (
+    <Container>
+      <Header>
+        <LoadingSkeleton width="150px" height="24px" />
+        <HeaderIcons>
+          <LoadingSkeleton width="40px" height="40px" radius="50%" margin="0 4px" />
+          <LoadingSkeleton width="40px" height="40px" radius="50%" margin="0 4px" />
+        </HeaderIcons>
+      </Header>
+      <ProfileSection>
+        <LoadingSkeleton width="120px" height="120px" radius="50%" margin="0 0 16px 0" />
+        <LoadingSkeleton width="150px" height="20px" margin="0 0 8px 0" />
+        <LoadingSkeleton width="200px" height="16px" margin="0 0 24px 0" />
+      </ProfileSection>
+      <LoadingSkeleton width="100%" height="200px" margin="24px 0" />
+    </Container>
+  );
+}
   if (err || !profile)
     return (
       <Container>
@@ -858,6 +926,14 @@ function Profile() {
         <Header>
           <UserName>{profile.name}</UserName>
           <HeaderIcons>
+            {/* NEW: Refresh button */}
+            <RefreshButton 
+              onClick={handleRefresh} 
+              spinning={refreshing}
+              title="Refresh profile"
+            >
+              <RefreshCw size={20} />
+            </RefreshButton>
             <IconButton>
               <Share size={24} />
             </IconButton>
