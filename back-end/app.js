@@ -705,62 +705,112 @@ app.get("/api/featured-lists", (req, res) => {
   res.json(FEATURED_LISTS);
 });
 
-// ---- FEED DATA (mock, tabbed) ----
-const FEED_SETS = {
-  "trending": [
-    {
-      id: 1, user: "Mia", activity: "ranked", rating: "7.6", time: "Today",
-      review: "People slept on Views way too hard when it dropped. Yeah, it's moody and self-indulgent, but that's what makes it timeless. The production aged beautifully.",
-      likes: 10, bookmarks: 5, isLiked: false, artist: "Drake", title: "Views", musicType: "Album",
-    },
-    {
-      id: 2, user: "Alex", activity: "ranked", rating: "9.2", time: "2 hours ago",
-      review: "Kendrick really outdid himself here. Every track hits different and the production is insane.",
-      likes: 24, bookmarks: 12, isLiked: false, artist: "Kendrick Lamar", title: "DAMN.", musicType: "Album",
-    },
-  ],
-  "friend-recs": [
-    {
-      id: 3, user: "Sarah", activity: "recommended", rating: "8.8", time: "1 day ago",
-      review: "If you haven't listened to Igor yet, you're missing out. Tyler's evolution as an artist is incredible.",
-      likes: 15, bookmarks: 8, isLiked: false, artist: "Tyler, The Creator", title: "Igor", musicType: "Album",
-    },
-    {
-      id: 4, user: "Jake", activity: "recommended", rating: "9.5", time: "2 days ago",
-      review: "Still the best album of the 2010s. Frank's vocals and the production are otherworldly.",
-      likes: 31, bookmarks: 18, isLiked: false, artist: "Frank Ocean", title: "Blonde", musicType: "Album",
-    },
-  ],
-  "new-releases": [
-    {
-      id: 5, user: "Music Bot", activity: "new release", rating: "8.4", time: "3 hours ago",
-      review: "SZA's highly anticipated follow-up to Ctrl is finally here. R&B perfection with modern twists.",
-      likes: 42, bookmarks: 25, isLiked: false, artist: "SZA", title: "SOS", musicType: "Album",
-    },
-    {
-      id: 6, user: "Music Bot", activity: "new release", rating: "7.9", time: "5 hours ago",
-      review: "Metro proves once again why he's one of the best producers in the game right now.",
-      likes: 28, bookmarks: 14, isLiked: false, artist: "Metro Boomin", title: "Heroes & Villains", musicType: "Album",
-    },
-  ],
-};
+// ---- FEED DATA from DB (following or all users) ----
+app.get("/api/feed", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { tab = "trending" } = req.query;
 
-app.get("/api/feed", (req, res) => {
-  const userId = req.user.id;
-  const { tab = "trending" } = req.query;
-  const items = FEED_SETS[tab] || [];
-  res.json({ tab, total: items.length, items });
+    const currentUser = await User.findById(userId).select("following name username");
+
+    const hasFollowing = currentUser && Array.isArray(currentUser.following) && currentUser.following.length > 0;
+
+    const baseQuery = hasFollowing
+      ? { userId: { $in: currentUser.following } }
+      : {};
+
+    let sortOption;
+    switch (tab) {
+      case "new-releases":
+        sortOption = { createdAt: -1 };
+        break;
+      case "friend-recs":
+        sortOption = { createdAt: -1 };
+        break;
+      case "trending":
+      default:
+        sortOption = { rating: -1, createdAt: -1 };
+        break;
+    }
+
+    const reviews = await Review.find(baseQuery)
+      .sort(sortOption)
+      .limit(50)
+      .lean()
+      .exec();
+
+    if (!reviews.length) {
+      return res.json({ tab, total: 0, items: [] });
+    }
+
+    const reviewerIds = [...new Set(reviews.map((r) => String(r.userId)))];
+    const songIds = reviews
+      .filter((r) => r.targetType === "Song")
+      .map((r) => r.targetId);
+    const albumIds = reviews
+      .filter((r) => r.targetType === "Album")
+      .map((r) => r.targetId);
+
+    const [reviewers, songs, albums] = await Promise.all([
+      User.find({ _id: { $in: reviewerIds } })
+        .select("name username")
+        .lean()
+        .exec(),
+      songIds.length
+        ? Song.find({ spotifyId: { $in: songIds } }).lean().exec()
+        : [],
+      albumIds.length
+        ? Album.find({ spotifyId: { $in: albumIds } }).lean().exec()
+        : [],
+    ]);
+
+    const userMap = new Map(reviewers.map((u) => [String(u._id), u]));
+    const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+    const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+    const items = reviews.map((r) => {
+      const reviewer = userMap.get(String(r.userId)) || {};
+      const isSong = r.targetType === "Song";
+      const meta = isSong
+        ? songMap.get(r.targetId) || {}
+        : albumMap.get(r.targetId) || {};
+
+      const title = meta.title || "Unknown";
+      const artist = meta.artist || "Unknown";
+      const rating = typeof r.rating === "number" ? r.rating.toFixed(1) : "-";
+
+      const createdAt = r.createdAt ? new Date(r.createdAt) : new Date();
+      const time = createdAt.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+
+      return {
+        id: r._id,
+        user: reviewer.name || reviewer.username || "Unknown",
+        activity: "ranked",
+        rating,
+        time,
+        review: r.text || "",
+        likes: 0,
+        bookmarks: 0,
+        isLiked: false,
+        artist,
+        title,
+        musicType: r.targetType,
+      };
+    });
+
+    res.json({ tab, total: items.length, items });
+  } catch (error) {
+    console.error("Error building feed:", error.message);
+    res.status(500).json({ error: "Failed to load feed" });
+  }
 });
 
-// like/unlike toggle (in-memory)
+// like/unlike toggle stub
 app.post("/api/feed/:id/like", (req, res) => {
-  const id = Number(req.params.id);
-  for (const key of Object.keys(FEED_SETS)) {
-    FEED_SETS[key] = FEED_SETS[key].map((it) =>
-      it.id === id ? { ...it, isLiked: !it.isLiked, likes: it.isLiked ? it.likes - 1 : it.likes + 1 } : it
-    );
-  }
-  res.json({ ok: true, id });
+  res.json({ ok: true, id: req.params.id });
 });
 
 app.post('/api/onboarding', (req, res) => {
