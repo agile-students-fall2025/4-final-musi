@@ -204,6 +204,10 @@ export default function Lists() {
                 : "Find songs to add"}
             </EmptyStateButton>
           </EmptyState>
+        ) : songs.length === 0 && activeTab === "new releases" ? (
+          <EmptyState>
+            <EmptyStateText>No new releases available at the moment</EmptyStateText>
+          </EmptyState>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {songs.map((song, i) => (
@@ -217,12 +221,13 @@ export default function Lists() {
                 subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
                 meta={(song.tags ?? []).join(", ")}
                 score={song.score}
-                showScore={activeTab !== "want"}
-                showPlus={activeTab === "want"}
-                showBookmark={activeTab === "want"}
-                bookmarked={activeTab === "want"}
+                showScore={activeTab !== "want" && activeTab !== "new releases"}
+                showPlus={activeTab === "want" || activeTab === "new releases"}
+                showBookmark={activeTab === "want" || activeTab === "new releases"}
+                bookmarked={song.bookmarked || (activeTab === "want")}
                 onPlusClick={() => goToMusic(song)}
-                onBookmarkClick={async () => {
+                onBookmarkClick={async (e) => {
+                  e.stopPropagation();
                   try {
                     const type = song.musicType ?? "Song";
                     const spotifyId =
@@ -231,31 +236,61 @@ export default function Lists() {
                         .toLowerCase()
                         .replace(/[^a-z0-9]/g, "-");
 
-                    await axios.post("http://localhost:3001/api/want/remove", {
-                      spotifyId,
-                    });
+                    if (activeTab === "want") {
+                      // Remove from want list
+                      await axios.post("http://localhost:3001/api/want/remove", {
+                        spotifyId,
+                      });
 
-                    setSongs((prev) =>
-                      prev.filter(
-                        (s, idx) =>
-                          idx !== i &&
-                          (s.id ?? `${s.artist}-${s.title}`) !==
-                            (song.id ?? `${song.artist}-${song.title}`)
-                      )
-                    );
-                    setTabs((prev) =>
-                      prev.map((t) =>
-                        t.key === "want"
-                          ? {
-                              ...t,
-                              count: Math.max(0, (t.count || 0) - 1),
-                            }
-                          : t
-                      )
-                    );
+                      setSongs((prev) =>
+                        prev.filter(
+                          (s, idx) =>
+                            idx !== i &&
+                            (s.id ?? `${s.artist}-${s.title}`) !==
+                              (song.id ?? `${song.artist}-${song.title}`)
+                        )
+                      );
+                      setTabs((prev) =>
+                        prev.map((t) =>
+                          t.key === "want"
+                            ? {
+                                ...t,
+                                count: Math.max(0, (t.count || 0) - 1),
+                              }
+                            : t
+                        )
+                      );
+                    } else if (activeTab === "new releases") {
+                      // Add to want list
+                      if (song.bookmarked) {
+                        await axios.post("http://localhost:3001/api/want/remove", {
+                          spotifyId,
+                        });
+                        setSongs((prev) =>
+                          prev.map((s, idx) =>
+                            idx === i ? { ...s, bookmarked: false } : s
+                          )
+                        );
+                      } else {
+                        await axios.post("http://localhost:3001/api/want", {
+                          spotifyId,
+                          title: song.title,
+                          artist: song.artist,
+                          musicType: type,
+                          imageUrl: song.imageUrl,
+                        });
+                        setSongs((prev) =>
+                          prev.map((s, idx) =>
+                            idx === i ? { ...s, bookmarked: true } : s
+                          )
+                        );
+                      }
+                    }
                   } catch (e) {
-                    console.error("Failed to remove from want list:", e);
-                    alert("Failed to remove from Want to listen");
+                    console.error("Failed to update want list:", e);
+                    alert(activeTab === "want" 
+                      ? "Failed to remove from Want to listen"
+                      : "Failed to update Want to listen");
                   }
                 }}
               imageUrl={song.imageUrl}

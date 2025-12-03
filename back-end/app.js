@@ -357,6 +357,41 @@ app.get('/api/lists', async (req, res) => {
             })),
         ];
       }
+    } else if (tab === 'new') {
+      // Fetch new releases from Spotify
+      try {
+        const accessToken = await getSpotifyAccessToken();
+        const spotifyResp = await axios.get('https://api.spotify.com/v1/browse/new-releases', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            limit: Math.min(lim + off, 50), // Spotify API max is 50
+            offset: off,
+            country: 'US', // You can make this configurable
+          },
+        });
+
+        const albums = spotifyResp.data?.albums?.items || [];
+        const user = await User.findById(userId).select('wantList').lean().exec();
+        const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+
+        rows = albums.map((album) => {
+          const artistNames = (album.artists || []).map((a) => a.name).join(', ');
+          return {
+            id: album.id,
+            spotifyId: album.id,
+            title: album.name || 'Unknown',
+            artist: artistNames || 'Unknown',
+            imageUrl: album.images?.[0]?.url || '',
+            tags: album.album_type ? [album.album_type] : [],
+            score: null,
+            musicType: 'Album',
+            bookmarked: wantList.includes(album.id),
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching new releases from Spotify:', error.response ? error.response.data : error.message);
+        rows = [];
+      }
     } else {
       // For now, unsupported tabs return empty
       rows = [];
