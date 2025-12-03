@@ -6,6 +6,7 @@ import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import '../components/Score.css';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -446,12 +447,109 @@ const SectionDivider = styled.div`
   height: 16px;
 `;
 
+// Feed styled components for activity
+const FeedItem = styled.div`
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+`;
+
+const FeedAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+`;
+
+const UserDetails = styled.div`
+  flex: 1;
+`;
+
+const FeedUserName = styled.div`
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  text-align: left;
+`;
+
+const ActivityText = styled.div`
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: left;
+`;
+
+const TimeStamp = styled.div`
+  font-size: 0.8rem;
+  color: #999;
+  text-align: left;
+`;
+
+const FeedScoreContainer = styled.div`
+  .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
+  .score-number{ font-size:1rem!important; font-weight:600!important;}
+`;
+
+const Artwork = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  background: #666;
+  background-size: cover;
+  background-position: center;
+  margin: 12px 0;
+`;
+
+const ReviewText = styled.p`
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.4;
+  margin: 12px 0;
+  text-align: left;
+`;
+
+const InteractionBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+`;
+
+const InteractionLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: #666;
+`;
+
+const InteractionRight = styled.div`
+  font-size: 0.85rem;
+  color: #666;
+`;
+
 function User() {
   const { username } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [activity, setActivity] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -478,6 +576,7 @@ function User() {
 
         const data = response.data.profile;
         setProfile(data);
+        setActivity(response.data.activity || []);
         setIsFollowing(!!data.isFollowing);
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -643,24 +742,24 @@ function User() {
           </StatItemClickable>
         </StatsRow>
 
-        <ListItem>
+        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "listened" } })}>
           <ListItemLeft>
             <span>🎧</span>
             <ListItemText>Listened</ListItemText>
           </ListItemLeft>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ListItemCount>0</ListItemCount>
+            <ListItemCount>{profile.listenedCount || 0}</ListItemCount>
             <ChevronRight size={20} color="#999" />
           </div>
         </ListItem>
 
-        <ListItem>
+        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "want" } })}>
           <ListItemLeft>
             <span>🔖</span>
             <ListItemText>Want to listen</ListItemText>
           </ListItemLeft>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ListItemCount>0</ListItemCount>
+            <ListItemCount>{profile.wantCount || 0}</ListItemCount>
             <ChevronRight size={20} color="#999" />
           </div>
         </ListItem>
@@ -697,9 +796,87 @@ function User() {
 
         {activeTab === 'activity' && (
           <TabContent>
-            <p style={{ color: theme.colors.text_secondary, textAlign: 'center', padding: '40px 0' }}>
-              No recent activity
-            </p>
+            {activity.length === 0 ? (
+              <div
+                style={{
+                  color: theme.colors.text_secondary,
+                  textAlign: 'center',
+                  padding: '40px 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}
+              >
+                <p>No recent activity</p>
+              </div>
+            ) : (
+              activity.map((item) => {
+                const goToMusic = () => {
+                  const musicType = item.musicType || 'Song';
+                  navigate(`/app/music/${encodeURIComponent(musicType)}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`);
+                };
+
+                return (
+                  <FeedItem key={item.id}>
+                    <UserInfo>
+                      <FeedAvatar
+                        style={{
+                          backgroundImage: item.userAvatar ? `url(${item.userAvatar})` : 'none',
+                          backgroundColor: item.userAvatar ? 'transparent' : (item.userAvatarColor || '#ddd'),
+                        }}
+                      >
+                        {!item.userAvatar && item.username && item.username.charAt(0).toUpperCase()}
+                      </FeedAvatar>
+                      <UserDetails>
+                        <FeedUserName>{item.user}</FeedUserName>
+                        <ActivityText>
+                          {item.activity}{' '}
+                          <span
+                            style={{
+                              color: theme.colors.accent,
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                            }}
+                            onClick={goToMusic}
+                          >
+                            {item.title}
+                          </span>{' '}
+                          by {item.artist}
+                        </ActivityText>
+                        <TimeStamp>{item.time}</TimeStamp>
+                      </UserDetails>
+                      <FeedScoreContainer>
+                        <div className="score-item">
+                          <div className="score-circle-container">
+                            <div className="score-circle">
+                              <span className="score-number">{item.rating}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </FeedScoreContainer>
+                    </UserInfo>
+
+                    {item.imageUrl && (
+                      <Artwork
+                        style={{ backgroundImage: `url(${item.imageUrl})` }}
+                        onClick={goToMusic}
+                      />
+                    )}
+                    {item.review && <ReviewText>Notes: {item.review}</ReviewText>}
+
+                    <InteractionBar>
+                      <InteractionLeft>
+                        <span>{item.likes} likes</span>
+                      </InteractionLeft>
+                      <InteractionRight>
+                        <span>{item.bookmarks} bookmarks</span>
+                      </InteractionRight>
+                    </InteractionBar>
+                  </FeedItem>
+                );
+              })
+            )}
           </TabContent>
         )}
 

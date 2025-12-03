@@ -507,11 +507,44 @@ app.get('/api/tabs', async (req, res) => {
     ]);
 
     const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
-    const reviewedIds = new Set(reviews.map((r) => r.targetId));
-
-    // Count only want-list items that are NOT already in listened
-    const effectiveWantCount = wantList.filter((id) => !reviewedIds.has(id))
-      .length;
+    const reviewedIdSet = new Set(reviews.map((r) => r.targetId));
+    
+    // To properly match, we need to look up Songs/Albums and generate targetIds
+    let effectiveWantCount = 0;
+    if (wantList.length > 0) {
+      const [songs, albums] = await Promise.all([
+        Song.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+        Album.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+      ]);
+      
+      const slugify = (type, artistName, titleName) =>
+        `${type}-${artistName}-${titleName}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-');
+      
+      // Count how many wantList items correspond to unreviewed items
+      effectiveWantCount = wantList.filter((id) => {
+        // Check if this ID itself is reviewed (exact match)
+        if (reviewedIdSet.has(id)) return false;
+        
+        // Look up the Song/Album to get the targetId and check if that's reviewed
+        const song = songs.find((s) => s.spotifyId === id);
+        if (song) {
+          const targetId = slugify('Song', song.artist || '', song.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        const album = albums.find((a) => a.spotifyId === id);
+        if (album) {
+          const targetId = slugify('Album', album.artist || '', album.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        // If we can't find it in Songs/Albums, check if the ID itself matches a reviewed targetId
+        // (it might already be in targetId format)
+        return !reviewedIdSet.has(id);
+      }).length;
+    }
 
     const tabs = [
       { key: "listened", label: "Listened", count: listenedCount },
@@ -794,10 +827,12 @@ app.get('/api/users/:username/profile', async (req, res) => {
 
     const currentUserId = req.user?.id || null;
 
-    const user = await User.findOne({ username }).populate([
-      { path: 'followers', select: '_id' },
-      { path: 'following', select: '_id' },
-    ]);
+    const user = await User.findOne({ username })
+      .select('username name email bio dateJoined followers following currentStreak longestStreak totalLogins profilePictureUrl avatarColor wantList')
+      .populate([
+        { path: 'followers', select: '_id' },
+        { path: 'following', select: '_id' },
+      ]);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -822,6 +857,51 @@ app.get('/api/users/:username/profile', async (req, res) => {
     const color = user.avatarColor || computeAvatarColor(user.username || "");
     const rank = await calculateUserRank(user._id);
 
+    // Get review count (listened)
+    const listenedCount = await Review.countDocuments({ userId: user._id });
+
+    // Get want list count (excluding items that are already reviewed)
+    const wantList = Array.isArray(user.wantList) ? user.wantList : [];
+    const reviewedIds = await Review.find({ userId: user._id }).select('targetId').lean().exec();
+    const reviewedIdSet = new Set(reviewedIds.map((r) => r.targetId));
+    
+    // To properly match, we need to look up Songs/Albums and generate targetIds
+    let wantCount = 0;
+    if (wantList.length > 0) {
+      const [songs, albums] = await Promise.all([
+        Song.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+        Album.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+      ]);
+      
+      const slugify = (type, artistName, titleName) =>
+        `${type}-${artistName}-${titleName}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-');
+      
+      // Count how many wantList items correspond to unreviewed items
+      wantCount = wantList.filter((id) => {
+        // Check if this ID itself is reviewed (exact match)
+        if (reviewedIdSet.has(id)) return false;
+        
+        // Look up the Song/Album to get the targetId and check if that's reviewed
+        const song = songs.find((s) => s.spotifyId === id);
+        if (song) {
+          const targetId = slugify('Song', song.artist || '', song.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        const album = albums.find((a) => a.spotifyId === id);
+        if (album) {
+          const targetId = slugify('Album', album.artist || '', album.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        // If we can't find it in Songs/Albums, check if the ID itself matches a reviewed targetId
+        // (it might already be in targetId format)
+        return !reviewedIdSet.has(id);
+      }).length;
+    }
+
     const profile = {
       id: user._id,
       name: user.name || user.username,
@@ -839,9 +919,76 @@ app.get('/api/users/:username/profile', async (req, res) => {
       avatarColor: color,
       dateJoined: memberSinceDate,
       rank: rank || 999, // Default to 999 if rank calculation fails
+      listenedCount,
+      wantCount,
     };
 
-    res.json({ profile });
+    // Build recent activity from real reviews
+    const reviews = await Review.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+      .exec();
+
+    const songIds = reviews
+      .filter((r) => r.targetType === 'Song')
+      .map((r) => r.targetId);
+    const albumIds = reviews
+      .filter((r) => r.targetType === 'Album')
+      .map((r) => r.targetId);
+
+    const [songs, albums] = await Promise.all([
+      songIds.length
+        ? Song.find({ spotifyId: { $in: songIds } }).lean().exec()
+        : [],
+      albumIds.length
+        ? Album.find({ spotifyId: { $in: albumIds } }).lean().exec()
+        : [],
+    ]);
+
+    const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+    const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+    const activity = reviews.map((r) => {
+      const isSong = r.targetType === 'Song';
+      const meta = isSong
+        ? songMap.get(r.targetId) || {}
+        : albumMap.get(r.targetId) || {};
+
+      const title = meta.title || 'Unknown';
+      const artist = meta.artist || 'Unknown';
+      const rating = typeof r.rating === 'number'
+        ? r.rating.toFixed(1)
+        : '-';
+      const imageUrl = meta.imageUrl || meta.coverUrl || '';
+
+      const createdAt = r.createdAt ? new Date(r.createdAt) : new Date();
+      const time = createdAt.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+
+      return {
+        id: r._id,
+        user: user.name || user.username,
+        username: user.username,
+        userAvatar: user.profilePictureUrl || "",
+        userAvatarColor: user.avatarColor || computeAvatarColor(user.username || ""),
+        activity: 'ranked',
+        rating,
+        time,
+        review: r.text || '',
+        likes: 0,
+        bookmarks: 0,
+        isLiked: false,
+        artist,
+        title,
+        musicType: r.targetType,
+        imageUrl,
+      };
+    });
+
+    res.json({ profile, activity });
   } catch (error) {
     console.error('Error fetching public user profile:', error.message);
     res.status(500).json({ error: 'Failed to fetch user profile' });
@@ -1205,6 +1352,51 @@ app.get('/api/profile', async (req, res) => {
     const color = user.avatarColor || computeAvatarColor(user.username || "");
     const rank = await calculateUserRank(userId);
 
+    // Get review count (listened)
+    const listenedCount = await Review.countDocuments({ userId });
+
+    // Get want list count (excluding items that are already reviewed)
+    const wantList = Array.isArray(user.wantList) ? user.wantList : [];
+    const reviewedIds = await Review.find({ userId }).select('targetId').lean().exec();
+    const reviewedIdSet = new Set(reviewedIds.map((r) => r.targetId));
+    
+    // To properly match, we need to look up Songs/Albums and generate targetIds
+    let wantCount = 0;
+    if (wantList.length > 0) {
+      const [songs, albums] = await Promise.all([
+        Song.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+        Album.find({ spotifyId: { $in: wantList } }).select('spotifyId title artist').lean().exec(),
+      ]);
+      
+      const slugify = (type, artistName, titleName) =>
+        `${type}-${artistName}-${titleName}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-');
+      
+      // Count how many wantList items correspond to unreviewed items
+      wantCount = wantList.filter((id) => {
+        // Check if this ID itself is reviewed (exact match)
+        if (reviewedIdSet.has(id)) return false;
+        
+        // Look up the Song/Album to get the targetId and check if that's reviewed
+        const song = songs.find((s) => s.spotifyId === id);
+        if (song) {
+          const targetId = slugify('Song', song.artist || '', song.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        const album = albums.find((a) => a.spotifyId === id);
+        if (album) {
+          const targetId = slugify('Album', album.artist || '', album.title || '');
+          return !reviewedIdSet.has(targetId);
+        }
+        
+        // If we can't find it in Songs/Albums, check if the ID itself matches a reviewed targetId
+        // (it might already be in targetId format)
+        return !reviewedIdSet.has(id);
+      }).length;
+    }
+
     const profile = {
       name: user.name || user.username,
       username: user.username,
@@ -1214,8 +1406,8 @@ app.get('/api/profile', async (req, res) => {
       following: user.following?.length || 0,
       rank: rank || 999, // Default to 999 if rank calculation fails
       streakDays: user.currentStreak || 0,
-      listenedCount: user.reviews?.length || 0,
-      wantCount: 0, // TODO: Implement want list
+      listenedCount,
+      wantCount,
       profilePictureUrl: user.profilePictureUrl || "",
       avatarColor: color,
     };
@@ -1268,6 +1460,9 @@ app.get('/api/profile', async (req, res) => {
       return {
         id: r._id,
         user: user.name || user.username,
+        username: user.username,
+        userAvatar: user.profilePictureUrl || "",
+        userAvatarColor: user.avatarColor || computeAvatarColor(user.username || ""),
         activity: 'ranked',
         rating,
         time,

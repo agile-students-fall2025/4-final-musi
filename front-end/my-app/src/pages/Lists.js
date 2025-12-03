@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { theme } from "../theme";
 import SectionHeader from "../components/SectionHeader";
 import Tabs from "../components/Tabs";
 import SongItem from "../components/SongItem";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 
@@ -94,14 +94,31 @@ const tabToApi = (key) => {
 };
 
 export default function Lists() {
-  const [activeTab, setActiveTab] = useState("listened");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialTab = location.state?.tab || "listened";
+  const lastLocationKey = useRef(location.key);
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [tabs, setTabs] = useState([]);
   const [songs, setSongs] = useState([]);
   const [loadingTabs, setLoadingTabs] = useState(true);
   const [loadingSongs, setLoadingSongs] = useState(true);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const navigate = useNavigate();
+  
+  // Update activeTab only when navigating to this page with state
+  // location.key changes on every navigation, so this detects new navigations
+  useEffect(() => {
+    if (location.key !== lastLocationKey.current) {
+      // We've navigated to this page (new navigation)
+      lastLocationKey.current = location.key;
+      const tabFromState = location.state?.tab;
+      if (tabFromState) {
+        setActiveTab(tabFromState);
+      }
+    }
+  }, [location.key, location.state?.tab]);
 
 
   useEffect(() => {

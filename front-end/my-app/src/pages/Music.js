@@ -75,6 +75,9 @@ function Music() {
 
         Promise.allSettled(removals).catch(() => {});
 
+        // Dispatch event to notify other pages (like Profile) that profile data should refresh
+        window.dispatchEvent(new CustomEvent('reviewSubmitted'));
+
         alert(`Successfully ranked #${response.data.rank} on your list!`);
       })
       .catch(err => {
