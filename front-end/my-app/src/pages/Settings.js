@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Mail, Lock, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SettingsRow from "../components/SettingsRow";
 import ConfirmOverlay from "../components/ConfirmOverlay";
+import { AuthContext } from "../context/AuthContext"; 
 import axios from "axios";
 
 export default function Settings() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { logout, deleteAccount } = useContext(AuthContext);
 
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -56,27 +59,21 @@ export default function Settings() {
   
   const handleConfirmDelete = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // TODO: Add delete account API endpoint
-      // await axios.delete('http://localhost:3001/api/auth/account', {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
-      
-      localStorage.removeItem('token');
+      await deleteAccount(); 
       setShowDelete(false);
-      navigate('/');
+      navigate('/'); 
       console.log("Account deleted");
     } catch (error) {
-      console.error('Error deleting account:', error);
+      alert("Failed to delete account: " + error);
     }
   };
 
   const handleConfirmLogout = () => {
     localStorage.removeItem('token');
     setShowLogout(false);
-    navigate('/');
-    console.log("Logged out");
+    
+    logout(); 
+    navigate('/'); 
   };
 
   if (loading) {
@@ -137,7 +134,6 @@ export default function Settings() {
         />
       </div>
 
-      {/* Delete confirmation overlay */}
       <ConfirmOverlay
         open={showDelete}
         title="Are you sure you want to delete your account?"
@@ -149,7 +145,6 @@ export default function Settings() {
         onConfirm={handleConfirmDelete}
       />
 
-      {/* Logout confirmation overlay */}
       <ConfirmOverlay
         open={showLogout}
         title="Are you sure you want to logout?"

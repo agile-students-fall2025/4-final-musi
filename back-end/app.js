@@ -5,8 +5,9 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
-const { User } = require('./models');
-const app = express();
+const User = require('./models').User;
+const Review = require('./models').Review;
+const app = express() 
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/musi';
@@ -621,6 +622,72 @@ app.post('/api/profile/activity/:id/like', (req, res) => {
   }
 });
 
+app.delete('/api/profile', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    await User.findByIdAndDelete(userId);
+
+    await Review.deleteMany({ userId: userId }); 
+
+    res.json({ msg: "Account deleted successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// ===== STREAK ROUTES (ENHANCED) =====
+
+//mock data for our profile
+let userData = {
+  profile: {
+    name: "John Doe",
+    username: "johndoe",
+    bio: "Music lover 🎵",
+    memberSince: "January 2024",
+    followers: 1234,
+    following: 567,
+    rank: 42,
+    streakDays: 7, // Current streak
+    lastActivity: new Date().toISOString().split('T')[0], // Today's date
+    listenedCount: 89,
+    wantCount: 23
+  },
+  streakHistory: [
+    { date: "2024-11-11", activity: "listened" },
+    { date: "2024-11-10", activity: "listened" },
+    { date: "2024-11-09", activity: "listened" },
+    { date: "2024-11-08", activity: "listened" },
+    { date: "2024-11-07", activity: "listened" },
+    { date: "2024-11-06", activity: "listened" },
+    { date: "2024-11-05", activity: "listened" }
+  ]
+};
+
+function calculateCurrentStreak(streakHistory) {
+  if (!streakHistory || streakHistory.length === 0) return 0;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const sortedHistory = streakHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  let streak = 0;
+  let currentDate = new Date(today);
+  
+  for (const record of sortedHistory) {
+    const recordDate = record.date;
+    const expectedDate = currentDate.toISOString().split('T')[0];
+    
+    if (recordDate === expectedDate) {
+      streak++;
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  
+  return streak;
+}
 // ===== STREAK ROUTES =====
 
 // GET streak from MongoDB

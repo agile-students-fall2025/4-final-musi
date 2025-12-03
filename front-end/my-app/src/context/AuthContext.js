@@ -8,6 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  const API_URL = 'http://localhost:3001/api';
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token');
@@ -36,15 +38,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const api = axios.create({
-    baseURL: 'http://localhost:3001/api', 
-  });
-
   const register = async (username, email, password) => {
     try {
-      const res = await api.post('/auth/register', { username, email, password });
+      const res = await axios.post(`${API_URL}/auth/register`, { username, email, password });
       setToken(res.data.token);
-      return true;
+      return true; 
     } catch (err) {
       throw err.response ? err.response.data.msg : 'Registration failed';
     }
@@ -52,7 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await axios.post(`${API_URL}/auth/login`, { email, password });
       setToken(res.data.token);
       return true;
     } catch (err) {
@@ -65,12 +63,26 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const deleteAccount = async () => {
+    try {
+      await axios.delete(`${API_URL}/profile`);
+      
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('token');
+      return true;
+    } catch (err) {
+      console.error("Delete account error:", err);
+      throw err.response ? err.response.data.msg : 'Could not delete account';
+    }
+  };
+
   if (loading) {
     return <div style={{padding: "50px", textAlign: "center"}}>Loading...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, register, login, logout }}>
+    <AuthContext.Provider value={{ token, user, register, login, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
