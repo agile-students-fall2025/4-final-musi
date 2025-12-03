@@ -108,7 +108,12 @@ export default function Lists() {
   }, [activeTab]);
 
   const goToMusic = (song) => {
-    navigate(`/app/music/Song/${encodeURIComponent(song.artist)}/${encodeURIComponent(song.title)}`);
+    const type = song.musicType ?? "Song";
+    navigate(
+      `/app/music/${encodeURIComponent(type)}/${encodeURIComponent(
+        song.artist
+      )}/${encodeURIComponent(song.title)}`
+    );
   };
 
   if (loadingTabs || loadingSongs) {
@@ -149,6 +154,47 @@ export default function Lists() {
                 subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
                 meta={(song.tags ?? []).join(", ")}
                 score={song.score}
+                showScore={activeTab !== "want"}
+                showPlus={activeTab === "want"}
+                showBookmark={activeTab === "want"}
+                bookmarked={activeTab === "want"}
+                onPlusClick={() => goToMusic(song)}
+                onBookmarkClick={async () => {
+                  try {
+                    const type = song.musicType ?? "Song";
+                    const spotifyId =
+                      song.spotifyId ||
+                      `${type}-${song.artist}-${song.title}`
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, "-");
+
+                    await axios.post("http://localhost:3001/api/want/remove", {
+                      spotifyId,
+                    });
+
+                    setSongs((prev) =>
+                      prev.filter(
+                        (s, idx) =>
+                          idx !== i &&
+                          (s.id ?? `${s.artist}-${s.title}`) !==
+                            (song.id ?? `${song.artist}-${song.title}`)
+                      )
+                    );
+                    setTabs((prev) =>
+                      prev.map((t) =>
+                        t.key === "want"
+                          ? {
+                              ...t,
+                              count: Math.max(0, (t.count || 0) - 1),
+                            }
+                          : t
+                      )
+                    );
+                  } catch (e) {
+                    console.error("Failed to remove from want list:", e);
+                    alert("Failed to remove from Want to listen");
+                  }
+                }}
               imageUrl={song.imageUrl}
                 dividerTop={i > 0}
               />

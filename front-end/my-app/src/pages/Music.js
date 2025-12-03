@@ -52,7 +52,29 @@ function Music() {
           isRated: true,
           avgScore: response.data.score || prevData.avgScore, 
         }));
-        
+
+        // Remove from "Want to listen" if present
+        const type = ratingInfo.targetType || selectedSong?.musicType || musicType;
+        const slugId = `${type}-${selectedSong?.artist || artist}-${selectedSong?.title || title}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-');
+
+        const removals = [];
+        if (ratingInfo.spotifyId) {
+          removals.push(
+            axios.post('http://localhost:3001/api/want/remove', {
+              spotifyId: ratingInfo.spotifyId,
+            })
+          );
+        }
+        removals.push(
+          axios.post('http://localhost:3001/api/want/remove', {
+            spotifyId: slugId,
+          })
+        );
+
+        Promise.allSettled(removals).catch(() => {});
+
         alert(`Successfully ranked #${response.data.rank} on your list!`);
       })
       .catch(err => {
