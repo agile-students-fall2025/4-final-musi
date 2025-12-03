@@ -159,6 +159,7 @@ app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
     const user = await User.findById(userId).select('wantList').lean().exec();
     const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
     const spotifyId = spotifyItem?.id || targetId;
+    const spotifyUrl = spotifyItem?.external_urls?.spotify || null;
 
     const data = {
       spotifyId,
@@ -175,6 +176,7 @@ app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
       genre: [], // could be enhanced later with artist/album genres
       year,
       isBookmarked: wantList.includes(spotifyId),
+      spotifyUrl,
     };
 
     res.json(data);

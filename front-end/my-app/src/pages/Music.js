@@ -137,14 +137,12 @@ function Music() {
       <ImageHeader 
         {...musicData} 
         spotifyId={musicData.spotifyId}
+        spotifyUrl={musicData.spotifyUrl}
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
       />
       <div className="description">
         <div className="vibe">
           {musicData?.vibe?.join(" • ")}
-        </div>
-        <div className="genre-year">
-          {musicData?.musicType} | {musicData?.year} | {musicData?.genre?.join(" , ")}
         </div>
       </div>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}

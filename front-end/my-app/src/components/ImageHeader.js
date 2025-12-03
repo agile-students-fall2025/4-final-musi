@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import './ImageHeader.css'
 
-function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType, isBookmarked: initialBookmarked = false, spotifyId}) {
+function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType, isBookmarked: initialBookmarked = false, spotifyId, spotifyUrl}) {
 
     const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
 
@@ -53,6 +53,16 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
       />
       
       <div className="image-header-gradient" />
+
+      {spotifyUrl && (
+        <button
+          className="image-header-spotify-btn"
+          onClick={() => window.open(spotifyUrl, '_blank', 'noopener,noreferrer')}
+          title="Listen on Spotify"
+        >
+          Listen on Spotify
+        </button>
+      )}
 
       <button 
         className="image-header-share-btn"
