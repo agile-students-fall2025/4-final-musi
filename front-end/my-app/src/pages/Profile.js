@@ -346,6 +346,39 @@ const InteractionRight = styled.div`
   font-size: 0.85rem;
   color: #666;
 `;
+const MoreButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: ${theme.colors.text_secondary};
+`;
+const ReviewMenu = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+`;
+const ReviewMenuItem = styled.button`
+  border: none;
+  background: none;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: ${theme.colors.text};
+
+  &:hover {
+    background: #f5f5f5;
+  }
+`;
 // Modals
 const ModalOverlay = styled.div`
   position: fixed;
@@ -544,6 +577,9 @@ function Profile() {
   const [topTracks, setTopTracks] = useState([]); // [{id,title,artist,tags,score}]
   const [insights, setInsights] = useState({}); // {artistsListened, songsRated}
   const fileInputRef = useRef(null);
+  const [activeReviewMenuId, setActiveReviewMenuId] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
+  const [editingReviewText, setEditingReviewText] = useState("");
 
   const handleEditPhotoClick = () => {
     if (fileInputRef.current) {
@@ -758,6 +794,64 @@ function Profile() {
     }
   };
 
+  const openReviewMenu = (id) => {
+    setActiveReviewMenuId((prev) => (prev === id ? null : id));
+  };
+
+  const startEditReview = (item) => {
+    setEditingReview(item);
+    setEditingReviewText(item.review || "");
+    setActiveReviewMenuId(null);
+  };
+
+  const saveEditReview = async () => {
+    if (!editingReview) return;
+    try {
+      await axios.patch(`/api/reviews/${editingReview.id}`, {
+        text: editingReviewText,
+      });
+      setActivity((prev) =>
+        prev.map((it) =>
+          it.id === editingReview.id ? { ...it, review: editingReviewText } : it
+        )
+      );
+      setEditingReview(null);
+      setEditingReviewText("");
+    } catch (e) {
+      console.error("Failed to update review:", e);
+      alert("Failed to update review. Please try again.");
+    }
+  };
+
+  const cancelEditReview = () => {
+    setEditingReview(null);
+    setEditingReviewText("");
+  };
+
+  const deleteReview = async (item) => {
+    if (!window.confirm("Delete this review?")) {
+      setActiveReviewMenuId(null);
+      return;
+    }
+    try {
+      await axios.delete(`/api/reviews/${item.id}`);
+      setActivity((prev) => prev.filter((it) => it.id !== item.id));
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              listenedCount: Math.max(0, (prev.listenedCount || 0) - 1),
+            }
+          : prev
+      );
+    } catch (e) {
+      console.error("Failed to delete review:", e);
+      alert("Failed to delete review. Please try again.");
+    } finally {
+      setActiveReviewMenuId(null);
+    }
+  };
+
   return (
     <>
       <Container>
@@ -905,7 +999,7 @@ function Profile() {
               </div>
             ) : (
               activity.map((item) => (
-                <FeedItem key={item.id}>
+                <FeedItem key={item.id} style={{ position: "relative" }}>
                   <UserInfo>
                     <FeedAvatar />
                     <UserDetails>
@@ -935,6 +1029,9 @@ function Profile() {
                         </div>
                       </div>
                     </FeedScoreContainer>
+                    <MoreButton onClick={() => openReviewMenu(item.id)}>
+                      ⋯
+                    </MoreButton>
                   </UserInfo>
 
                   {item.imageUrl && (
@@ -957,6 +1054,20 @@ function Profile() {
                       <span>{item.bookmarks} bookmarks</span>
                     </InteractionRight>
                   </InteractionBar>
+
+                  {activeReviewMenuId === item.id && (
+                    <ReviewMenu>
+                      <ReviewMenuItem onClick={() => startEditReview(item)}>
+                        Edit review
+                      </ReviewMenuItem>
+                      <ReviewMenuItem
+                        onClick={() => deleteReview(item)}
+                        style={{ color: "#e5534b" }}
+                      >
+                        Delete review
+                      </ReviewMenuItem>
+                    </ReviewMenu>
+                  )}
                 </FeedItem>
               ))
             )}
@@ -1139,36 +1250,62 @@ function Profile() {
       </ModalOverlay>
 
       {/* Input Edit Modal */}
-      <InputModalOverlay show={showInputModal}>
+      <InputModalOverlay show={showInputModal || !!editingReview}>
         <InputModalHeader>
-          <CancelButton onClick={handleCancelEdit}>Cancel</CancelButton>
-          <InputModalTitle>{getFieldTitle(editingField)}</InputModalTitle>
+          <CancelButton onClick={editingReview ? cancelEditReview : handleCancelEdit}>
+            Cancel
+          </CancelButton>
+          <InputModalTitle>
+            {editingReview ? "Edit review" : getFieldTitle(editingField)}
+          </InputModalTitle>
           <div style={{ width: "60px" }} />
         </InputModalHeader>
 
         <InputModalBody>
           <InputWrapper>
-            {editingField === "username" && <InputPrefix>@</InputPrefix>}
-            <Input
-              type="text"
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              placeholder={`Enter ${editingField}`}
-              autoFocus
-            />
-            {tempValue && profile && tempValue !== profile[editingField] && (
-              <CheckIcon>
-                <Check size={16} />
-              </CheckIcon>
+            {editingReview ? (
+              <textarea
+                style={{
+                  width: "100%",
+                  minHeight: "120px",
+                  border: "none",
+                  outline: "none",
+                  fontSize: "1rem",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                }}
+                value={editingReviewText}
+                onChange={(e) => setEditingReviewText(e.target.value)}
+                placeholder="Update your notes..."
+                autoFocus
+              />
+            ) : (
+              <>
+                {editingField === "username" && <InputPrefix>@</InputPrefix>}
+                <Input
+                  type="text"
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  placeholder={`Enter ${editingField}`}
+                  autoFocus
+                />
+                {tempValue && profile && tempValue !== profile[editingField] && (
+                  <CheckIcon>
+                    <Check size={16} />
+                  </CheckIcon>
+                )}
+              </>
             )}
           </InputWrapper>
         </InputModalBody>
 
         <SaveButton
-          onClick={handleSaveField}
+          onClick={editingReview ? saveEditReview : handleSaveField}
           disabled={
-            !tempValue.trim() ||
-            (profile && tempValue === profile[editingField])
+            editingReview
+              ? false
+              : !tempValue.trim() ||
+                (profile && tempValue === profile[editingField])
           }
         >
           Save

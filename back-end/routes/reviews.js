@@ -133,4 +133,43 @@ router.post('/rate-ranked', auth, async (req, res) => {
   }
 });
 
+// PATCH update a review's text (only by owner)
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { text } = req.body;
+
+    const review = await Review.findOne({ _id: req.params.id, userId });
+    if (!review) {
+      return res.status(404).json({ msg: 'Review not found' });
+    }
+
+    review.text = text || '';
+    await review.save();
+
+    res.json({ ok: true, review });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// DELETE a review (only by owner)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const review = await Review.findOne({ _id: req.params.id, userId });
+
+    if (!review) {
+      return res.status(404).json({ msg: 'Review not found' });
+    }
+
+    await Review.deleteOne({ _id: review._id });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
