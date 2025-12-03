@@ -138,18 +138,19 @@ const reviewSchema = new Schema(
 
     targetType: {
       type: String,
-      enum: ["song", "album"],
+      enum: ["Song", "Album"],
       required: true
     },
 
     targetId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       required: true,
       // dynamic ref depending on targetType
       refPath: "targetType"
     },
 
-    rating: { type: Number, min: 0, max: 5 },
+    rating: { type: Number, min: 0, max: 10 },
+    ratingIndex: { type: Number, enum: [0, 1, 2], default: 0 }, // 0: Liked, 1: Fine, 2: Disliked
     text: String
   },
   { timestamps: true }
