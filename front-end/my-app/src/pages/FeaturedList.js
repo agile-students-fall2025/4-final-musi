@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { ChevronLeft } from "lucide-react";
 import SongItem from "../components/SongItem";
 import { theme } from "../theme";
+import axios from "axios";
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -37,12 +38,6 @@ const Title = styled.h1`
   margin: 0;
 `;
 
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
 
 export default function FeaturedList() {
   const navigate = useNavigate();
@@ -63,6 +58,41 @@ export default function FeaturedList() {
 
   const handleBack = () => navigate("/app/feed");
 
+  // Parse artist from subtitle (format: "Song • Artist Name")
+  const parseTrackInfo = (track) => {
+    const parts = track.subtitle?.split(" • ") || [];
+    const musicType = parts[0] || "Song";
+    const artist = parts.slice(1).join(" • ") || "Unknown Artist";
+    return { musicType, artist };
+  };
+
+  const handleTrackClick = (track) => {
+    const { musicType, artist } = parseTrackInfo(track);
+    navigate(
+      `/app/music/${encodeURIComponent(musicType)}/${encodeURIComponent(artist)}/${encodeURIComponent(track.title)}`
+    );
+  };
+
+  const handleBookmarkClick = async (track) => {
+    try {
+      const { musicType, artist } = parseTrackInfo(track);
+      const spotifyId = `${musicType}-${artist}-${track.title}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-');
+
+      await axios.post('http://localhost:3001/api/want', {
+        spotifyId,
+        title: track.title,
+        artist: artist,
+        musicType: musicType,
+        imageUrl: track.imageUrl,
+      });
+    } catch (e) {
+      console.error('Failed to add to want list:', e);
+      alert('Failed to add to Want to listen');
+    }
+  };
+
   return (
     <Container>
       <Header>
@@ -78,17 +108,19 @@ export default function FeaturedList() {
         </div>
       ) : (
         tracks.map((track, index) => (
-          <Row key={track.id}>
-            <SongItem
-              title={track.title}
-              subtitle={track.subtitle}
-              showScore={false}
-              showPlus={true}
-              showBookmark={true}
-              score={null}
-              dividerTop={index !== 0}
-            />
-          </Row>
+          <SongItem
+            key={track.id || index}
+            title={track.title}
+            subtitle={track.subtitle}
+            showScore={false}
+            showPlus={false}
+            showBookmark={true}
+            score={null}
+            imageUrl={track.imageUrl}
+            onClick={() => handleTrackClick(track)}
+            onBookmarkClick={() => handleBookmarkClick(track)}
+            bookmarked={false}
+          />
         ))
       )}
     </Container>
