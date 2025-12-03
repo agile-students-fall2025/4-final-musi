@@ -1162,39 +1162,125 @@ app.get('/api/albumlist/:artist/:title', (req, res) => {
 // ---- FEATURED LISTS (mock) ----
 const FEATURED_LISTS = [
   {
-    title: "Study flow",
+    title: "Indie Vibes",
+    imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
     tracks: [
-      { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
-      { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
-      { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
-      { id: 4, title: "Ain't Nobody", subtitle: "Song • Chaka Khan" },
-      { id: 5, title: "Le Freak", subtitle: "Song • CHIC" }
+      { id: 1, title: "Electric Feel", subtitle: "Song • MGMT" },
+      { id: 2, title: "Time to Pretend", subtitle: "Song • MGMT" },
+      { id: 3, title: "Kids", subtitle: "Song • MGMT" },
+      { id: 4, title: "1901", subtitle: "Song • Phoenix" },
+      { id: 5, title: "Lisztomania", subtitle: "Song • Phoenix" },
+      { id: 6, title: "Sleepyhead", subtitle: "Song • Passion Pit" },
+      { id: 7, title: "The Less I Know The Better", subtitle: "Song • Tame Impala" },
+      { id: 8, title: "Feel It Still", subtitle: "Song • Portugal. The Man" }
     ],
   },
   {
-    title: "RapCaviar",
+    title: "Hip Hop Essentials",
+    imageUrl: "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=400&h=400&fit=crop",
     tracks: [
-      { id: 11, title: "Meltdown", subtitle: "Song • Travis Scott, Drake" },
-      { id: 12, title: "First Person Shooter", subtitle: "Song • Drake, J. Cole" },
-      { id: 13, title: "Rich Flex", subtitle: "Song • Drake, 21 Savage" },
-      { id: 14, title: "BROTHER STONE", subtitle: "Song • Don Toliver" },
-      { id: 15, title: "Knife Talk", subtitle: "Song • Drake, 21 Savage, Project Pat" }
+      { id: 11, title: "Juicy", subtitle: "Song • The Notorious B.I.G." },
+      { id: 12, title: "N.Y. State of Mind", subtitle: "Song • Nas" },
+      { id: 13, title: "Shook Ones, Part II", subtitle: "Song • Mobb Deep" },
+      { id: 14, title: "The Message", subtitle: "Song • Grandmaster Flash & The Furious Five" },
+      { id: 15, title: "Straight Outta Compton", subtitle: "Song • N.W.A" },
+      { id: 16, title: "Gin and Juice", subtitle: "Song • Snoop Dogg" },
+      { id: 17, title: "California Love", subtitle: "Song • 2Pac, Dr. Dre" }
     ],
   },
   {
-    title: "Teenage Fever",
+    title: "Chill Beats",
+    imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop",
     tracks: [
-      { id: 21, title: "drivers license", subtitle: "Song • Olivia Rodrigo" },
-      { id: 22, title: "Heather", subtitle: "Song • Conan Gray" },
-      { id: 23, title: "Telepatía", subtitle: "Song • Kali Uchis" },
-      { id: 24, title: "Sweater Weather", subtitle: "Song • The Neighbourhood" },
-      { id: 25, title: "Someone You Loved", subtitle: "Song • Lewis Capaldi" }
+      { id: 21, title: "Midnight City", subtitle: "Song • M83" },
+      { id: 22, title: "Breathe Me", subtitle: "Song • Sia" },
+      { id: 23, title: "Holocene", subtitle: "Song • Bon Iver" },
+      { id: 24, title: "Skinny Love", subtitle: "Song • Bon Iver" },
+      { id: 25, title: "The Night We Met", subtitle: "Song • Lord Huron" },
+      { id: 26, title: "Lost in the Light", subtitle: "Song • Bahamas" },
+      { id: 27, title: "Rivers and Roads", subtitle: "Song • The Head and the Heart" }
+    ],
+  },
+  {
+    title: "Rock Classics",
+    imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
+    tracks: [
+      { id: 31, title: "Bohemian Rhapsody", subtitle: "Song • Queen" },
+      { id: 32, title: "Stairway to Heaven", subtitle: "Song • Led Zeppelin" },
+      { id: 33, title: "Hotel California", subtitle: "Song • Eagles" },
+      { id: 34, title: "Sweet Child O' Mine", subtitle: "Song • Guns N' Roses" },
+      { id: 35, title: "Smells Like Teen Spirit", subtitle: "Song • Nirvana" },
+      { id: 36, title: "Wonderwall", subtitle: "Song • Oasis" },
+      { id: 37, title: "Don't Stop Believin'", subtitle: "Song • Journey" }
+    ],
+  },
+  {
+    title: "R&B Soul",
+    imageUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop",
+    tracks: [
+      { id: 41, title: "Let's Stay Together", subtitle: "Song • Al Green" },
+      { id: 42, title: "Ain't No Sunshine", subtitle: "Song • Bill Withers" },
+      { id: 43, title: "What's Going On", subtitle: "Song • Marvin Gaye" },
+      { id: 44, title: "I Want You Back", subtitle: "Song • The Jackson 5" },
+      { id: 45, title: "Superstition", subtitle: "Song • Stevie Wonder" },
+      { id: 46, title: "Respect", subtitle: "Song • Aretha Franklin" },
+      { id: 47, title: "Let's Get It On", subtitle: "Song • Marvin Gaye" }
     ],
   },
 ];
 
-app.get("/api/featured-lists", (req, res) => {
-  res.json(FEATURED_LISTS);
+app.get("/api/featured-lists", async (req, res) => {
+  try {
+    const accessToken = await getSpotifyAccessToken();
+    
+    // Fetch artwork from Spotify for each track
+    const listsWithArtwork = await Promise.all(
+      FEATURED_LISTS.map(async (list) => {
+        const tracksWithArtwork = await Promise.all(
+          list.tracks.map(async (track) => {
+            // Parse artist and title from subtitle (format: "Song • Artist Name")
+            const parts = track.subtitle?.split(" • ") || [];
+            const musicType = parts[0] || "Song";
+            const artist = parts.slice(1).join(" • ") || "";
+            
+            if (!artist || !track.title) {
+              return { ...track, imageUrl: "" };
+            }
+            
+            try {
+              // Search Spotify for the track
+              const searchQuery = `track:${track.title} artist:${artist}`;
+              const spotifyResp = await axios.get('https://api.spotify.com/v1/search', {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                params: {
+                  q: searchQuery,
+                  type: 'track',
+                  limit: 1,
+                },
+              });
+              
+              const spotifyItem = spotifyResp.data?.tracks?.items?.[0] || null;
+              // Get album artwork from Spotify (for songs, use album.images)
+              const imageUrl = spotifyItem?.album?.images?.[0]?.url || "";
+              
+              return { ...track, imageUrl };
+            } catch (error) {
+              console.error(`Error fetching artwork for ${track.title} by ${artist}:`, error.message);
+              return { ...track, imageUrl: "" };
+            }
+          })
+        );
+        
+        return { ...list, tracks: tracksWithArtwork };
+      })
+    );
+    
+    res.json(listsWithArtwork);
+  } catch (error) {
+    console.error('Error fetching featured lists with artwork:', error);
+    // Fallback to original lists if there's an error
+    res.json(FEATURED_LISTS);
+  }
 });
 
 // ---- FEED DATA from DB (following or all users) ----

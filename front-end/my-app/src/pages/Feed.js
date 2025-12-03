@@ -44,9 +44,27 @@ const SectionTitle = styled.h3`
 const SeeAll = styled.button`background: none; border: none; color: ${theme.colors.accent}; font-size: 0.9rem; font-weight: 500; cursor: pointer;`;
 const FeaturedLists = styled.div`display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;`;
 const ListCardButton = styled.button`
-  min-width: 120px; height: 120px; background: #666; border-radius: 8px;
+  min-width: 120px; height: 120px; border-radius: 8px;
   display: flex; align-items: flex-end; padding: 12px; color: white;
   font-weight: 500; font-size: 0.9rem; border: none; cursor: pointer; text-align: left;
+  background-size: cover; background-position: center;
+  position: relative; overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+    z-index: 1;
+  }
+  
+  span {
+    position: relative;
+    z-index: 2;
+  }
 `;
 const FeedItem = styled.div`padding: 16px 20px; border-bottom: 1px solid #f0f0f0;`;
 const UserInfo = styled.div`display: flex; align-items: center; gap: 12px; margin-bottom: 8px;`;
@@ -264,8 +282,15 @@ function Feed() {
 
         <FeaturedLists>
           {featured.map((list) => (
-            <ListCardButton key={list.title} onClick={() => openFeatured(list)} aria-label={`Open ${list.title}`}>
-              {list.title}
+            <ListCardButton 
+              key={list.title} 
+              onClick={() => openFeatured(list)} 
+              aria-label={`Open ${list.title}`}
+              style={{
+                backgroundImage: list.imageUrl ? `url(${list.imageUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              }}
+            >
+              <span>{list.title}</span>
             </ListCardButton>
           ))}
         </FeaturedLists>
