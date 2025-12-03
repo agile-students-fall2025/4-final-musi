@@ -186,9 +186,13 @@ function Feed() {
       </Header>
 
       <SearchContainer>
-        <SearchBar>
+        <SearchBar onClick={() => navigate("/app/search")}>
           <Search size={16} color="#999" />
-          <SearchInput placeholder="Search a song, album or user..." />
+          <SearchInput
+            placeholder="Search a song, album or user..."
+            onFocus={() => navigate("/app/search")}
+            readOnly
+          />
         </SearchBar>
 
         <FilterButtons>
