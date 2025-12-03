@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import Scores from "../components/Scores";
 
@@ -545,6 +545,38 @@ function Profile() {
   const [genres, setGenres] = useState([]); // [{name,value,color}]
   const [topTracks, setTopTracks] = useState([]); // [{id,title,artist,tags,score}]
   const [insights, setInsights] = useState({}); // {artistsListened, songsRated}
+  const fileInputRef = useRef(null);
+
+  const handleEditPhotoClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handlePhotoChange = async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const imageData = reader.result;
+        const res = await axios.put("/api/profile/photo", { imageData });
+        const url = res.data.profilePictureUrl || imageData;
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                profilePictureUrl: url,
+              }
+            : prev
+        );
+      } catch (e) {
+        console.error("Failed to update profile photo:", e);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -574,8 +606,15 @@ function Profile() {
 
   // nav handlers
 
-  const handleFollowersClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
-  const handleFollowingClick = () => navigate(`/app/followers/${encodeURIComponent(profile.username)}`);
+  const handleFollowersClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'followers' },
+    });
+
+  const handleFollowingClick = () =>
+    navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
+      state: { initialTab: 'following' },
+    });
 
   // Navigate to music page from feed item
   const goToMusicFromFeed = (item) => {
@@ -737,7 +776,17 @@ function Profile() {
         </Header>
 
         <ProfileSection>
-          <Avatar>
+          <Avatar
+            style={
+              profile.profilePictureUrl
+                ? {
+                    backgroundImage: `url(${profile.profilePictureUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : undefined
+            }
+          >
             <EditIcon onClick={() => setShowEditModal(true)}>
               <Edit size={16} />
             </EditIcon>
@@ -1004,8 +1053,27 @@ function Profile() {
           </ModalHeader>
 
           <EditPhotoSection>
-            <Avatar />
-            <EditPhotoButton>Edit profile photo</EditPhotoButton>
+            <Avatar
+              style={
+                profile.profilePictureUrl
+                  ? {
+                      backgroundImage: `url(${profile.profilePictureUrl})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            />
+            <EditPhotoButton onClick={handleEditPhotoClick}>
+              Edit profile photo
+            </EditPhotoButton>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handlePhotoChange}
+            />
           </EditPhotoSection>
 
           <FormSection>
@@ -1035,7 +1103,7 @@ function Profile() {
 
             <SectionDivider />
 
-            <FormItem>
+            <FormItem onClick={() => navigate("/app/settings")}>
               <FormLabel>Account settings</FormLabel>
               <ChevronRight size={20} color="#999" />
             </FormItem>

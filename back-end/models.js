@@ -12,6 +12,7 @@ const userSchema = new Schema(
     email: { type: String, required: true, unique: true, match: [/.+\@.+\..+/, "Please fill a valid email address"]},
     password: { type: String, required: true },
     dateJoined: { type: Date, default: Date.now },
+    bio: { type: String, default: "" },
 
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],

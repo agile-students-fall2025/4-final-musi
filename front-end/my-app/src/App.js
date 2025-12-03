@@ -39,7 +39,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/featuredlist/:title" element={<FeaturedList />} />
-          <Route path="/user" element={<User />} />
+          <Route path="/user/:username" element={<User />} />
           <Route path="/music/:musicType/:artist/:title" 
             element={<Music />} 
           />

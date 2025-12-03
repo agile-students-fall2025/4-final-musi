@@ -167,28 +167,43 @@ app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/followers/:username', (req, res) => {
-    const { username } = req.params;
-    const userId = req.user.id;
-    const followers = [
-      { id: 'user1', name: 'David', username: '@dvd', mutual: true },
-      { id: 'user2', name: 'Zuhair', username: '@zuhair', mutual: false },
-      { id: 'user3', name: 'Julz', username: '@julz', mutual: true },
-    ];
-    
-    const following = [
-      { id: 'user4', name: 'Ian', username: '@ian' },
-      { id: 'user5', name: 'Lana', username: '@lana' },
-      { id: 'user6', name: 'Patrick', username: '@patrick' },
-      { id: 'user7', name: 'Tobey', username: '@tobey' },
-      { id: 'user8', name: 'Liam', username: '@liam' },
-      { id: 'user1', name: 'David', username: '@david' },
-    ];
-    if (followers && following) {
-        res.json({ followers, following });
-    } else {
-        res.status(404).json({ error: "User not found" });
+app.get('/api/followers/:username', async (req, res) => {
+  try {
+    const rawUsername = req.params.username || '';
+    const username = rawUsername.startsWith('@')
+      ? rawUsername.slice(1)
+      : rawUsername;
+
+    const user = await User.findOne({ username })
+      .populate('followers', 'username name')
+      .populate('following', 'username name');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    const followingIds = new Set(
+      (user.following || []).map((u) => String(u._id))
+    );
+
+    const followers = (user.followers || []).map((u) => ({
+      id: String(u._id),
+      name: u.name || u.username,
+      username: `@${u.username}`,
+      mutual: followingIds.has(String(u._id)),
+    }));
+
+    const following = (user.following || []).map((u) => ({
+      id: String(u._id),
+      name: u.name || u.username,
+      username: `@${u.username}`,
+    }));
+
+    res.json({ followers, following });
+  } catch (err) {
+    console.error('Error fetching followers/following:', err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
 });
 
 // --- MOCK DATA (replace with DB later) ---
@@ -421,6 +436,165 @@ app.get('/api/search', async (req, res) => {
   } catch (error) {
     console.error('Error searching Spotify:', error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Failed to search Spotify' });
+  }
+});
+
+// ---- USER SEARCH (by username or name) ----
+app.get('/api/search/users', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { q } = req.query;
+
+    const query = (q || '').trim();
+    if (!query) {
+      return res.json([]);
+    }
+
+    // Case-insensitive partial match on username or name
+    const regex = new RegExp(query, 'i');
+
+    const users = await User.find({
+      $or: [{ username: regex }, { name: regex }],
+    })
+      .limit(20)
+      .select('username name');
+
+    const results = users.map((u) => ({
+      id: u._id,
+      username: u.username,
+      name: u.name || u.username,
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error searching users:', error.message);
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+});
+
+// ---- PUBLIC USER PROFILE (by username, for other profiles) ----
+app.get('/api/users/:username/profile', async (req, res) => {
+  try {
+    const rawUsername = req.params.username || '';
+    const username = rawUsername.startsWith('@')
+      ? rawUsername.slice(1)
+      : rawUsername;
+
+    const currentUserId = req.user?.id || null;
+
+    const user = await User.findOne({ username }).populate([
+      { path: 'followers', select: '_id' },
+      { path: 'following', select: '_id' },
+    ]);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const followerIds = (user.followers || []).map((u) => String(u._id));
+    const followingIds = (user.following || []).map((u) => String(u._id));
+
+    const isFollowing =
+      currentUserId != null && followerIds.includes(String(currentUserId));
+
+    const memberSinceDate = user.dateJoined || user.createdAt;
+    const memberSince = memberSinceDate
+      ? memberSinceDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : '';
+
+    const profile = {
+      id: user._id,
+      name: user.name || user.username,
+      username: user.username,
+      bio: user.bio || 'No bio yet',
+      memberSince,
+      followers: followerIds.length,
+      following: followingIds.length,
+      currentStreak: user.currentStreak || 0,
+      longestStreak: user.longestStreak || 0,
+      totalLogins: user.totalLogins || 0,
+      isFollowing,
+      dateJoined: memberSinceDate,
+    };
+
+    res.json({ profile });
+  } catch (error) {
+    console.error('Error fetching public user profile:', error.message);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// ---- FOLLOW / UNFOLLOW USER ----
+app.post('/api/users/:id/follow', async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const targetUserId = req.params.id;
+
+    if (String(currentUserId) === String(targetUserId)) {
+      return res.status(400).json({ error: 'Cannot follow yourself' });
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(targetUserId),
+    ]);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add to following / followers (no duplicates)
+    if (!currentUser.following.includes(targetUser._id)) {
+      currentUser.following.push(targetUser._id);
+    }
+    if (!targetUser.followers.includes(currentUser._id)) {
+      targetUser.followers.push(currentUser._id);
+    }
+
+    await Promise.all([currentUser.save(), targetUser.save()]);
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error following user:', error.message);
+    res.status(500).json({ error: 'Failed to follow user' });
+  }
+});
+
+app.post('/api/users/:id/unfollow', async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const targetUserId = req.params.id;
+
+    if (String(currentUserId) === String(targetUserId)) {
+      return res.status(400).json({ error: 'Cannot unfollow yourself' });
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(targetUserId),
+    ]);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    currentUser.following = currentUser.following.filter(
+      (id) => String(id) !== String(targetUser._id)
+    );
+    targetUser.followers = targetUser.followers.filter(
+      (id) => String(id) !== String(currentUser._id)
+    );
+
+    await Promise.all([currentUser.save(), targetUser.save()]);
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Error unfollowing user:', error.message);
+    res.status(500).json({ error: 'Failed to unfollow user' });
   }
 });
 
@@ -754,6 +928,35 @@ app.put('/api/profile', async (req, res) => {
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// PUT profile picture (expects base64 data URL or image URL)
+app.put('/api/profile/photo', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { imageData } = req.body;
+
+    if (!imageData || typeof imageData !== 'string') {
+      return res.status(400).json({ error: 'imageData is required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.profilePictureUrl = imageData;
+    await user.save();
+
+    res.json({
+      ok: true,
+      profilePictureUrl: user.profilePictureUrl,
+    });
+  } catch (error) {
+    console.error('Error updating profile picture:', error.message);
+    res.status(500).json({ error: 'Failed to update profile picture' });
   }
 });
 

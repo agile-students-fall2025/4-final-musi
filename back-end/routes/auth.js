@@ -135,6 +135,84 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
+// @route   PUT api/auth/email
+// @desc    Update user email
+// @access  Private
+router.put("/email", auth, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ msg: "Email is required" });
+    }
+
+    const existing = await User.findOne({
+      email: email,
+      _id: { $ne: req.user.id },
+    });
+
+    if (existing) {
+      return res.status(400).json({ msg: "Email is already in use" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    user.email = email;
+    await user.save();
+
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// @route   PUT api/auth/password
+// @desc    Update user password
+// @access  Private
+router.put("/password", auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ msg: "Current password and new password are required" });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ msg: "Password updated successfully" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 // @route   GET api/auth/streak
 // @desc    Get user streak data
 // @access  Private

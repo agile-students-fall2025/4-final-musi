@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
 import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -418,62 +419,47 @@ const SectionDivider = styled.div`
 `;
 
 function User() {
+  const { username } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('activity');
   const [showEditModal, setShowEditModal] = useState(false);
-  const [profile, setProfile] = useState({
-    name: '',
-    username: '',
-    bio: '',
-    email: '',
-    followers: 0,
-    following: 0,
-    currentStreak: 0,
-    longestStreak: 0,
-    dateJoined: null,
-    totalLogins: 0
-  });
+  const [profile, setProfile] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!username) {
+      setLoading(false);
+      return;
+    }
+
     const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        
-        if (!token) {
-          console.error('No token found');
-          return;
-        }
 
-        const response = await axios.get('http://localhost:3001/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(
+          `/api/users/${encodeURIComponent(username)}/profile`,
+          token
+            ? {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            : undefined
+        );
 
-        const userData = response.data.user;
-        
-        setProfile({
-          name: userData.name || 'User',
-          username: userData.username || '@user',
-          bio: userData.bio || 'No bio yet',
-          email: userData.email,
-          followers: userData.followers?.length || 0,
-          following: userData.following?.length || 0,
-          currentStreak: userData.currentStreak || 0,
-          longestStreak: userData.longestStreak || 0,
-          dateJoined: userData.dateJoined || userData.createdAt,
-          totalLogins: userData.totalLogins || 0
-        });
-
-        setLoading(false);
+        const data = response.data.profile;
+        setProfile(data);
+        setIsFollowing(!!data.isFollowing);
       } catch (error) {
         console.error('Error fetching user profile:', error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, []);
+  }, [username]);
 
   const formatDate = (date) => {
     if (!date) return 'Recently';
@@ -504,12 +490,57 @@ function User() {
     );
   }
 
+  if (!profile) {
+    return (
+      <Container>
+        <p
+          style={{
+            textAlign: 'center',
+            padding: '40px 0',
+            color: theme.colors.text_secondary,
+          }}
+        >
+          User not found
+        </p>
+      </Container>
+    );
+  }
+
+  const handleToggleFollow = async (nextFollowState) => {
+    const token = localStorage.getItem('token');
+    const url = nextFollowState
+      ? `/api/users/${profile.id}/follow`
+      : `/api/users/${profile.id}/unfollow`;
+
+    await axios.post(
+      url,
+      {},
+      token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined
+    );
+
+    setIsFollowing(nextFollowState);
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            followers: prev.followers + (nextFollowState ? 1 : -1),
+          }
+        : prev
+    );
+  };
+
   return (
     <>
       <Container>
         <Header>
           <div>
-            <IconButton>
+            <IconButton onClick={() => navigate(-1)}>
               <ChevronLeft size={22} />
             </IconButton>
           </div>
@@ -531,7 +562,10 @@ function User() {
           <MemberSince>Member since {formatDate(profile.dateJoined)}</MemberSince>
 
           <ButtonGroup>
-            <FollowButton />
+            <FollowButton
+              initialFollow={isFollowing}
+              onToggle={handleToggleFollow}
+            />
           </ButtonGroup>
         </ProfileSection>
 

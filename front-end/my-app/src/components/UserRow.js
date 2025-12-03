@@ -1,6 +1,6 @@
 import "./UserRow.css";
 
-function UserRow({ user, activeTab, onUnfollow, onFollowBack }) {
+function UserRow({ user, activeTab, onUnfollow, onFollowBack, onClickUser }) {
   let button;
   if (activeTab === 'followers') {
     if (user.mutual) {
@@ -39,7 +39,9 @@ function UserRow({ user, activeTab, onUnfollow, onFollowBack }) {
         href={`/profile/${user.username}`} 
         onClick={(e) => {
           e.preventDefault(); 
-          console.log(`Maps to ${user.username}'s profile`);
+          if (onClickUser) {
+            onClickUser(user);
+          }
         }} 
         className="user-info-link"
       >
