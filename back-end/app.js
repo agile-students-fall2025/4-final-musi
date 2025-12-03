@@ -69,27 +69,57 @@ app.use('/api/auth', authRoutes);
 // Protected routes (auth required)
 app.use(authMiddleware);
 
-app.get('/api/music/:type/:artist/:title', (req, res) => {
-    const { type, artist, title } = req.params;
-    const userId = req.user.id;
-    const data = { 
-        imageUrl: "/olivia-album.jpg",
-        spotifyId: `${type}-${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        title: title || "SOUR",
-        artist: artist || "Olivia Rodrigo",
-        avgScore: 8.4,
-        totalRatings: 1250,
-        isRated: false, 
-        musicType: type || "Album",
-        vibe: ["heartbreak", "pop", "emotional"],
-        genre: ["pop", "indie pop"],
-        year: 2021,
-    };
+app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
+    try {
+        const { type, artist, title } = req.params;
+        const userId = req.user.id;
 
-    if (data) {
+        const targetId = `${type}-${artist}-${title}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
+
+        console.log(`Fetching data for: ${targetId}`);
+
+        const userReview = await Review.findOne({ 
+            userId: userId, 
+            targetId: targetId 
+        });
+
+        const stats = await Review.aggregate([
+            { $match: { targetId: targetId } }, // Find all reviews for this song
+            { 
+                $group: { 
+                    _id: null, 
+                    averageScore: { $avg: "$rating" }, // Calculate Average
+                    totalCount: { $sum: 1 }            // Count total
+                } 
+            }
+        ]);
+
+        const avgScore = stats.length > 0 ? parseFloat(stats[0].averageScore.toFixed(1)) : 0;
+        const totalRatings = stats.length > 0 ? stats[0].totalCount : 0;
+
+        const data = { 
+            spotifyId: targetId,
+            title: title,
+            artist: artist,
+            musicType: type,
+            
+            isRated: !!userReview, 
+            avgScore: avgScore,
+            totalRatings: totalRatings,
+
+            imageUrl: "/olivia-album.jpg", 
+            vibe: ["heartbreak", "pop", "emotional"],
+            genre: ["pop", "indie pop"],
+            year: 2021,
+        };
+
         res.json(data);
-    } else {
-        res.status(404).json({ error: "Music not found" });
+
+    } catch (err) {
+        console.error("Error fetching music details:", err);
+        res.status(500).json({ error: "Server Error" });
     }
 });
 
@@ -207,38 +237,91 @@ app.get('/api/tabs', (req, res) => {
   res.json(tabs);
 });
 
-app.get('/api/scores/:type/:artist/:title', (req, res) => {
+app.get('/api/scores/:type/:artist/:title', async (req, res) => {
     const { type, artist, title } = req.params;
     const userId = req.user.id;
-    const { isRated } = req.query; 
 
-    let responseData = {};
+    const targetId = `${type}-${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    
+    try {
+        const userReview = await Review.findOne({ userId, targetId });
+        const isRated = !!userReview;
+        
+        let rank = "-";
+        
+        if (isRated) {
+            const userReviews = await Review.find({ userId, targetType: userReview.targetType })
+                .sort({ rating: -1 });
+            
+            const rankIndex = userReviews.findIndex(r => r.targetId === targetId);
+            rank = rankIndex !== -1 ? rankIndex + 1 : "?";
+        }
 
-    if (isRated === 'true') {
-        responseData = {
-            scores: [9.2, 7.6, 7.8], 
-            counts: [1, 2, 12],
-            scoreTitles: ["Your Musi Rating", "Friend Score", "User Score"],
-            descriptions: [
-                "#<strong>1</strong> on your list of music", 
-                "What your <strong>friends</strong> think", 
-                "Average score from <strong>all</strong> users"
-            ]
-        };
-    } else {
-        responseData = {
-            scores: [7.6, 7.6, 7.8],
-            counts: [101, 2, 12],
-            scoreTitles: ["Rec Score", "Friend Score", "User Score"],
-            descriptions: [
-                "How much we think <strong>you</strong> will like it",
-                "What your <strong>friends</strong> think", 
-                "Average score from <strong>all</strong> users"
-            ]
-        };
+        const userScore = (userReview && userReview.rating !== undefined) ? userReview.rating.toFixed(1) : "-";
+
+        const currentUser = await User.findById(userId);
+        const friendIds = currentUser ? currentUser.following : [];
+
+        const friendReviews = await Review.find({
+            targetId: targetId,
+            userId: { $in: friendIds }
+        });
+
+        let friendScore = "-";
+        let friendCount = 0;
+
+        if (friendReviews.length > 0) {
+            const total = friendReviews.reduce((sum, r) => sum + r.rating, 0);
+            friendScore = (total / friendReviews.length).toFixed(1);
+            friendCount = friendReviews.length;
+        }
+
+        const globalStats = await Review.aggregate([
+            { $match: { targetId: targetId } },
+            { 
+                $group: { 
+                    _id: null, 
+                    avg: { $avg: "$rating" }, 
+                    count: { $sum: 1 } 
+                } 
+            }
+        ]);
+
+        const globalScore = globalStats.length > 0 ? globalStats[0].avg.toFixed(1) : "-";
+        const globalCount = globalStats.length > 0 ? globalStats[0].count : 0;
+
+        let responseData = {};
+
+        if (isRated) {
+            responseData = {
+                scores: [userScore, friendScore, globalScore],
+                counts: ["You", friendCount, globalCount],
+                scoreTitles: ["Your Musi Rating", "Friend Score", "User Score"],
+                descriptions: [
+                    `#<strong>${rank}</strong> on your list of ${type === 'Song' ? 'songs' : 'albums'}`, 
+                    friendCount === 1 ? `What <strong>1 friend</strong> thinks` : `What your <strong>${friendCount} friends</strong> think`, 
+                    `Average score from <strong>${globalCount}</strong> users`
+                ]
+            };
+        } else {
+            responseData = {
+                scores: ["-", friendScore, globalScore], 
+                counts: [0, friendCount, globalCount],
+                scoreTitles: ["Rec Score", "Friend Score", "User Score"],
+                descriptions: [
+                    "How much we think <strong>you</strong> will like it",
+                    friendCount === 1 ? `What <strong>1 friend</strong> thinks` : `What your <strong>${friendCount} friends</strong> think`, 
+                    `Average score from <strong>${globalCount}</strong> users`
+                ]
+            };
+        }
+
+        res.json(responseData);
+
+    } catch (err) {
+        console.error("Error fetching scores:", err);
+        res.status(500).json({ error: "Server Error" });
     }
-
-    res.json(responseData);
 });
 
 app.get('/api/search', (req, res) => {
@@ -744,19 +827,46 @@ app.post('/api/streak/activity', async (req, res) => {
 
 app.use('/api/reviews', require('./routes/reviews'));
 
-app.get('/api/friendscores/:type/:artist/:title', (req, res) => {
+app.get('/api/friendscores/:type/:artist/:title', async (req, res) => {
     const { type, artist, title } = req.params;
     const userId = req.user.id;
-    const friendScores = [
-      { id: 1, name: 'David', handle: '@dvd', score: 7.1, rating: 3, imgUrl: '' },
-      { id: 2, name: 'Julz Liang', handle: '@julzliang', score: 7.2, rating: 3, imgUrl: '' },
-      { id: 3, name: 'Andy Cabindol', handle: '@andycabindol', score: 3.4, rating: 2, imgUrl: '' },
-      { id: 4, name: 'Zuhair', handle: '@zuhair', score: 6.7, rating: 3, imgUrl: '' },
-    ];
-    if (friendScores) {
+
+    const targetId = `${type}-${artist}-${title}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+    try {
+        const currentUser = await User.findById(userId);
+        const friendIds = currentUser ? currentUser.following : [];
+
+        if (friendIds.length === 0) {
+            return res.json([]);
+        }
+
+        const friendReviews = await Review.find({
+            targetId: targetId,
+            userId: { $in: friendIds }
+        })
+        .populate('userId', 'name username') 
+        .sort({ rating: -1 }); 
+
+        // 4. Map to Frontend Format
+        const friendScores = friendReviews.map(review => {
+            if (!review.userId) return null;
+            
+            return {
+                id: review.userId._id,
+                name: review.userId.name || "Unknown",
+                handle: `@${review.userId.username}`,
+                score: review.rating.toFixed(1),
+                rating: review.ratingIndex,      // 0, 1, or 2 (Circle Color)
+                imgUrl: review.userId.profilePictureUrl || "" // Placeholder for now
+            };
+        }).filter(item => item !== null);
+
         res.json(friendScores);
-    } else {
-        res.json([]);
+
+    } catch (err) {
+        console.error("Error fetching friend scores:", err);
+        res.status(500).json({ error: "Server Error" });
     }
 });
 

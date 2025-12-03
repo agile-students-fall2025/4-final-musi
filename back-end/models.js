@@ -20,7 +20,8 @@ const userSchema = new Schema(
     currentStreak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
     lastLoginDate: { type: Date, default: null },
-    totalLogins: { type: Number, default: 0 }
+    totalLogins: { type: Number, default: 0 },
+    profilePictureUrl: { type: String, default: "" }
   },
   { timestamps: true }
 );
@@ -155,7 +156,7 @@ const reviewSchema = new Schema(
   },
   { timestamps: true }
 );
-
+  
 reviewSchema.index({ targetType: 1, targetId: 1 });
 
 

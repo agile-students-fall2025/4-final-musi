@@ -23,15 +23,29 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     { label: "I didn't like it", color: "#d3d3d3" }
   ];
 
+  // Helper to remove the current song from the list (prevents self-comparison)
+  const filterOutCurrentSong = (list) => {
+    return list.filter(item => {
+      // Backend returns targetId as an object (populated) or fallback
+      const itemId = item.targetId?.spotifyId || item.targetId;
+      return itemId !== spotifyId;
+    });
+  };
+
   // 1. Start Ranking
   const handleStartRanking = async () => {
     setMode('loading');
     try {
       const res = await axios.get(`http://localhost:3001/api/reviews/my-list?type=${targetType}`);
-      const allItems = res.data || [];
+      
+      // A. Remove current song from the list (fixes "Song A vs Song A" and "Always #1" bugs)
+      const allItems = filterOutCurrentSong(res.data || []);
+      
+      // B. Filter by Tier (Only compare against same category)
       const sameTierItems = allItems.filter(item => (item.ratingIndex ?? 0) === selectedRating);
 
       if (sameTierItems.length === 0) {
+        // If no items in this tier, place it after all "Better" items
         const betterTierItems = allItems.filter(item => (item.ratingIndex ?? 0) < selectedRating);
         submitFinalRank(betterTierItems.length);
       } else {
@@ -52,11 +66,17 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     let newMin = min;
     let newMax = max;
 
-    if (preferred === 'new') newMax = mid - 1;
-    else newMin = mid + 1;
+    if (preferred === 'new') {
+      // User prefers NEW song (Higher in list = Lower Index)
+      newMax = mid - 1;
+    } else {
+      // User prefers OLD song
+      newMin = mid + 1;
+    }
 
-    if (newMin > newMax) calculateGlobalAndSubmit(newMin);
-    else {
+    if (newMin > newMax) {
+      calculateGlobalAndSubmit(newMin);
+    } else {
       setMin(newMin);
       setMax(newMax);
       setMid(Math.floor((newMin + newMax) / 2));
@@ -67,10 +87,17 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   const calculateGlobalAndSubmit = async (localRankIndex) => {
     try {
       const res = await axios.get(`http://localhost:3001/api/reviews/my-list?type=${targetType}`);
-      const allItems = res.data || [];
+      
+      // A. Again, filter out ourselves so we don't count our old rating
+      const allItems = filterOutCurrentSong(res.data || []);
+
+      // B. Count items in better tiers (e.g. if I am Tier 1, count all Tier 0 items)
       const betterTierCount = allItems.filter(item => (item.ratingIndex ?? 0) < selectedRating).length;
+      
+      // Global Rank = (Count of Better Items) + (My Position in Current Tier)
       submitFinalRank(betterTierCount + localRankIndex);
     } catch (e) {
+      console.error("Error calculating global rank", e);
       submitFinalRank(localRankIndex);
     }
   }
@@ -100,7 +127,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     <div className="rating-modal-overlay" onClick={onClose}>
       <div className="rating-modal" onClick={(e) => e.stopPropagation()}>
         
-        {/* HEADER - Always visible now, even during ranking */}
+        {/* HEADER - Always visible */}
         <div className="rating-modal-header">
           <img 
             src={imageUrl} 
@@ -166,7 +193,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
               </div>
             </div>
 
-            {/* Controls (Hidden placeholder for now as requested) */}
+            {/* Controls (Hidden placeholder) */}
             <div className="versus-controls">
                <button className="versus-action-btn" style={{visibility: 'hidden'}}>
                  ↩ Undo
