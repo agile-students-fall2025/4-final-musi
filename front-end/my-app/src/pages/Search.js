@@ -80,6 +80,8 @@ function Search() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [userResults, setUserResults] = useState([]);
+  const [bookmarkedIds, setBookmarkedIds] = useState([]);
+  const [toast, setToast] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = async (term) => {
@@ -100,7 +102,11 @@ function Search() {
         params: { q: term }
         })
       ]);
-      setResults(musicRes.data || []);
+      const musicItems = musicRes.data || [];
+      setResults(musicItems);
+      setBookmarkedIds(
+        musicItems.filter((m) => m.bookmarked).map((m) => m.id)
+      );
       setUserResults(userRes.data || []);
     } catch (e) {
       console.error('Error searching:', e);
@@ -160,14 +166,56 @@ function Search() {
             subtitle={`${item.musicType || 'Song'} • ${item.artist}`}
             meta={(item.tags || []).join(", ")}
             score={item.score}
+            showScore={false}
+            showBookmark={true}
+            bookmarked={bookmarkedIds.includes(item.id)}
+            imageUrl={item.imageUrl}
             onClick={() =>
               navigate(
                 `/app/music/${encodeURIComponent(item.musicType || 'Song')}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`
               )
             }
+            onBookmarkClick={async () => {
+              try {
+                await axios.post('http://localhost:3001/api/want', {
+                  spotifyId: item.id,
+                  title: item.title,
+                  artist: item.artist,
+                  musicType: item.musicType || 'Song',
+                  imageUrl: item.imageUrl,
+                });
+                setBookmarkedIds((prev) =>
+                  prev.includes(item.id) ? prev : [...prev, item.id]
+                );
+                setToast(`${item.title} added to Want to listen`);
+                setTimeout(() => setToast(''), 2500);
+              } catch (e) {
+                console.error('Failed to add to want list:', e);
+                alert('Failed to add to Want to listen');
+              }
+            }}
           />
         ))}
       </ResultsContainer>
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: "80px",
+            transform: "translateX(-50%)",
+            background: "#111",
+            color: "#fff",
+            padding: "10px 16px",
+            borderRadius: "999px",
+            fontSize: "0.9rem",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+            zIndex: 2000,
+          }}
+        >
+          {toast}
+        </div>
+      )}
     </Container>
   );
 }

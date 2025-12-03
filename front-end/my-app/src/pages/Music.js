@@ -114,6 +114,7 @@ function Music() {
     <div className="Music">
       <ImageHeader 
         {...musicData} 
+        spotifyId={musicData.spotifyId}
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
       />
       <div className="description">

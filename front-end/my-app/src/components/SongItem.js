@@ -19,6 +19,8 @@ const Thumbnail = styled.div`
   height: 56px;
   border-radius: 10px;
   background: #e9e9ec;
+  background-size: cover;
+  background-position: center;
 `;
 
 const Body = styled.div`
@@ -90,10 +92,21 @@ export default function SongItem({
   showPlus = false,
   showBookmark = false,
   onClick,
+  onBookmarkClick,
+  bookmarked = false,
+  imageUrl,
 }) {
   return (
     <Card onClick={onClick}>
-      <Thumbnail />
+      <Thumbnail
+        style={
+          imageUrl
+            ? {
+                backgroundImage: `url(${imageUrl})`,
+              }
+            : undefined
+        }
+      />
       <Body>
         <Title>{title}</Title>
         <Subtitle>{subtitle}</Subtitle>
@@ -108,8 +121,18 @@ export default function SongItem({
           </CircleIconButton>
         )}
         {showBookmark && (
-          <IconButton aria-label="Bookmark">
-            <Bookmark size={20} color={theme.colors.text} />
+          <IconButton
+            aria-label="Bookmark"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onBookmarkClick) onBookmarkClick();
+            }}
+          >
+            <Bookmark
+              size={20}
+              color={bookmarked ? theme.colors.primary : theme.colors.text}
+              fill={bookmarked ? theme.colors.primary : "none"}
+            />
           </IconButton>
         )}
       </RightSection>

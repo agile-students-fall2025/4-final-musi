@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Search, Menu, Heart } from "lucide-react";
+import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import "../components/Score.css";
@@ -55,8 +55,15 @@ const UserDetails = styled.div`flex: 1;`;
 const UserName = styled.div`font-weight: 600; font-size: 0.9rem; color: #333; text-align: left;`;
 const ActivityText = styled.div`font-size: 0.85rem; color: #666; margin-bottom: 4px; text-align: left;`;
 const TimeStamp = styled.div`font-size: 0.8rem; color: #999; text-align: left;`;
-const AlbumGrid = styled.div`display: flex; gap: 8px; margin: 12px 0;`;
-const AlbumCover = styled.div`width: 80px; height: 80px; background: #666; border-radius: 4px;`;
+const Artwork = styled.div`
+  width: 80px;
+  height: 80px;
+  margin: 12px 0;
+  border-radius: 4px;
+  background: #666;
+  background-size: cover;
+  background-position: center;
+`;
 const ReviewText = styled.p`font-size: 0.9rem; color: #333; line-height: 1.4; margin: 12px 0; text-align: left;`;
 const InteractionBar = styled.div`display: flex; justify-content: space-between; align-items: center; margin-top: 12px;`;
 const InteractionLeft = styled.div`display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: #666;`;
@@ -173,6 +180,25 @@ function Feed() {
     navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
   };
 
+  const handleBookmark = async (item) => {
+    try {
+      const type = item.musicType || "Song";
+      const spotifyId = `${type}-${item.artist}-${item.title}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-');
+
+      await axios.post("http://localhost:3001/api/want", {
+        spotifyId,
+        title: item.title,
+        artist: item.artist,
+        musicType: type,
+      });
+    } catch (e) {
+      console.error("Failed to add to want list:", e);
+      alert("Failed to add to Want to listen");
+    }
+  };
+
   if (loading) return <Container><Section><div>Loading…</div></Section></Container>;
   if (err) return <Container><Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section></Container>;
 
@@ -254,7 +280,9 @@ function Feed() {
             </FeedScoreContainer>
           </UserInfo>
 
-          <AlbumGrid><AlbumCover /><AlbumCover /><AlbumCover /></AlbumGrid>
+          {item.imageUrl && (
+            <Artwork style={{ backgroundImage: `url(${item.imageUrl})` }} />
+          )}
           <ReviewText>{item.review}</ReviewText>
 
           <InteractionBar>
@@ -265,7 +293,22 @@ function Feed() {
               </LikeButton>
             </InteractionLeft>
             <InteractionRight>
-              <span>{item.bookmarks} bookmarks</span>
+              <button
+                onClick={() => handleBookmark(item)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "0.85rem",
+                  color: "#666",
+                }}
+              >
+                <Bookmark size={16} />
+                <span>Want to listen</span>
+              </button>
             </InteractionRight>
           </InteractionBar>
         </FeedItem>

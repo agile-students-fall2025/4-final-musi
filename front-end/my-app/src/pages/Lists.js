@@ -147,6 +147,7 @@ export default function Lists() {
                 subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
                 meta={(song.tags ?? []).join(", ")}
                 score={song.score}
+              imageUrl={song.imageUrl}
                 dividerTop={i > 0}
               />
             </li>

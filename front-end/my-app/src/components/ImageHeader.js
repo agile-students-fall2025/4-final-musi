@@ -1,9 +1,47 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import './ImageHeader.css'
 
-function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType}) {
+function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType, isBookmarked: initialBookmarked = false, spotifyId}) {
 
-    const [isBookmarked, SetIsBookmarked] = useState(false)
+    const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
+
+    useEffect(() => {
+      setIsBookmarked(initialBookmarked);
+    }, [initialBookmarked]);
+
+    const toggleBookmark = async () => {
+      try {
+        if (isBookmarked) {
+          await fetch("http://localhost:3001/api/want/remove", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": localStorage.getItem("token") || "",
+            },
+            body: JSON.stringify({ spotifyId }),
+          });
+          setIsBookmarked(false);
+        } else {
+          await fetch("http://localhost:3001/api/want", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": localStorage.getItem("token") || "",
+            },
+            body: JSON.stringify({
+              spotifyId,
+              title,
+              artist,
+              musicType,
+              imageUrl,
+            }),
+          });
+          setIsBookmarked(true);
+        }
+      } catch (e) {
+        console.error("Bookmark toggle failed:", e);
+      }
+    };
 
     return (
     <div className="image-header-container">
@@ -56,7 +94,7 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
                 className="icon" 
               />
             </button>
-            <button className="image-header-action-btn" title="Bookmark" onClick={()=>SetIsBookmarked(!isBookmarked)}>
+            <button className="image-header-action-btn" title="Bookmark" onClick={toggleBookmark}>
               <img 
                 src={isBookmarked ? '/filled-bookmark.png' : '/empty-bookmark.png'} 
                 alt="Bookmark" 
