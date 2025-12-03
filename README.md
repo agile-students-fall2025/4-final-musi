@@ -10,9 +10,9 @@ Musi is an app where users can rank their favorite songs, create personal lists,
 
 ## Team Norms
 Sprint Planning   
-Mondays 4:00-4:30 PM
+Mondays 4:00-4:30PM
 
-Spring Reviews
+Sprint Reviews
 Thursdays 4:00-4:30PM 
 
 ## Why work on Musi
