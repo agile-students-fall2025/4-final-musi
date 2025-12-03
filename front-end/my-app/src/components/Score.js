@@ -5,7 +5,7 @@ function Score({ score, count, title, description }) {
     <div className="score-item">
       <div className="score-circle-container">
         <div className="score-circle">
-          <span className="score-number">{score ? score.toFixed(1) : '...'}</span>
+          <span className="score-number">{score ? score : '...'}</span>
         </div>
         <div className="score-count">
           {count || '...'}
