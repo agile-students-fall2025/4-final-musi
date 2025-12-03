@@ -50,7 +50,20 @@ const ListCardButton = styled.button`
 `;
 const FeedItem = styled.div`padding: 16px 20px; border-bottom: 1px solid #f0f0f0;`;
 const UserInfo = styled.div`display: flex; align-items: center; gap: 12px; margin-bottom: 8px;`;
-const Avatar = styled.div`width: 40px; height: 40px; background: #ddd; border-radius: 50%;`;
+const Avatar = styled.div`
+  width: 40px;
+  height: 40px;
+  background: #ddd;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+`;
 const UserDetails = styled.div`flex: 1;`;
 const UserName = styled.div`font-weight: 600; font-size: 0.9rem; color: #333; text-align: left;`;
 const ActivityText = styled.div`font-size: 0.85rem; color: #666; margin-bottom: 4px; text-align: left;`;
@@ -254,7 +267,19 @@ function Feed() {
       {feedData.map((item) => (
         <FeedItem key={item.id}>
           <UserInfo>
-            <Avatar />
+            <Avatar
+              style={
+                item.userAvatar
+                  ? { backgroundImage: `url(${item.userAvatar})` }
+                  : { backgroundColor: item.userAvatarColor || "#666" }
+              }
+            >
+              {!item.userAvatar &&
+                (item.user || "")
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase()}
+            </Avatar>
             <UserDetails>
               <UserName>{item.user}</UserName>
               <ActivityText>

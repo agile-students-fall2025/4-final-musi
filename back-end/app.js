@@ -8,6 +8,19 @@ const authRoutes = require('./routes/auth');
 const { User, Review, Song, Album } = require('./models');
 const app = express() 
 
+// --- Avatar color helper (matches user schema logic) ---
+function computeAvatarColor(username = "") {
+  const clean = (username || "").replace(/^@/, "") || "user";
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash * 31 + clean.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  const saturation = 65;
+  const lightness = 55;
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/musi';
 
@@ -179,8 +192,8 @@ app.get('/api/followers/:username', async (req, res) => {
       : rawUsername;
 
     const user = await User.findOne({ username })
-      .populate('followers', 'username name')
-      .populate('following', 'username name');
+      .populate('followers', 'username name profilePictureUrl avatarColor')
+      .populate('following', 'username name profilePictureUrl avatarColor');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -190,18 +203,28 @@ app.get('/api/followers/:username', async (req, res) => {
       (user.following || []).map((u) => String(u._id))
     );
 
-    const followers = (user.followers || []).map((u) => ({
-      id: String(u._id),
-      name: u.name || u.username,
-      username: `@${u.username}`,
-      mutual: followingIds.has(String(u._id)),
-    }));
+    const followers = (user.followers || []).map((u) => {
+      const color = u.avatarColor || computeAvatarColor(u.username);
+      return {
+        id: String(u._id),
+        name: u.name || u.username,
+        username: `@${u.username}`,
+        profilePictureUrl: u.profilePictureUrl || "",
+        avatarColor: color,
+        mutual: followingIds.has(String(u._id)),
+      };
+    });
 
-    const following = (user.following || []).map((u) => ({
-      id: String(u._id),
-      name: u.name || u.username,
-      username: `@${u.username}`,
-    }));
+    const following = (user.following || []).map((u) => {
+      const color = u.avatarColor || computeAvatarColor(u.username);
+      return {
+        id: String(u._id),
+        name: u.name || u.username,
+        username: `@${u.username}`,
+        profilePictureUrl: u.profilePictureUrl || "",
+        avatarColor: color,
+      };
+    });
 
     res.json({ followers, following });
   } catch (err) {
@@ -669,13 +692,20 @@ app.get('/api/search/users', async (req, res) => {
       $or: [{ username: regex }, { name: regex }],
     })
       .limit(20)
-      .select('username name');
+      .select('username name profilePictureUrl avatarColor')
+      .lean()
+      .exec();
 
-    const results = users.map((u) => ({
-      id: u._id,
-      username: u.username,
-      name: u.name || u.username,
-    }));
+    const results = users.map((u) => {
+      const color = u.avatarColor || computeAvatarColor(u.username);
+      return {
+        id: u._id,
+        username: u.username,
+        name: u.name || u.username,
+        profilePictureUrl: u.profilePictureUrl || "",
+        avatarColor: color,
+      };
+    });
 
     res.json(results);
   } catch (error) {
@@ -966,7 +996,7 @@ app.get("/api/feed", async (req, res) => {
 
     const [reviewers, songs, albums] = await Promise.all([
       User.find({ _id: { $in: reviewerIds } })
-        .select("name username")
+        .select("name username profilePictureUrl avatarColor")
         .lean()
         .exec(),
       songIds.length
@@ -998,9 +1028,13 @@ app.get("/api/feed", async (req, res) => {
         day: "numeric",
       });
 
+      const color = reviewer.avatarColor || computeAvatarColor(reviewer.username || "");
+
       return {
         id: r._id,
         user: reviewer.name || reviewer.username || "Unknown",
+        userAvatar: reviewer.profilePictureUrl || "",
+        userAvatarColor: color,
         activity: "ranked",
         rating,
         time,

@@ -23,16 +23,33 @@ const userSchema = new Schema(
     longestStreak: { type: Number, default: 0 },
     lastLoginDate: { type: Date, default: null },
     totalLogins: { type: Number, default: 0 },
-    profilePictureUrl: { type: String, default: "" }
+    profilePictureUrl: { type: String, default: "" },
+    avatarColor: { type: String, default: "" }
   },
   { timestamps: true }
 );
 
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+function computeAvatarColor(username = "") {
+  const clean = username.replace(/^@/, "") || "user";
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hash = (hash * 31 + clean.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  const saturation = 65;
+  const lightness = 55;
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+userSchema.pre("save", async function () {
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  if (!this.avatarColor && this.username) {
+    this.avatarColor = computeAvatarColor(this.username);
+  }
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

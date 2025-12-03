@@ -629,19 +629,50 @@ function Profile() {
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
-        const imageData = reader.result;
-        const res = await axios.put("/api/profile/photo", { imageData });
-        const url = res.data.profilePictureUrl || imageData;
-        setProfile((prev) =>
-          prev
-            ? {
-                ...prev,
-                profilePictureUrl: url,
-              }
-            : prev
-        );
+        const originalDataUrl = reader.result;
+
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            const maxSize = 256; // max width/height for avatar
+            let { width, height } = img;
+
+            if (width > maxSize || height > maxSize) {
+              const scale = Math.min(maxSize / width, maxSize / height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+            const res = await axios.put("/api/profile/photo", {
+              imageData: compressedDataUrl,
+            });
+            const url = res.data.profilePictureUrl || compressedDataUrl;
+            setProfile((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    profilePictureUrl: url,
+                  }
+                : prev
+            );
+          } catch (e) {
+            console.error("Failed to update profile photo:", e);
+          }
+        };
+        img.onerror = () => {
+          console.error("Failed to load image for compression");
+        };
+        img.src = originalDataUrl;
       } catch (e) {
-        console.error("Failed to update profile photo:", e);
+        console.error("Failed to process profile photo:", e);
       }
     };
     reader.readAsDataURL(file);
