@@ -33,6 +33,10 @@ function UserRow({ user, activeTab, onUnfollow, onFollowBack, onClickUser }) {
     );
   }
 
+  const displayName = user.username || user.name || "";
+  const initial =
+    displayName.replace(/^@/, "").charAt(0).toUpperCase() || "?";
+
   return (
     <div className="user-row">
       <a 
@@ -45,7 +49,28 @@ function UserRow({ user, activeTab, onUnfollow, onFollowBack, onClickUser }) {
         }} 
         className="user-info-link"
       >
-        <div className="user-avatar"></div>
+        <div
+          className="user-avatar"
+          style={
+            user.profilePictureUrl
+              ? {
+                  backgroundImage: `url(${user.profilePictureUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : {
+                  backgroundColor: user.avatarColor || "#666",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "0.9rem",
+                }
+          }
+        >
+          {!user.profilePictureUrl && initial}
+        </div>
         <div className="user-details">
           <p className="user-name">{user.name}</p>
           <p className="user-username">{user.username}</p>
