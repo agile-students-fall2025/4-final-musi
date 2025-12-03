@@ -68,38 +68,24 @@ const ResultsContainer = styled.div`
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
-  const [allSongs, setAllSongs] = useState([]);
 
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/search');
-        
-        setAllSongs(response.data);
-        setResults(response.data);
-      } 
-      catch (e) {
-        console.error('Error fetching songs:', e);
-      }
-    };
-
-    fetchSongs();
-  }, []);
-
-  const handleSearch = (term) => {
+  const handleSearch = async (term) => {
     setSearchTerm(term);
     
     if (term.trim() === '') {
-      setResults(allSongs);
+      setResults([]);
       return;
     }
     
-    const lowerCaseTerm = term.toLowerCase();
-    const filteredData = allSongs.filter(item =>
-      item.title.toLowerCase().includes(lowerCaseTerm) ||
-      item.artist.toLowerCase().includes(lowerCaseTerm)
-    );
-    setResults(filteredData);
+    try {
+      const response = await axios.get('http://localhost:3001/api/search', {
+        params: { q: term }
+      });
+      setResults(response.data || []);
+    } catch (e) {
+      console.error('Error searching songs:', e);
+      setResults([]);
+    }
   };
 
   return (
@@ -125,13 +111,13 @@ function Search() {
       </Header>
 
       <ResultsContainer>
-        {results.map((song) => (
+        {results.map((item) => (
           <SongItem
-            key={song.id}
-            title={song.title}
-            subtitle={`Song • ${song.artist}`}
-            meta={song.tags.join(", ")}
-            score={song.score}
+            key={item.id}
+            title={item.title}
+            subtitle={`${item.musicType || 'Song'} • ${item.artist}`}
+            meta={(item.tags || []).join(", ")}
+            score={item.score}
           />
         ))}
       </ResultsContainer>

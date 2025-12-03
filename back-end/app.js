@@ -324,9 +324,60 @@ app.get('/api/scores/:type/:artist/:title', async (req, res) => {
     }
 });
 
-app.get('/api/search', (req, res) => {
-  const userId = req.user.id;
-  res.json(MOCK_SONGS);
+// ---- SPOTIFY SEARCH (tracks + albums) ----
+app.get('/api/search', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { q } = req.query;
+
+    const query = (q || '').trim();
+    if (!query) {
+      return res.json([]);
+    }
+
+    const accessToken = await getSpotifyAccessToken();
+
+    const response = await axios.get('https://api.spotify.com/v1/search', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        q: query,
+        type: 'track,album',
+        limit: 20,
+      },
+    });
+
+    const trackItems = response.data.tracks?.items || [];
+    const albumItems = response.data.albums?.items || [];
+
+    // Normalize to unified shape for frontend
+    const results = [
+      ...trackItems.map((t) => ({
+        id: t.id,
+        title: t.name,
+        artist: t.artists?.map((a) => a.name).join(', ') || '',
+        tags: (t.album?.album_type ? [t.album.album_type] : []),
+        score: null,
+        musicType: 'Song',
+        imageUrl: t.album?.images?.[0]?.url || '',
+      })),
+      ...albumItems.map((a) => ({
+        id: a.id,
+        title: a.name,
+        artist: a.artists?.map((ar) => ar.name).join(', ') || '',
+        tags: (a.album_type ? [a.album_type] : []),
+        score: null,
+        musicType: 'Album',
+        imageUrl: a.images?.[0]?.url || '',
+      })),
+    ];
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error searching Spotify:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to search Spotify' });
+  }
 });
 
 app.get('/api/leaderboard', (req, res) => {
