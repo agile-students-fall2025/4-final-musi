@@ -186,6 +186,18 @@ const Card = styled.div`
   gap: 8px;
 `;
 
+const CardClickable = styled(Card)`
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  &:hover {
+    background-color: #fafafa;
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const CardLabel = styled.div`
   font-size: 0.85rem;
   color: ${theme.colors.text_secondary};
@@ -625,10 +637,10 @@ function User() {
             <StatValue>{profile.following}</StatValue>
             <StatLabel>Following</StatLabel>
           </StatItemClickable>
-          <StatItem>
-            <StatValue>#2</StatValue>
+          <StatItemClickable onClick={() => navigate("/app/leaderboard")}>
+            <StatValue>#{profile.rank || '?'}</StatValue>
             <StatLabel>Rank on Musi</StatLabel>
-          </StatItem>
+          </StatItemClickable>
         </StatsRow>
 
         <ListItem>
@@ -662,11 +674,11 @@ function User() {
         </ListItem>
 
         <CardRow>
-          <Card>
+          <CardClickable onClick={() => navigate("/app/leaderboard")}>
             <Star size={20} />
             <CardLabel>Rank on Musi</CardLabel>
-            <CardValue>#2</CardValue>
-          </Card>
+            <CardValue>#{profile.rank || '?'}</CardValue>
+          </CardClickable>
           <Card>
             <Flame size={20} />
             <CardLabel>Current streak</CardLabel>

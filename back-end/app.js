@@ -733,6 +733,57 @@ app.get('/api/search/users', async (req, res) => {
   }
 });
 
+// Helper function to calculate user rank based on review count
+async function calculateUserRank(userId) {
+  try {
+    // Get review counts for all users
+    const reviewCounts = await Review.aggregate([
+      {
+        $group: {
+          _id: '$userId',
+          reviewCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Create a map of userId to reviewCount
+    const countMap = new Map();
+    reviewCounts.forEach(item => {
+      countMap.set(String(item._id), item.reviewCount);
+    });
+
+    // Get all users with their usernames and review counts
+    const users = await User.find({})
+      .select('_id username')
+      .lean()
+      .exec();
+
+    // Add review counts to users and sort
+    const usersWithCounts = users.map(user => ({
+      _id: user._id,
+      username: user.username || '',
+      reviewCount: countMap.get(String(user._id)) || 0
+    }));
+
+    // Sort by review count descending, then alphabetically by username
+    usersWithCounts.sort((a, b) => {
+      if (b.reviewCount !== a.reviewCount) {
+        return b.reviewCount - a.reviewCount;
+      }
+      return (a.username || '').localeCompare(b.username || '');
+    });
+
+    // Find the user's position in the sorted list
+    const userIndex = usersWithCounts.findIndex(u => String(u._id) === String(userId));
+    
+    // Rank is 1-indexed, or null if user not found
+    return userIndex !== -1 ? userIndex + 1 : null;
+  } catch (error) {
+    console.error('Error calculating user rank:', error);
+    return null;
+  }
+}
+
 // ---- PUBLIC USER PROFILE (by username, for other profiles) ----
 app.get('/api/users/:username/profile', async (req, res) => {
   try {
@@ -769,6 +820,7 @@ app.get('/api/users/:username/profile', async (req, res) => {
       : '';
 
     const color = user.avatarColor || computeAvatarColor(user.username || "");
+    const rank = await calculateUserRank(user._id);
 
     const profile = {
       id: user._id,
@@ -786,6 +838,7 @@ app.get('/api/users/:username/profile', async (req, res) => {
       profilePictureUrl: user.profilePictureUrl || "",
       avatarColor: color,
       dateJoined: memberSinceDate,
+      rank: rank || 999, // Default to 999 if rank calculation fails
     };
 
     res.json({ profile });
@@ -865,58 +918,82 @@ app.post('/api/users/:id/unfollow', async (req, res) => {
   }
 });
 
-app.get('/api/leaderboard', (req, res) => {
-  const userId = req.user.id;
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { filter = 'all' } = req.query; // 'all' or 'following'
     
-  const reviewData = [
-    { rank: 1, username: "@dvd", score: 640 },
-    { rank: 2, username: "@andycabindol", score: 569 },
-    { rank: 3, username: "@julz", score: 467 },
-    { rank: 4, username: "@ian", score: 428 },
-    { rank: 5, username: "@zuhair", score: 304 },
-    { rank: 6, username: "@beef", score: 237 },
-    { rank: 7, username: "@fish", score: 220 },
-    { rank: 8, username: "@tofu", score: 96 },
-    { rank: 9, username: "@salmon", score: 90 },
-    { rank: 10, username: "@trash", score: 9 },
-    { rank: 11, username: "@slop", score: 1 },
-  ];
+    // Get review counts for all users
+    const reviewCounts = await Review.aggregate([
+      {
+        $group: {
+          _id: '$userId',
+          reviewCount: { $sum: 1 }
+        }
+      }
+    ]);
 
-  const albumData = [
-    { rank: 1, username: "@tea", score: 190 },
-    { rank: 2, username: "@egg", score: 179 },
-    { rank: 3, username: "@julz", score: 167 },
-    { rank: 4, username: "@ian", score: 128 },
-    { rank: 5, username: "@zuhair", score: 104 },
-    { rank: 6, username: "@beef", score: 100 },
-    { rank: 7, username: "@fish", score: 99 },
-    { rank: 8, username: "@andycabindol", score: 96 },
-    { rank: 9, username: "@salmon", score: 29 },
-    { rank: 10, username: "@trash", score: 14 },
-    { rank: 11, username: "@slop", score: 1 },
-  ];
+    // Create a map of userId to reviewCount
+    const countMap = new Map();
+    reviewCounts.forEach(item => {
+      countMap.set(String(item._id), item.reviewCount);
+    });
 
-  const songData = [
-    { rank: 1, username: "@ian", score: 1640 },
-    { rank: 2, username: "@andycabindol", score: 1569 },
-    { rank: 3, username: "@julz", score: 1467 },
-    { rank: 4, username: "@andy", score: 1428 },
-    { rank: 5, username: "@zuhair", score: 1304 },
-    { rank: 6, username: "@beef", score: 1237 },
-    { rank: 7, username: "@fish", score: 1220 },
-    { rank: 8, username: "@jules", score: 1096 },
-    { rank: 9, username: "@salmon", score: 1029 },
-    { rank: 10, username: "@trash", score: 814 },
-    { rank: 11, username: "@slop", score: 451 },
-  ];
+    // Get all users with their usernames and review counts
+    let usersQuery = User.find({}).select('_id username name profilePictureUrl avatarColor');
+    
+    // If filtering by following, get users that the current user follows + the current user
+    if (filter === 'following') {
+      const currentUser = await User.findById(userId).select('following').lean().exec();
+      const followingIds = (currentUser?.following || []).map(id => String(id));
+      // Include current user in the following list
+      const userIdsToInclude = [...new Set([...followingIds, String(userId)])];
+      if (userIdsToInclude.length === 0) {
+        return res.json({ users: [], currentUserId: String(userId) });
+      }
+      usersQuery = User.find({ _id: { $in: userIdsToInclude } }).select('_id username name profilePictureUrl avatarColor');
+    }
+    
+    // Get current user's username for highlighting
+    const currentUserData = await User.findById(userId).select('username').lean().exec();
+    const currentUsername = currentUserData?.username || '';
+    
+    const users = await usersQuery.lean().exec();
 
-  const dataMap = {
-    reviews: reviewData,
-    songs: songData,
-    albums: albumData,
-  };
+    // Add review counts to users and sort
+    const usersWithCounts = users.map(user => ({
+      _id: user._id,
+      username: user.username || '',
+      name: user.name || user.username || '',
+      reviewCount: countMap.get(String(user._id)) || 0,
+      profilePictureUrl: user.profilePictureUrl || "",
+      avatarColor: user.avatarColor || computeAvatarColor(user.username || ""),
+    }));
 
-  res.json(dataMap);
+    // Sort by review count descending, then alphabetically by username
+    usersWithCounts.sort((a, b) => {
+      if (b.reviewCount !== a.reviewCount) {
+        return b.reviewCount - a.reviewCount;
+      }
+      return (a.username || '').localeCompare(b.username || '');
+    });
+
+    // Assign ranks (1-indexed)
+    const usersWithRanks = usersWithCounts.map((user, index) => ({
+      rank: index + 1,
+      username: `@${user.username}`,
+      score: user.reviewCount,
+      name: user.name,
+      profilePictureUrl: user.profilePictureUrl,
+      avatarColor: user.avatarColor,
+      isCurrentUser: user.username === currentUsername,
+    }));
+
+    res.json({ users: usersWithRanks, currentUsername: currentUsername });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
 });
 
 app.get('/api/albumlist/:artist/:title', (req, res) => {
@@ -1126,6 +1203,7 @@ app.get('/api/profile', async (req, res) => {
     });
 
     const color = user.avatarColor || computeAvatarColor(user.username || "");
+    const rank = await calculateUserRank(userId);
 
     const profile = {
       name: user.name || user.username,
@@ -1134,7 +1212,7 @@ app.get('/api/profile', async (req, res) => {
       memberSince: memberSince,
       followers: user.followers?.length || 0,
       following: user.following?.length || 0,
-      rank: 2, // TODO: Calculate actual rank from leaderboard
+      rank: rank || 999, // Default to 999 if rank calculation fails
       streakDays: user.currentStreak || 0,
       listenedCount: user.reviews?.length || 0,
       wantCount: 0, // TODO: Implement want list
