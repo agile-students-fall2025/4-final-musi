@@ -143,8 +143,12 @@ app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
 
     const year = releaseDate ? parseInt(releaseDate.slice(0, 4), 10) : null;
 
+    const user = await User.findById(userId).select('wantList').lean().exec();
+    const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+    const spotifyId = spotifyItem?.id || targetId;
+
     const data = {
-      spotifyId: spotifyItem?.id || targetId,
+      spotifyId,
       title: displayTitle,
       artist: displayArtist,
       musicType: type,
@@ -157,6 +161,7 @@ app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
       vibe: [], // could be enhanced later with audio features
       genre: [], // could be enhanced later with artist/album genres
       year,
+      isBookmarked: wantList.includes(spotifyId),
     };
 
     res.json(data);
@@ -220,79 +225,241 @@ const MOCK_SONGS = [
 ];
 
 // --- /api/lists ---
-app.get('/api/lists', (req, res) => {
-  const {
-    tab = 'listened',
-    q = '',
-    limit = '50',
-    offset = '0',
-  } = req.query;
+app.get('/api/lists', async (req, res) => {
+  try {
+    const {
+      tab = 'listened',
+      q = '',
+      limit = '50',
+      offset = '0',
+    } = req.query;
 
-  const userId = req.user.id;
+    const userId = req.user.id;
 
-  const lim = Math.max(1, Math.min(parseInt(limit, 10) || 50, 100));
-  const off = Math.max(0, parseInt(offset, 10) || 0);
-  const query = String(q).trim().toLowerCase();
+    const lim = Math.max(1, Math.min(parseInt(limit, 10) || 50, 100));
+    const off = Math.max(0, parseInt(offset, 10) || 0);
+    const query = String(q).trim().toLowerCase();
 
-  let rows = [...MOCK_SONGS];
-  switch (tab) {
-    case 'want':
-      rows = rows.filter((_, i) => i % 3 === 0);
-      break;
-    case 'recs':
-      rows = rows.filter(s => (s.score ?? 0) >= 8.5);
-      break;
-    case 'trending':
-      rows = rows.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-      break;
-    case 'friends':
-      rows = rows.filter((_, i) => i % 2 === 1);
-      break;
-    case 'new':
-      rows = rows.slice().reverse();
-      break;
-    case 'listened':
-    default:
-      break;
-  }
+    let rows = [];
 
-  if (query) {
-    rows = rows.filter(s => {
-      const hay = [
-        s.title,
-        s.artist,
-        ...(s.tags || []),
-        s.musicType || ''
-      ].join(' ').toLowerCase();
-      return hay.includes(query);
+    if (tab === 'listened') {
+      // All songs/albums the user has reviewed
+      const reviews = await Review.find({ userId })
+        .sort({ rating: -1 })
+        .lean()
+        .exec();
+
+      if (reviews.length) {
+        const songIds = reviews
+          .filter((r) => r.targetType === 'Song')
+          .map((r) => r.targetId);
+        const albumIds = reviews
+          .filter((r) => r.targetType === 'Album')
+          .map((r) => r.targetId);
+
+        const [songs, albums] = await Promise.all([
+          songIds.length
+            ? Song.find({ spotifyId: { $in: songIds } }).lean().exec()
+            : [],
+          albumIds.length
+            ? Album.find({ spotifyId: { $in: albumIds } }).lean().exec()
+            : [],
+        ]);
+
+        const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+        const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+        rows = reviews.map((r) => {
+          const isSong = r.targetType === 'Song';
+          const meta = isSong
+            ? songMap.get(r.targetId) || {}
+            : albumMap.get(r.targetId) || {};
+
+          return {
+            id: r._id,
+            title: meta.title || 'Unknown',
+            artist: meta.artist || 'Unknown',
+            tags: [],
+            score: typeof r.rating === 'number' ? r.rating.toFixed(1) : null,
+            musicType: r.targetType,
+          };
+        });
+      }
+    } else if (tab === 'want') {
+      // Songs/albums the user bookmarked (want-to-listen)
+      const user = await User.findById(userId).select('wantList').lean().exec();
+      const wantIds = Array.isArray(user?.wantList) ? user.wantList : [];
+
+      if (wantIds.length) {
+        const [songs, albums] = await Promise.all([
+          Song.find({ spotifyId: { $in: wantIds } }).lean().exec(),
+          Album.find({ spotifyId: { $in: wantIds } }).lean().exec(),
+        ]);
+
+        rows = [
+          ...songs.map((s) => ({
+            id: s._id,
+            title: s.title || 'Unknown',
+            artist: s.artist || 'Unknown',
+            tags: [],
+            score: null,
+            musicType: 'Song',
+          })),
+          ...albums.map((a) => ({
+            id: a._id,
+            title: a.title || 'Unknown',
+            artist: a.artist || 'Unknown',
+            tags: [],
+            score: null,
+            musicType: 'Album',
+          })),
+        ];
+      }
+    } else {
+      // For now, unsupported tabs return empty
+      rows = [];
+    }
+
+    if (query) {
+      rows = rows.filter((s) => {
+        const hay = [
+          s.title,
+          s.artist,
+          ...(s.tags || []),
+          s.musicType || '',
+        ]
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(query);
+      });
+    }
+
+    const total = rows.length;
+    const page = rows.slice(off, off + lim);
+
+    res.json({
+      tab,
+      q: query || undefined,
+      total,
+      limit: lim,
+      offset: off,
+      items: page,
     });
+  } catch (error) {
+    console.error('Error building lists:', error.message);
+    res.status(500).json({ error: 'Failed to load lists' });
   }
+});
 
-  const total = rows.length;
-  const page = rows.slice(off, off + lim);
+// --- Want-to-listen (bookmark) endpoints ---
+app.post('/api/want', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { spotifyId, title, artist, musicType, imageUrl } = req.body;
 
-  res.json({
-    tab,
-    q: query || undefined,
-    total,
-    limit: lim,
-    offset: off,
-    items: page,
-  });
+    if (!spotifyId && title && artist && musicType) {
+      spotifyId = `${musicType}-${artist}-${title}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-');
+    }
+
+    if (!spotifyId) {
+      return res.status(400).json({ error: 'spotifyId is required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Ensure metadata is cached
+    const normalizedType = (musicType || 'Song').toLowerCase() === 'album' ? 'Album' : 'Song';
+    const targetData = {
+      spotifyId,
+      title,
+      artist,
+      coverUrl: imageUrl,
+    };
+
+    if (normalizedType === 'Song') {
+      await Song.findOneAndUpdate(
+        { spotifyId },
+        targetData,
+        { new: true, upsert: true }
+      );
+    } else {
+      await Album.findOneAndUpdate(
+        { spotifyId },
+        targetData,
+        { new: true, upsert: true }
+      );
+    }
+
+    if (!Array.isArray(user.wantList)) {
+      user.wantList = [];
+    }
+
+    if (!user.wantList.includes(spotifyId)) {
+      user.wantList.push(spotifyId);
+      await user.save();
+    }
+
+    res.json({ ok: true, wantList: user.wantList });
+  } catch (error) {
+    console.error('Error adding to want list:', error.message);
+    res.status(500).json({ error: 'Failed to update want list' });
+  }
+});
+
+app.post('/api/want/remove', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { spotifyId } = req.body;
+
+    if (!spotifyId) {
+      return res.status(400).json({ error: 'spotifyId is required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.wantList = (user.wantList || []).filter((id) => id !== spotifyId);
+    await user.save();
+
+    res.json({ ok: true, wantList: user.wantList });
+  } catch (error) {
+    console.error('Error removing from want list:', error.message);
+    res.status(500).json({ error: 'Failed to update want list' });
+  }
 });
 
 // --- /api/tabs route ---
-app.get('/api/tabs', (req, res) => {
-  const userId = req.user.id;
-  const tabs = [
-    { key: "listened", label: "Listened", count: 204 },
-    { key: "want", label: "Want to listen", count: 10 },
-    { key: "recs", label: "Recs" },
-    { key: "trending", label: "Trending" },
-    { key: "recs from friends", label: "Recs from friends" },
-    { key: "new releases", label: "New releases" },
-  ];
-  res.json(tabs);
+app.get('/api/tabs', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [listenedCount, user] = await Promise.all([
+      Review.countDocuments({ userId }),
+      User.findById(userId).select('wantList').lean().exec(),
+    ]);
+
+    const wantCount = Array.isArray(user?.wantList) ? user.wantList.length : 0;
+
+    const tabs = [
+      { key: "listened", label: "Listened", count: listenedCount },
+      { key: "want", label: "Want to listen", count: wantCount },
+      { key: "recs", label: "Recs" },
+      { key: "trending", label: "Trending" },
+      { key: "recs from friends", label: "Recs from friends" },
+      { key: "new releases", label: "New releases" },
+    ];
+    res.json(tabs);
+  } catch (error) {
+    console.error('Error building tabs:', error.message);
+    res.status(500).json({ error: 'Failed to load tabs' });
+  }
 });
 
 app.get('/api/scores/:type/:artist/:title', async (req, res) => {
@@ -409,6 +576,9 @@ app.get('/api/search', async (req, res) => {
     const trackItems = response.data.tracks?.items || [];
     const albumItems = response.data.albums?.items || [];
 
+    const user = await User.findById(userId).select('wantList').lean().exec();
+    const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+
     // Normalize to unified shape for frontend
     const results = [
       ...trackItems.map((t) => ({
@@ -419,6 +589,7 @@ app.get('/api/search', async (req, res) => {
         score: null,
         musicType: 'Song',
         imageUrl: t.album?.images?.[0]?.url || '',
+        bookmarked: wantList.includes(t.id),
       })),
       ...albumItems.map((a) => ({
         id: a.id,
@@ -428,6 +599,7 @@ app.get('/api/search', async (req, res) => {
         score: null,
         musicType: 'Album',
         imageUrl: a.images?.[0]?.url || '',
+        bookmarked: wantList.includes(a.id),
       })),
     ];
 

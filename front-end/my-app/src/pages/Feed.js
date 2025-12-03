@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Search, Menu, Heart } from "lucide-react";
+import { Search, Menu, Heart, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import "../components/Score.css";
@@ -173,6 +173,25 @@ function Feed() {
     navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
   };
 
+  const handleBookmark = async (item) => {
+    try {
+      const type = item.musicType || "Song";
+      const spotifyId = `${type}-${item.artist}-${item.title}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-');
+
+      await axios.post("http://localhost:3001/api/want", {
+        spotifyId,
+        title: item.title,
+        artist: item.artist,
+        musicType: type,
+      });
+    } catch (e) {
+      console.error("Failed to add to want list:", e);
+      alert("Failed to add to Want to listen");
+    }
+  };
+
   if (loading) return <Container><Section><div>Loading…</div></Section></Container>;
   if (err) return <Container><Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section></Container>;
 
@@ -265,7 +284,22 @@ function Feed() {
               </LikeButton>
             </InteractionLeft>
             <InteractionRight>
-              <span>{item.bookmarks} bookmarks</span>
+              <button
+                onClick={() => handleBookmark(item)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "0.85rem",
+                  color: "#666",
+                }}
+              >
+                <Bookmark size={16} />
+                <span>Want to listen</span>
+              </button>
             </InteractionRight>
           </InteractionBar>
         </FeedItem>

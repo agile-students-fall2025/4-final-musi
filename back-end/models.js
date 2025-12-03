@@ -18,6 +18,7 @@ const userSchema = new Schema(
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
     reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
+    wantList: [{ type: String, default: [] }], // array of spotifyIds for want-to-listen
     currentStreak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
     lastLoginDate: { type: Date, default: null },
