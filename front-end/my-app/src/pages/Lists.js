@@ -6,6 +6,7 @@ import Tabs from "../components/Tabs";
 import SongItem from "../components/SongItem";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Sidebar from "../components/Sidebar";
 
 const Container = styled.div`
   min-height: 100vh;
@@ -67,6 +68,7 @@ export default function Lists() {
   const [loadingTabs, setLoadingTabs] = useState(true);
   const [loadingSongs, setLoadingSongs] = useState(true);
   const [error, setError] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
 
@@ -122,7 +124,7 @@ export default function Lists() {
       <TopBar>
         <div />
         <TopTitle>MY LISTS</TopTitle>
-        <Hamburger>
+        <Hamburger onClick={() => setIsSidebarOpen(true)}>
           <span />
           <span />
           <span />
@@ -154,6 +156,8 @@ export default function Lists() {
           ))}
         </ul>
       </Main>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </Container>
   );
 }
