@@ -68,6 +68,7 @@ const ResultsContainer = styled.div`
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
+  const navigate = useNavigate();
 
   const handleSearch = async (term) => {
     setSearchTerm(term);
@@ -118,6 +119,11 @@ function Search() {
             subtitle={`${item.musicType || 'Song'} • ${item.artist}`}
             meta={(item.tags || []).join(", ")}
             score={item.score}
+            onClick={() =>
+              navigate(
+                `/app/music/${encodeURIComponent(item.musicType || 'Song')}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`
+              )
+            }
           />
         ))}
       </ResultsContainer>

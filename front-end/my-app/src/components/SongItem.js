@@ -11,6 +11,7 @@ const Card = styled.article`
   border-bottom: 1px solid ${theme.colors.outline};
   align-items: center;
   width: 100%;
+  cursor: pointer;
 `;
 
 const Thumbnail = styled.div`
@@ -88,9 +89,10 @@ export default function SongItem({
   showScore = true,
   showPlus = false,
   showBookmark = false,
+  onClick,
 }) {
   return (
-    <Card>
+    <Card onClick={onClick}>
       <Thumbnail />
       <Body>
         <Title>{title}</Title>

@@ -70,57 +70,101 @@ app.use('/api/auth', authRoutes);
 app.use(authMiddleware);
 
 app.get('/api/music/:type/:artist/:title', authMiddleware, async (req, res) => {
-    try {
-        const { type, artist, title } = req.params;
-        const userId = req.user.id;
+  try {
+    const { type, artist, title } = req.params;
+    const userId = req.user.id;
 
-        const targetId = `${type}-${artist}-${title}`
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '-');
+    const targetId = `${type}-${artist}-${title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
 
-        console.log(`Fetching data for: ${targetId}`);
+    console.log(`Fetching data for: ${targetId}`);
 
-        const userReview = await Review.findOne({ 
-            userId: userId, 
-            targetId: targetId 
-        });
+    // 1) Get existing review stats from Mongo
+    const userReview = await Review.findOne({
+      userId: userId,
+      targetId: targetId,
+    });
 
-        const stats = await Review.aggregate([
-            { $match: { targetId: targetId } }, // Find all reviews for this song
-            { 
-                $group: { 
-                    _id: null, 
-                    averageScore: { $avg: "$rating" }, // Calculate Average
-                    totalCount: { $sum: 1 }            // Count total
-                } 
-            }
-        ]);
+    const stats = await Review.aggregate([
+      { $match: { targetId: targetId } },
+      {
+        $group: {
+          _id: null,
+          averageScore: { $avg: '$rating' },
+          totalCount: { $sum: 1 },
+        },
+      },
+    ]);
 
-        const avgScore = stats.length > 0 ? parseFloat(stats[0].averageScore.toFixed(1)) : 0;
-        const totalRatings = stats.length > 0 ? stats[0].totalCount : 0;
+    const avgScore = stats.length > 0 ? parseFloat(stats[0].averageScore.toFixed(1)) : 0;
+    const totalRatings = stats.length > 0 ? stats[0].totalCount : 0;
 
-        const data = { 
-            spotifyId: targetId,
-            title: title,
-            artist: artist,
-            musicType: type,
-            
-            isRated: !!userReview, 
-            avgScore: avgScore,
-            totalRatings: totalRatings,
+    // 2) Fetch metadata from Spotify based on type + artist + title
+    const accessToken = await getSpotifyAccessToken();
+    const isSong = (type || '').toLowerCase() === 'song';
 
-            imageUrl: "/olivia-album.jpg", 
-            vibe: ["heartbreak", "pop", "emotional"],
-            genre: ["pop", "indie pop"],
-            year: 2021,
-        };
+    const searchQuery = isSong
+      ? `track:${title} artist:${artist}`
+      : `album:${title} artist:${artist}`;
 
-        res.json(data);
+    const spotifyResp = await axios.get('https://api.spotify.com/v1/search', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        q: searchQuery,
+        type: isSong ? 'track' : 'album',
+        limit: 1,
+      },
+    });
 
-    } catch (err) {
-        console.error("Error fetching music details:", err);
-        res.status(500).json({ error: "Server Error" });
+    let spotifyItem = null;
+    if (isSong) {
+      spotifyItem = spotifyResp.data?.tracks?.items?.[0] || null;
+    } else {
+      spotifyItem = spotifyResp.data?.albums?.items?.[0] || null;
     }
+
+    if (!spotifyItem) {
+      console.warn('No Spotify item found for', { type, artist, title });
+    }
+
+    // 3) Normalize Spotify data
+    const imageUrl = isSong
+      ? spotifyItem?.album?.images?.[0]?.url || ''
+      : spotifyItem?.images?.[0]?.url || '';
+
+    const displayTitle = spotifyItem?.name || title;
+    const displayArtist = (spotifyItem?.artists || [])
+      .map((a) => a.name)
+      .join(', ') || artist;
+
+    const releaseDate = isSong
+      ? spotifyItem?.album?.release_date
+      : spotifyItem?.release_date;
+
+    const year = releaseDate ? parseInt(releaseDate.slice(0, 4), 10) : null;
+
+    const data = {
+      spotifyId: spotifyItem?.id || targetId,
+      title: displayTitle,
+      artist: displayArtist,
+      musicType: type,
+
+      isRated: !!userReview,
+      avgScore: avgScore,
+      totalRatings: totalRatings,
+
+      imageUrl,
+      vibe: [], // could be enhanced later with audio features
+      genre: [], // could be enhanced later with artist/album genres
+      year,
+    };
+
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching music details:', err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
 });
 
 app.get('/api/followers/:username', (req, res) => {
