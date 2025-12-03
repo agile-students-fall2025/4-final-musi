@@ -62,7 +62,7 @@ router.post('/rate-ranked', auth, async (req, res) => {
         spotifyId: targetId, 
         title, 
         artist, 
-        imageUrl 
+        coverUrl: imageUrl 
     };
 
     if (normalizedType === 'Song') {

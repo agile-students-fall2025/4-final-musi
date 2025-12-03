@@ -299,16 +299,14 @@ const FeedScoreContainer = styled.div`
   .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
-const AlbumGrid = styled.div`
-  display: flex;
-  gap: 8px;
-  margin: 12px 0;
-`;
-const AlbumCover = styled.div`
+const Artwork = styled.div`
   width: 80px;
   height: 80px;
-  background: #666;
   border-radius: 4px;
+  background: #666;
+  background-size: cover;
+  background-position: center;
+  margin: 12px 0;
 `;
 const ReviewText = styled.p`
   font-size: 0.9rem;
@@ -876,63 +874,92 @@ function Profile() {
 
         {activeTab === "activity" && (
           <TabContent>
-            {activity.map((item) => (
-              <FeedItem key={item.id}>
-                <UserInfo>
-                  <FeedAvatar />
-                  <UserDetails>
-                    <FeedUserName>{item.user}</FeedUserName>
-                    <ActivityText>
-                      {item.activity}{" "}
-                      <span
-                        style={{ 
-                          color: theme.colors.accent, 
-                          cursor: "pointer", 
-                          fontWeight: 600 
-                        }}
-                        onClick={() => goToMusicFromFeed(item)}
-                      >
-                        {item.title}
-                      </span>{" "}
-                      by {item.artist}
-                    </ActivityText>
-                    <TimeStamp>{item.time}</TimeStamp>
-                  </UserDetails>
-                  <FeedScoreContainer>
-                    <div className="score-item">
-                      <div className="score-circle-container">
-                        <div className="score-circle">
-                          <span className="score-number">{item.rating}</span>
+            {activity.length === 0 ? (
+              <div
+                style={{
+                  color: theme.colors.text_secondary,
+                  textAlign: "center",
+                  padding: "40px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "12px",
+                }}
+              >
+                <p>Search a song and start reviewing</p>
+                <button
+                  onClick={() => navigate("/app/search")}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "999px",
+                    border: "none",
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Find a song to review
+                </button>
+              </div>
+            ) : (
+              activity.map((item) => (
+                <FeedItem key={item.id}>
+                  <UserInfo>
+                    <FeedAvatar />
+                    <UserDetails>
+                      <FeedUserName>{item.user}</FeedUserName>
+                      <ActivityText>
+                        {item.activity}{" "}
+                        <span
+                          style={{ 
+                            color: theme.colors.accent, 
+                            cursor: "pointer", 
+                            fontWeight: 600 
+                          }}
+                          onClick={() => goToMusicFromFeed(item)}
+                        >
+                          {item.title}
+                        </span>{" "}
+                        by {item.artist}
+                      </ActivityText>
+                      <TimeStamp>{item.time}</TimeStamp>
+                    </UserDetails>
+                    <FeedScoreContainer>
+                      <div className="score-item">
+                        <div className="score-circle-container">
+                          <div className="score-circle">
+                            <span className="score-number">{item.rating}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </FeedScoreContainer>
-                </UserInfo>
+                    </FeedScoreContainer>
+                  </UserInfo>
 
-                <AlbumGrid>
-                  <AlbumCover />
-                  <AlbumCover />
-                  <AlbumCover />
-                </AlbumGrid>
-                <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
+                  {item.imageUrl && (
+                    <Artwork style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                  )}
+                  <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
 
-                <InteractionBar>
-                  <InteractionLeft>
-                    <LikeButton onClick={() => handleLike(item.id)}>
-                      <Heart
-                        size={16}
-                        fill={item.isLiked ? "#ff6b6b" : "none"}
-                        color={item.isLiked ? "#ff6b6b" : "#666"}
-                      />
-                      <span>{item.likes} likes</span>
-                    </LikeButton>
-                  </InteractionLeft>
-                  <InteractionRight>
-                    <span>{item.bookmarks} bookmarks</span>
-                  </InteractionRight>
-                </InteractionBar>
-              </FeedItem>
-            ))}
+                  <InteractionBar>
+                    <InteractionLeft>
+                      <LikeButton onClick={() => handleLike(item.id)}>
+                        <Heart
+                          size={16}
+                          fill={item.isLiked ? "#ff6b6b" : "none"}
+                          color={item.isLiked ? "#ff6b6b" : "#666"}
+                        />
+                        <span>{item.likes} likes</span>
+                      </LikeButton>
+                    </InteractionLeft>
+                    <InteractionRight>
+                      <span>{item.bookmarks} bookmarks</span>
+                    </InteractionRight>
+                  </InteractionBar>
+                </FeedItem>
+              ))
+            )}
           </TabContent>
         )}
 
