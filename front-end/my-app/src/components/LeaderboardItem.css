@@ -4,10 +4,20 @@
   align-items: center;
   padding: 12px 8px;
   border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .leaderboard-item:hover {
   background-color: #fafafa;
+}
+
+.leaderboard-item.current-user {
+  background-color: #f0f4ff;
+}
+
+.leaderboard-item.current-user:hover {
+  background-color: #e0e8ff;
 }
 
 .item-rank {
@@ -17,12 +27,36 @@
   color: #888;
 }
 
+.item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ddd;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-left: 12px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
 .item-username {
   flex-grow: 1;
-  margin-left: 16px;
   font-size: 1.1rem;
   font-weight: 500;
   color: #333;
+}
+
+.you-label {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #666;
+  margin-left: 4px;
 }
 
 .item-score {
