@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
@@ -24,13 +25,20 @@ export default function UpdatePassword() {
     [currentPwd, meetsPolicy, matchesConfirm, differentFromCurrent]
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
-    // TODO: call your API to update the password here
-    navigate("/settings", {
-      replace: true,
-      state: { passwordUpdated: true },
-    });
+    try {
+      await axios.put("/api/auth/password", {
+        currentPassword: currentPwd,
+        newPassword: newPwd,
+      });
+      navigate("/app/settings", {
+        replace: true,
+        state: { passwordUpdated: true },
+      });
+    } catch (e) {
+      alert("Failed to update password. Please check your current password.");
+    }
   };
 
   return (

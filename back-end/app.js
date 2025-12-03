@@ -931,6 +931,35 @@ app.put('/api/profile', async (req, res) => {
   }
 });
 
+// PUT profile picture (expects base64 data URL or image URL)
+app.put('/api/profile/photo', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { imageData } = req.body;
+
+    if (!imageData || typeof imageData !== 'string') {
+      return res.status(400).json({ error: 'imageData is required' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.profilePictureUrl = imageData;
+    await user.save();
+
+    res.json({
+      ok: true,
+      profilePictureUrl: user.profilePictureUrl,
+    });
+  } catch (error) {
+    console.error('Error updating profile picture:', error.message);
+    res.status(500).json({ error: 'Failed to update profile picture' });
+  }
+});
+
 // Mock activity like toggle (will be replaced with real data)
 let PROFILE_ACTIVITY = [
   { 

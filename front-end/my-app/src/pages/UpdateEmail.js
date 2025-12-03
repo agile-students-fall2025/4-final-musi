@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function UpdateEmail() {
   const navigate = useNavigate();
@@ -18,12 +19,17 @@ export default function UpdateEmail() {
   const isDirty = value.trim() !== incomingEmail.trim();
   const canSave = isValidEmail && isDirty;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
-    navigate("/settings", {
-      replace: true,
-      state: { updatedEmail: value.trim() },
-    });
+    try {
+      await axios.put("/api/auth/email", { email: value.trim() });
+      navigate("/app/settings", {
+        replace: true,
+        state: { updatedEmail: value.trim() },
+      });
+    } catch (e) {
+      alert("Failed to update email. Please try again.");
+    }
   };
 
   return (
