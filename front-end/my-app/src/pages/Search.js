@@ -115,6 +115,28 @@ function Search() {
     }
   };
 
+  const handleUserFollowToggle = async (targetUser) => {
+    try {
+      if (targetUser.isFollowing) {
+        await axios.post(`http://localhost:3001/api/users/${targetUser.id}/unfollow`);
+        setUserResults((prev) =>
+          prev.map((u) =>
+            u.id === targetUser.id ? { ...u, isFollowing: false } : u
+          )
+        );
+      } else {
+        await axios.post(`http://localhost:3001/api/users/${targetUser.id}/follow`);
+        setUserResults((prev) =>
+          prev.map((u) =>
+            u.id === targetUser.id ? { ...u, isFollowing: true } : u
+          )
+        );
+      }
+    } catch (e) {
+      console.error('Error updating follow status:', e);
+    }
+  };
+
   return (
     <Container>
       <Header>
@@ -145,9 +167,9 @@ function Search() {
               <UserRow
                 key={user.id}
                 user={user}
-                activeTab="followers"
-                onUnfollow={() => {}}
-                onFollowBack={() => {}}
+                context="search"
+                onUnfollow={() => handleUserFollowToggle(user)}
+                onFollowBack={() => handleUserFollowToggle(user)}
                 onClickUser={(u) =>
                   navigate(`/app/user/${encodeURIComponent(u.username)}`)
                 }

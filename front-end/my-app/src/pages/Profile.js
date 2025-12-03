@@ -63,6 +63,14 @@ const Avatar = styled.div`
   background: #d3d3d3;
   position: relative;
   margin-bottom: 16px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 2rem;
 `;
 const EditIcon = styled.button`
   position: absolute;
@@ -983,9 +991,16 @@ if (loading) {
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }
-                : undefined
+                : {
+                    backgroundColor: profile.avatarColor || "#666",
+                  }
             }
           >
+            {!profile.profilePictureUrl &&
+              (profile.name || profile.username || "")
+                .trim()
+                .charAt(0)
+                .toUpperCase()}
             <EditIcon onClick={() => setShowEditModal(true)}>
               <Edit size={16} />
             </EditIcon>
@@ -1306,9 +1321,17 @@ if (loading) {
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                     }
-                  : undefined
+                  : {
+                      backgroundColor: profile.avatarColor || "#666",
+                    }
               }
-            />
+            >
+              {!profile.profilePictureUrl &&
+                (profile.name || profile.username || "")
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase()}
+            </Avatar>
             <EditPhotoButton onClick={handleEditPhotoClick}>
               Edit profile photo
             </EditPhotoButton>

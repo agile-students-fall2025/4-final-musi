@@ -686,24 +686,41 @@ app.get('/api/search/users', async (req, res) => {
     }
 
     // Case-insensitive partial match on username or name
+    // Exclude the current user from search results
     const regex = new RegExp(query, 'i');
 
     const users = await User.find({
       $or: [{ username: regex }, { name: regex }],
+      _id: { $ne: userId },
     })
       .limit(20)
       .select('username name profilePictureUrl avatarColor')
       .lean()
       .exec();
 
+    const currentUser = await User.findById(userId)
+      .select('followers following')
+      .lean()
+      .exec();
+
+    const followingIds = new Set(
+      (currentUser?.following || []).map((id) => String(id))
+    );
+    const followerIds = new Set(
+      (currentUser?.followers || []).map((id) => String(id))
+    );
+
     const results = users.map((u) => {
       const color = u.avatarColor || computeAvatarColor(u.username);
+      const idStr = String(u._id);
       return {
         id: u._id,
         username: u.username,
         name: u.name || u.username,
         profilePictureUrl: u.profilePictureUrl || "",
         avatarColor: color,
+        isFollowing: followingIds.has(idStr),
+        isFollower: followerIds.has(idStr),
       };
     });
 
@@ -738,6 +755,7 @@ app.get('/api/users/:username/profile', async (req, res) => {
 
     const isFollowing =
       currentUserId != null && followerIds.includes(String(currentUserId));
+    const isCurrentUser = currentUserId != null && String(user._id) === String(currentUserId);
 
     const memberSinceDate = user.dateJoined || user.createdAt;
     const memberSince = memberSinceDate
@@ -747,6 +765,8 @@ app.get('/api/users/:username/profile', async (req, res) => {
           year: 'numeric',
         })
       : '';
+
+    const color = user.avatarColor || computeAvatarColor(user.username || "");
 
     const profile = {
       id: user._id,
@@ -760,6 +780,9 @@ app.get('/api/users/:username/profile', async (req, res) => {
       longestStreak: user.longestStreak || 0,
       totalLogins: user.totalLogins || 0,
       isFollowing,
+      isCurrentUser,
+      profilePictureUrl: user.profilePictureUrl || "",
+      avatarColor: color,
       dateJoined: memberSinceDate,
     };
 
@@ -1033,6 +1056,7 @@ app.get("/api/feed", async (req, res) => {
       return {
         id: r._id,
         user: reviewer.name || reviewer.username || "Unknown",
+        username: reviewer.username || "",
         userAvatar: reviewer.profilePictureUrl || "",
         userAvatarColor: color,
         activity: "ranked",
@@ -1099,6 +1123,8 @@ app.get('/api/profile', async (req, res) => {
       year: 'numeric'
     });
 
+    const color = user.avatarColor || computeAvatarColor(user.username || "");
+
     const profile = {
       name: user.name || user.username,
       username: user.username,
@@ -1111,6 +1137,7 @@ app.get('/api/profile', async (req, res) => {
       listenedCount: user.reviews?.length || 0,
       wantCount: 0, // TODO: Implement want list
       profilePictureUrl: user.profilePictureUrl || "",
+      avatarColor: color,
     };
 
     // Build recent activity from real reviews

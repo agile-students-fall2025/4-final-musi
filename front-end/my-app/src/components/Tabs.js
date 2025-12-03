@@ -71,7 +71,7 @@ export default function Tabs({ tabs, activeKey, onChange }) {
           onClick={() => onChange(tab.key)}
         >
           {tab.label}
-          {tab.count && <span className="count">{tab.count}</span>}
+          {tab.count > 0 && <span className="count">{tab.count}</span>}
         </Tab>
       ))}
     </TabsWrapper>
