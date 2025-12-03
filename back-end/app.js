@@ -5,8 +5,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
-const User = require('./models').User;
-const Review = require('./models').Review;
+const { User, Review, Song, Album } = require('./models');
 const app = express() 
 
 // MongoDB connection
@@ -816,23 +815,67 @@ app.get('/api/profile', async (req, res) => {
       profilePictureUrl: user.profilePictureUrl || "",
     };
 
-    // Mock activity data (replace with real reviews later)
-    const activity = [
-      {
-        id: 1,
+    // Build recent activity from real reviews
+    const reviews = await Review.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+      .exec();
+
+    const songIds = reviews
+      .filter((r) => r.targetType === 'Song')
+      .map((r) => r.targetId);
+    const albumIds = reviews
+      .filter((r) => r.targetType === 'Album')
+      .map((r) => r.targetId);
+
+    const [songs, albums] = await Promise.all([
+      songIds.length
+        ? Song.find({ spotifyId: { $in: songIds } }).lean().exec()
+        : [],
+      albumIds.length
+        ? Album.find({ spotifyId: { $in: albumIds } }).lean().exec()
+        : [],
+    ]);
+
+    const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+    const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+    const activity = reviews.map((r) => {
+      const isSong = r.targetType === 'Song';
+      const meta = isSong
+        ? songMap.get(r.targetId) || {}
+        : albumMap.get(r.targetId) || {};
+
+      const title = meta.title || 'Unknown';
+      const artist = meta.artist || 'Unknown';
+      const rating = typeof r.rating === 'number'
+        ? r.rating.toFixed(1)
+        : '-';
+      const imageUrl = meta.imageUrl || meta.coverUrl || '';
+
+      const createdAt = r.createdAt ? new Date(r.createdAt) : new Date();
+      const time = createdAt.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+
+      return {
+        id: r._id,
         user: user.name || user.username,
-        activity: "ranked",
-        rating: "7.6",
-        time: "Today",
-        review: "Great song!",
+        activity: 'ranked',
+        rating,
+        time,
+        review: r.text || '',
         likes: 0,
         bookmarks: 0,
         isLiked: false,
-        artist: "Sample Artist",
-        title: "Sample Song",
-        musicType: "Song"
-      }
-    ];
+        artist,
+        title,
+        musicType: r.targetType,
+        imageUrl,
+      };
+    });
 
     // Mock taste data (replace with real data later)
     const taste = {
