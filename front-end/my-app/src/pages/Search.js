@@ -169,6 +169,7 @@ function Search() {
             showScore={false}
             showBookmark={true}
             bookmarked={bookmarkedIds.includes(item.id)}
+            imageUrl={item.imageUrl}
             onClick={() =>
               navigate(
                 `/app/music/${encodeURIComponent(item.musicType || 'Song')}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`

@@ -19,6 +19,8 @@ const Thumbnail = styled.div`
   height: 56px;
   border-radius: 10px;
   background: #e9e9ec;
+  background-size: cover;
+  background-position: center;
 `;
 
 const Body = styled.div`
@@ -92,10 +94,19 @@ export default function SongItem({
   onClick,
   onBookmarkClick,
   bookmarked = false,
+  imageUrl,
 }) {
   return (
     <Card onClick={onClick}>
-      <Thumbnail />
+      <Thumbnail
+        style={
+          imageUrl
+            ? {
+                backgroundImage: `url(${imageUrl})`,
+              }
+            : undefined
+        }
+      />
       <Body>
         <Title>{title}</Title>
         <Subtitle>{subtitle}</Subtitle>

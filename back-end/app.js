@@ -279,6 +279,7 @@ app.get('/api/lists', async (req, res) => {
             id: r._id,
             title: meta.title || 'Unknown',
             artist: meta.artist || 'Unknown',
+            imageUrl: meta.coverUrl || '',
             tags: [],
             score: typeof r.rating === 'number' ? r.rating.toFixed(1) : null,
             musicType: r.targetType,
@@ -301,6 +302,7 @@ app.get('/api/lists', async (req, res) => {
             id: s._id,
             title: s.title || 'Unknown',
             artist: s.artist || 'Unknown',
+            imageUrl: s.coverUrl || '',
             tags: [],
             score: null,
             musicType: 'Song',
@@ -309,6 +311,7 @@ app.get('/api/lists', async (req, res) => {
             id: a._id,
             title: a.title || 'Unknown',
             artist: a.artist || 'Unknown',
+            imageUrl: a.coverUrl || '',
             tags: [],
             score: null,
             musicType: 'Album',
@@ -970,6 +973,7 @@ app.get("/api/feed", async (req, res) => {
         artist,
         title,
         musicType: r.targetType,
+        imageUrl: meta.coverUrl || "",
       };
     });
 

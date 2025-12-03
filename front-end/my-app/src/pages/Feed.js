@@ -55,8 +55,15 @@ const UserDetails = styled.div`flex: 1;`;
 const UserName = styled.div`font-weight: 600; font-size: 0.9rem; color: #333; text-align: left;`;
 const ActivityText = styled.div`font-size: 0.85rem; color: #666; margin-bottom: 4px; text-align: left;`;
 const TimeStamp = styled.div`font-size: 0.8rem; color: #999; text-align: left;`;
-const AlbumGrid = styled.div`display: flex; gap: 8px; margin: 12px 0;`;
-const AlbumCover = styled.div`width: 80px; height: 80px; background: #666; border-radius: 4px;`;
+const Artwork = styled.div`
+  width: 80px;
+  height: 80px;
+  margin: 12px 0;
+  border-radius: 4px;
+  background: #666;
+  background-size: cover;
+  background-position: center;
+`;
 const ReviewText = styled.p`font-size: 0.9rem; color: #333; line-height: 1.4; margin: 12px 0; text-align: left;`;
 const InteractionBar = styled.div`display: flex; justify-content: space-between; align-items: center; margin-top: 12px;`;
 const InteractionLeft = styled.div`display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: #666;`;
@@ -273,7 +280,9 @@ function Feed() {
             </FeedScoreContainer>
           </UserInfo>
 
-          <AlbumGrid><AlbumCover /><AlbumCover /><AlbumCover /></AlbumGrid>
+          {item.imageUrl && (
+            <Artwork style={{ backgroundImage: `url(${item.imageUrl})` }} />
+          )}
           <ReviewText>{item.review}</ReviewText>
 
           <InteractionBar>
