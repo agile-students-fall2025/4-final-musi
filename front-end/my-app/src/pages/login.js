@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import BackArrow from "../components/BackArrow";
@@ -128,13 +128,19 @@ const ErrorMessage = styled.div`
 `;
 
 function Login() {
-  const { login } = useContext(AuthContext);
+  const { login, token } = useContext(AuthContext); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      navigate("/app/feed");
+    }
+  }, [token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
