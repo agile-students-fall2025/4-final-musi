@@ -1,13 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, Heart } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { theme } from '../theme';
-import FollowButton from '../components/FollowButton';
-import LikesModal from '../components/LikesModal';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
-import '../components/Score.css';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import {
+  Share,
+  Menu,
+  Edit,
+  ChevronRight,
+  Star,
+  Flame,
+  ChevronLeft,
+  Heart,
+} from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { theme } from "../theme";
+import FollowButton from "../components/FollowButton";
+import LikesModal from "../components/LikesModal";
+import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import "../components/Score.css";
+
+const getScoreColor = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 8) {
+    return theme.colors.green;
+  } else if (numRating > 5) {
+    return theme.colors.yellow;
+  } else {
+    return theme.colors.red;
+  }
+};
 
 const Container = styled.div`
   background: ${theme.colors.background};
@@ -149,7 +169,7 @@ const ListItem = styled.button`
   background: none;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -222,9 +242,9 @@ const Tab = styled.button`
   padding: 12px;
   border: none;
   background: none;
-  border-bottom: 2px solid ${props => props.active ? '#000' : 'transparent'};
+  border-bottom: 2px solid ${(props) => (props.active ? "#000" : "transparent")};
   font-size: 0.9rem;
-  font-weight: ${props => props.active ? '600' : '400'};
+  font-weight: ${(props) => (props.active ? "600" : "400")};
   cursor: pointer;
   color: ${theme.colors.text};
 `;
@@ -270,7 +290,7 @@ const LegendColor = styled.div`
   width: 12px;
   height: 12px;
   border-radius: 2px;
-  background: ${props => props.color};
+  background: ${(props) => props.color};
 `;
 
 const TrackList = styled.div`
@@ -345,7 +365,7 @@ const ModalOverlay = styled.div`
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: ${props => props.show ? 'flex' : 'none'};
+  display: ${(props) => (props.show ? "flex" : "none")};
   align-items: flex-end;
   z-index: 2000;
 `;
@@ -502,8 +522,16 @@ const TimeStamp = styled.div`
 `;
 
 const FeedScoreContainer = styled.div`
-  .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
-  .score-number{ font-size:1rem!important; font-weight:600!important;}
+  .score-circle {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border: 1.5px solid #4b5563 !important;
+  }
+  .score-number {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: inherit !important; /* Add this line */
+  }
 `;
 
 const Artwork = styled.div`
@@ -562,7 +590,7 @@ const LikeButton = styled.button`
 function User() {
   const { username } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('activity');
+  const [activeTab, setActiveTab] = useState("activity");
   const [showEditModal, setShowEditModal] = useState(false);
   const [profile, setProfile] = useState(null);
   const [activity, setActivity] = useState([]);
@@ -595,7 +623,11 @@ function User() {
       setActivity((prev) =>
         prev.map((it) =>
           it.id === id
-            ? { ...it, isLiked: response.data.isLiked, likes: response.data.likesCount }
+            ? {
+                ...it,
+                isLiked: response.data.isLiked,
+                likes: response.data.likesCount,
+              }
             : it
         )
       );
@@ -605,7 +637,11 @@ function User() {
       setActivity((prev) =>
         prev.map((it) =>
           it.id === id
-            ? { ...it, isLiked: wasLiked, likes: wasLiked ? it.likes + 1 : it.likes - 1 }
+            ? {
+                ...it,
+                isLiked: wasLiked,
+                likes: wasLiked ? it.likes + 1 : it.likes - 1,
+              }
             : it
         )
       );
@@ -625,7 +661,7 @@ function User() {
 
     const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
         const response = await axios.get(
           `/api/users/${encodeURIComponent(username)}/profile`,
@@ -643,7 +679,7 @@ function User() {
         setActivity(response.data.activity || []);
         setIsFollowing(!!data.isFollowing);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error("Error fetching user profile:", error);
       } finally {
         setLoading(false);
       }
@@ -655,33 +691,43 @@ function User() {
   // Redirect to /app/profile if viewing own profile
   useEffect(() => {
     if (profile && profile.isCurrentUser) {
-      navigate('/app/profile', { replace: true });
+      navigate("/app/profile", { replace: true });
     }
   }, [profile, navigate]);
 
   const formatDate = (date) => {
-    if (!date) return 'Recently';
+    if (!date) return "Recently";
     const d = new Date(date);
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const genreData = [
-    { name: 'R&B', value: 32, color: '#4A4A4A' },
-    { name: 'Pop', value: 28, color: '#C0C0C0' },
-    { name: 'Hip Hop', value: 24, color: '#6B6B6B' },
-    { name: 'Rock', value: 16, color: '#E8E8E8' },
+    { name: "R&B", value: 32, color: "#4A4A4A" },
+    { name: "Pop", value: 28, color: "#C0C0C0" },
+    { name: "Hip Hop", value: 24, color: "#6B6B6B" },
+    { name: "Rock", value: 16, color: "#E8E8E8" },
   ];
 
   const topTracks = [
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
+    { title: "Got to Be Real", artist: "Song • Cheryl Lynn" },
+    { title: "Got to Be Real", artist: "Song • Cheryl Lynn" },
+    { title: "Got to Be Real", artist: "Song • Cheryl Lynn" },
   ];
 
   if (loading) {
     return (
       <Container>
-        <p style={{ textAlign: 'center', padding: '40px 0', color: theme.colors.text_secondary }}>
+        <p
+          style={{
+            textAlign: "center",
+            padding: "40px 0",
+            color: theme.colors.text_secondary,
+          }}
+        >
           Loading profile...
         </p>
       </Container>
@@ -693,8 +739,8 @@ function User() {
       <Container>
         <p
           style={{
-            textAlign: 'center',
-            padding: '40px 0',
+            textAlign: "center",
+            padding: "40px 0",
             color: theme.colors.text_secondary,
           }}
         >
@@ -705,7 +751,7 @@ function User() {
   }
 
   const handleToggleFollow = async (nextFollowState) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const url = nextFollowState
       ? `/api/users/${profile.id}/follow`
       : `/api/users/${profile.id}/unfollow`;
@@ -735,12 +781,12 @@ function User() {
 
   const handleFollowersClick = () =>
     navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
-      state: { initialTab: 'followers' },
+      state: { initialTab: "followers" },
     });
 
   const handleFollowingClick = () =>
     navigate(`/app/followers/${encodeURIComponent(profile.username)}`, {
-      state: { initialTab: 'following' },
+      state: { initialTab: "following" },
     });
 
   return (
@@ -754,8 +800,12 @@ function User() {
           </div>
           <UserName>{profile.name}</UserName>
           <div>
-            <IconButton><Share size={20} /></IconButton>
-            <IconButton><Menu size={20} /></IconButton>
+            <IconButton>
+              <Share size={20} />
+            </IconButton>
+            <IconButton>
+              <Menu size={20} />
+            </IconButton>
           </div>
         </Header>
 
@@ -786,7 +836,9 @@ function User() {
           </Avatar>
           <Username>@{profile.username}</Username>
           <Bio>{profile.bio}</Bio>
-          <MemberSince>Member since {formatDate(profile.dateJoined)}</MemberSince>
+          <MemberSince>
+            Member since {formatDate(profile.dateJoined)}
+          </MemberSince>
 
           {!profile.isCurrentUser && (
             <ButtonGroup>
@@ -808,28 +860,32 @@ function User() {
             <StatLabel>Following</StatLabel>
           </StatItemClickable>
           <StatItemClickable onClick={() => navigate("/app/leaderboard")}>
-            <StatValue>#{profile.rank || '?'}</StatValue>
+            <StatValue>#{profile.rank || "?"}</StatValue>
             <StatLabel>Rank on Musi</StatLabel>
           </StatItemClickable>
         </StatsRow>
 
-        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "listened" } })}>
+        <ListItem
+          onClick={() => navigate("/app/lists", { state: { tab: "listened" } })}
+        >
           <ListItemLeft>
             <span>🎧</span>
             <ListItemText>Listened</ListItemText>
           </ListItemLeft>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <ListItemCount>{profile.listenedCount || 0}</ListItemCount>
             <ChevronRight size={20} color="#999" />
           </div>
         </ListItem>
 
-        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "want" } })}>
+        <ListItem
+          onClick={() => navigate("/app/lists", { state: { tab: "want" } })}
+        >
           <ListItemLeft>
             <span>🔖</span>
             <ListItemText>Want to listen</ListItemText>
           </ListItemLeft>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <ListItemCount>{profile.wantCount || 0}</ListItemCount>
             <ChevronRight size={20} color="#999" />
           </div>
@@ -847,36 +903,45 @@ function User() {
           <CardClickable onClick={() => navigate("/app/leaderboard")}>
             <Star size={20} />
             <CardLabel>Rank on Musi</CardLabel>
-            <CardValue>#{profile.rank || '?'}</CardValue>
+            <CardValue>#{profile.rank || "?"}</CardValue>
           </CardClickable>
           <Card>
             <Flame size={20} />
             <CardLabel>Current streak</CardLabel>
-            <CardValue>{profile.currentStreak} {profile.currentStreak === 1 ? 'day' : 'days'}</CardValue>
+            <CardValue>
+              {profile.currentStreak}{" "}
+              {profile.currentStreak === 1 ? "day" : "days"}
+            </CardValue>
           </Card>
         </CardRow>
 
         <TabBar>
-          <Tab active={activeTab === 'activity'} onClick={() => setActiveTab('activity')}>
+          <Tab
+            active={activeTab === "activity"}
+            onClick={() => setActiveTab("activity")}
+          >
             Recent activity
           </Tab>
-          <Tab active={activeTab === 'taste'} onClick={() => setActiveTab('taste')}>
+          <Tab
+            active={activeTab === "taste"}
+            onClick={() => setActiveTab("taste")}
+          >
             Music taste
           </Tab>
         </TabBar>
 
-        {activeTab === 'activity' && (
+        {activeTab === "activity" && (
           <TabContent>
             {activity.length === 0 ? (
               <div
                 style={{
                   color: theme.colors.text_secondary,
-                  textAlign: 'center',
-                  padding: '40px 0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '12px',
+                  textAlign: "center",
+                  padding: "40px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "12px",
                 }}
               >
                 <p>No recent activity</p>
@@ -884,8 +949,14 @@ function User() {
             ) : (
               activity.map((item) => {
                 const goToMusic = () => {
-                  const musicType = item.musicType || 'Song';
-                  navigate(`/app/music/${encodeURIComponent(musicType)}/${encodeURIComponent(item.artist)}/${encodeURIComponent(item.title)}`);
+                  const musicType = item.musicType || "Song";
+                  navigate(
+                    `/app/music/${encodeURIComponent(
+                      musicType
+                    )}/${encodeURIComponent(item.artist)}/${encodeURIComponent(
+                      item.title
+                    )}`
+                  );
                 };
 
                 return (
@@ -893,26 +964,32 @@ function User() {
                     <UserInfo>
                       <FeedAvatar
                         style={{
-                          backgroundImage: item.userAvatar ? `url(${item.userAvatar})` : 'none',
-                          backgroundColor: item.userAvatar ? 'transparent' : (item.userAvatarColor || '#ddd'),
+                          backgroundImage: item.userAvatar
+                            ? `url(${item.userAvatar})`
+                            : "none",
+                          backgroundColor: item.userAvatar
+                            ? "transparent"
+                            : item.userAvatarColor || "#ddd",
                         }}
                       >
-                        {!item.userAvatar && item.username && item.username.charAt(0).toUpperCase()}
+                        {!item.userAvatar &&
+                          item.username &&
+                          item.username.charAt(0).toUpperCase()}
                       </FeedAvatar>
                       <UserDetails>
                         <FeedUserName>{item.user}</FeedUserName>
                         <ActivityText>
-                          {item.activity}{' '}
+                          {item.activity}{" "}
                           <span
                             style={{
                               color: theme.colors.accent,
-                              cursor: 'pointer',
+                              cursor: "pointer",
                               fontWeight: 600,
                             }}
                             onClick={goToMusic}
                           >
                             {item.title}
-                          </span>{' '}
+                          </span>{" "}
                           by {item.artist}
                         </ActivityText>
                         <TimeStamp>{item.time}</TimeStamp>
@@ -921,7 +998,12 @@ function User() {
                         <div className="score-item">
                           <div className="score-circle-container">
                             <div className="score-circle">
-                              <span className="score-number">{item.rating}</span>
+                              <span
+                                className="score-number"
+                                style={{ color: getScoreColor(item.rating) }}
+                              >
+                                {item.rating}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -934,7 +1016,9 @@ function User() {
                         onClick={goToMusic}
                       />
                     )}
-                    {item.review && <ReviewText>Notes: {item.review}</ReviewText>}
+                    {item.review && (
+                      <ReviewText>Notes: {item.review}</ReviewText>
+                    )}
 
                     <InteractionBar>
                       <InteractionLeft>
@@ -963,7 +1047,7 @@ function User() {
           </TabContent>
         )}
 
-        {activeTab === 'taste' && (
+        {activeTab === "taste" && (
           <TabContent>
             <SectionTitle>YOUR TOP GENRES</SectionTitle>
 
@@ -986,45 +1070,57 @@ function User() {
                 </PieChart>
               </ResponsiveContainer>
 
-              <ChartLegend style={{
-                left: '10%',
-                top: '50%',
-                transform: 'translateY(-50%)'
-              }}>
+              <ChartLegend
+                style={{
+                  left: "10%",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
                 <LegendItem>
                   <LegendColor color="#E8E8E8" />
                   <span>Rock</span>
                 </LegendItem>
                 <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>16.00%</span>
+                  <span style={{ marginLeft: "20px", fontSize: "0.8rem" }}>
+                    16.00%
+                  </span>
                 </LegendItem>
-                <LegendItem style={{ marginTop: '8px' }}>
+                <LegendItem style={{ marginTop: "8px" }}>
                   <LegendColor color="#6B6B6B" />
                   <span>Hip Hop</span>
                 </LegendItem>
                 <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>24.00%</span>
+                  <span style={{ marginLeft: "20px", fontSize: "0.8rem" }}>
+                    24.00%
+                  </span>
                 </LegendItem>
               </ChartLegend>
 
-              <ChartLegend style={{
-                right: '10%',
-                top: '50%',
-                transform: 'translateY(-50%)'
-              }}>
+              <ChartLegend
+                style={{
+                  right: "10%",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
                 <LegendItem>
                   <LegendColor color="#4A4A4A" />
                   <span>R&B</span>
                 </LegendItem>
                 <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>32.00%</span>
+                  <span style={{ marginLeft: "20px", fontSize: "0.8rem" }}>
+                    32.00%
+                  </span>
                 </LegendItem>
-                <LegendItem style={{ marginTop: '8px' }}>
+                <LegendItem style={{ marginTop: "8px" }}>
                   <LegendColor color="#C0C0C0" />
                   <span>Pop</span>
                 </LegendItem>
                 <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>28.00%</span>
+                  <span style={{ marginLeft: "20px", fontSize: "0.8rem" }}>
+                    28.00%
+                  </span>
                 </LegendItem>
               </ChartLegend>
             </ChartContainer>
@@ -1058,7 +1154,10 @@ function User() {
       </Container>
 
       {/* Edit Profile Modal */}
-      <ModalOverlay show={showEditModal} onClick={() => setShowEditModal(false)}>
+      <ModalOverlay
+        show={showEditModal}
+        onClick={() => setShowEditModal(false)}
+      >
         <ModalContent onClick={(e) => e.stopPropagation()}>
           <ModalHeader>
             <CloseButton onClick={() => setShowEditModal(false)}>

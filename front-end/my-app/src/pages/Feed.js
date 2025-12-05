@@ -163,6 +163,18 @@ const Button = styled.button`
   }
 `;
 
+// Helper function to get score color based on rating
+const getScoreColor = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 8) {
+    return theme.colors.green;
+  } else if (numRating > 5) {
+    return theme.colors.yellow;
+  } else {
+    return theme.colors.red;
+  }
+};
+
 function Feed() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -399,7 +411,12 @@ function Feed() {
               <div className="score-item">
                 <div className="score-circle-container">
                   <div className="score-circle">
-                    <span className="score-number">{item.rating}</span>
+                    <span 
+                      className="score-number" 
+                      style={{ color: getScoreColor(item.rating) }}
+                    >
+                      {item.rating}
+                    </span>
                   </div>
                 </div>
               </div>
