@@ -15,9 +15,6 @@ body {
 .friend-score-container {
     width: 100%;
     max-width: 480px; 
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1rem; 
 }
 
 .friend-score-title {
@@ -47,27 +44,41 @@ body {
 .friend-score-item-left {
     display: flex;
     align-items: center;
-    gap: 1rem; 
+    /* FIX: Reduced gap to 12px to remove "weird space" */
+    gap: 0.75rem; 
 }
 
 .friend-score-avatar {
     width: 3rem; 
     height: 3rem; 
-    border-radius: 9999px; 
+    border-radius: 50%; /* Make container round */
     background-color: rgb(229 231 235); 
     flex-shrink: 0;
+    /* FIX: Force circular shape */
+    overflow: hidden; 
+}
+
+.friend-score-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* FIX: Force image itself to be round */
+    border-radius: 50%; 
 }
 
 .friend-score-user-info {
     display: flex;
     flex-direction: column;
+    justify-content: center;
 }
 
 .friend-score-user-name {
     font-weight: 600;
     color: rgb(17 24 39); 
+    line-height: 1.2; 
+    text-align: left; /* Ensure text aligns left */
 }
-
 .friend-score-user-handle {
     font-size: 0.875rem; 
     line-height: 1.25rem;

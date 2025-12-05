@@ -1908,20 +1908,19 @@ app.get('/api/friendscores/:type/:artist/:title', async (req, res) => {
             targetId: targetId,
             userId: { $in: friendIds }
         })
-        .populate('userId', 'name username') 
+        .populate('userId', 'name username profilePictureUrl') 
         .sort({ rating: -1 }); 
 
         // 4. Map to Frontend Format
         const friendScores = friendReviews.map(review => {
             if (!review.userId) return null;
-            
             return {
                 id: review.userId._id,
                 name: review.userId.name || "Unknown",
                 handle: `@${review.userId.username}`,
                 score: review.rating.toFixed(1),
                 rating: review.ratingIndex,      // 0, 1, or 2 (Circle Color)
-                imgUrl: review.userId.profilePictureUrl || "" // Placeholder for now
+                imgUrl: review.userId.profilePictureUrl || ""// Placeholder for now
             };
         }).filter(item => item !== null);
 
