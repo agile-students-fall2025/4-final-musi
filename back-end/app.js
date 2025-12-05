@@ -713,6 +713,13 @@ app.get('/api/search', async (req, res) => {
     const user = await User.findById(userId).select('wantList').lean().exec();
     const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
 
+    // Filter out albums with only one track
+    const validAlbums = albumItems.filter((a) => {
+      // Spotify API includes total_tracks field in album objects
+      const totalTracks = a.total_tracks || 0;
+      return totalTracks > 1;
+    });
+
     // Normalize to unified shape for frontend
     const results = [
       ...trackItems.map((t) => ({
@@ -725,7 +732,7 @@ app.get('/api/search', async (req, res) => {
         imageUrl: t.album?.images?.[0]?.url || '',
         bookmarked: wantList.includes(t.id),
       })),
-      ...albumItems.map((a) => ({
+      ...validAlbums.map((a) => ({
         id: a.id,
         title: a.name,
         artist: a.artists?.map((ar) => ar.name).join(', ') || '',
@@ -1188,20 +1195,81 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-app.get('/api/albumlist/:artist/:title', (req, res) => {
+app.get('/api/albumlist/:artist/:title', async (req, res) => {
+  try {
     const { artist, title } = req.params;
     const userId = req.user.id;
-    const songList = [
-      { id: 1, title: "drivers license", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 2, title: "deja vu", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 3, title: "good 4 u", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-      { id: 4, title: "traitor", artist: "Olivia Rodrigo", isRated: false, score: (Math.random() * 10).toFixed(1) },
-    ];
-    if (songList) {
-        res.json(songList);
-    } else {
-        res.json([]);
+
+    // Search for the album on Spotify
+    const accessToken = await getSpotifyAccessToken();
+    const searchQuery = `album:${title} artist:${artist}`;
+    
+    const spotifyResp = await axios.get('https://api.spotify.com/v1/search', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        q: searchQuery,
+        type: 'album',
+        limit: 1,
+      },
+    });
+
+    const album = spotifyResp.data?.albums?.items?.[0];
+    if (!album) {
+      return res.json([]);
     }
+
+    // Get album tracks
+    const tracksResp = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        limit: 50, // Get up to 50 tracks
+      },
+    });
+
+    const tracks = tracksResp.data?.items || [];
+
+    // Get user's reviewed songs and want list
+    const user = await User.findById(userId).select('wantList').lean().exec();
+    const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+    
+    const reviews = await Review.find({ userId }).select('targetId rating').lean().exec();
+    const reviewedIdSet = new Set(reviews.map(r => r.targetId));
+    const reviewMap = new Map(reviews.map(r => [r.targetId, r.rating]));
+
+    const slugify = (type, artistName, titleName) =>
+      `${type}-${artistName}-${titleName}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-');
+
+    // Format tracks for frontend
+    const songList = tracks.map((track, index) => {
+      const trackTitle = track.name || 'Unknown';
+      const trackArtists = (track.artists || []).map(a => a.name).join(', ') || artist;
+      const targetId = slugify('Song', trackArtists, trackTitle);
+      const isRated = reviewedIdSet.has(targetId);
+      const score = isRated && reviewMap.has(targetId) 
+        ? parseFloat(reviewMap.get(targetId)).toFixed(1)
+        : null;
+      const spotifyId = track.id;
+      const isBookmarked = wantList.includes(spotifyId);
+
+      return {
+        id: spotifyId || index + 1,
+        spotifyId: spotifyId,
+        title: trackTitle,
+        artist: trackArtists,
+        isRated,
+        score: score || (Math.random() * 10).toFixed(1), // Keep random score for unrated songs for display
+        isBookmarked,
+        imageUrl: album.images?.[0]?.url || '',
+      };
+    });
+
+    res.json(songList);
+  } catch (error) {
+    console.error('Error fetching album tracks:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to fetch album tracks' });
+  }
 });
 
 // ---- FEATURED LISTS (mock) ----
