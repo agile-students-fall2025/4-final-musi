@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { RotateCcw, HelpCircle, SkipForward } from "lucide-react";
 import "./RatingModal.css";
 
 function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, spotifyId }) {
@@ -13,9 +14,17 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   const [comment, setComment] = useState("");
   const [mode, setMode] = useState('initial'); 
   const [existingList, setExistingList] = useState([]);
+  
+  // Binary Search State
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(0);
   const [mid, setMid] = useState(0);
+  
+  // History for Undo
+  const [history, setHistory] = useState([]);
+
+  // Track how many items are in "better" tiers
+  const [betterCount, setBetterCount] = useState(0);
 
   const ratingOptions = [
     { label: "I liked it!", color: "#000000" }, 
@@ -23,10 +32,8 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     { label: "I didn't like it", color: "#d3d3d3" }
   ];
 
-  // Helper to remove the current song from the list (prevents self-comparison)
   const filterOutCurrentSong = (list) => {
     return list.filter(item => {
-      // Backend returns targetId as an object (populated) or fallback
       const itemId = item.targetId?.spotifyId || item.targetId;
       return itemId !== spotifyId;
     });
@@ -38,15 +45,14 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     try {
       const res = await axios.get(`http://localhost:3001/api/reviews/my-list?type=${targetType}`);
       
-      // A. Remove current song from the list (fixes "Song A vs Song A" and "Always #1" bugs)
       const allItems = filterOutCurrentSong(res.data || []);
       
-      // B. Filter by Tier (Only compare against same category)
+      const betterTierItems = allItems.filter(item => (item.ratingIndex ?? 0) < selectedRating);
+      setBetterCount(betterTierItems.length);
+
       const sameTierItems = allItems.filter(item => (item.ratingIndex ?? 0) === selectedRating);
 
       if (sameTierItems.length === 0) {
-        // If no items in this tier, place it after all "Better" items
-        const betterTierItems = allItems.filter(item => (item.ratingIndex ?? 0) < selectedRating);
         submitFinalRank(betterTierItems.length);
       } else {
         setExistingList(sameTierItems);
@@ -54,6 +60,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
         setMax(sameTierItems.length - 1);
         setMid(Math.floor((0 + (sameTierItems.length - 1)) / 2));
         setMode('ranking');
+        setHistory([]); // Reset history
       }
     } catch (err) {
       console.error("Error fetching list:", err);
@@ -63,14 +70,15 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
 
   // 2. Handle Choice
   const handleChoice = (preferred) => {
+    // Save current state to history before moving
+    setHistory(prev => [...prev, { min, max, mid }]);
+
     let newMin = min;
     let newMax = max;
 
     if (preferred === 'new') {
-      // User prefers NEW song (Higher in list = Lower Index)
       newMax = mid - 1;
     } else {
-      // User prefers OLD song
       newMin = mid + 1;
     }
 
@@ -83,26 +91,45 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     }
   };
 
-  // 3. Calculate Global Rank
+  // 3. New Functionality Handlers
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    
+    // Restore state
+    setMin(previous.min);
+    setMax(previous.max);
+    setMid(previous.mid);
+    
+    // Remove last history entry
+    setHistory(prev => prev.slice(0, -1));
+  };
+
+  const handleTooTough = () => {
+    // Treat as "Same Rank" -> Insert at current mid position
+    calculateGlobalAndSubmit(mid);
+  };
+
+  const handleSkip = () => {
+    // Move onto the music one rank above (index - 1)
+    if (mid > 0) {
+      setHistory(prev => [...prev, { min, max, mid }]);
+      setMid(mid - 1);
+    }
+  };
+
+  // 4. Calculate Global Rank
   const calculateGlobalAndSubmit = async (localRankIndex) => {
     try {
-      const res = await axios.get(`http://localhost:3001/api/reviews/my-list?type=${targetType}`);
-      
-      // A. Again, filter out ourselves so we don't count our old rating
-      const allItems = filterOutCurrentSong(res.data || []);
-
-      // B. Count items in better tiers (e.g. if I am Tier 1, count all Tier 0 items)
-      const betterTierCount = allItems.filter(item => (item.ratingIndex ?? 0) < selectedRating).length;
-      
       // Global Rank = (Count of Better Items) + (My Position in Current Tier)
-      submitFinalRank(betterTierCount + localRankIndex);
+      submitFinalRank(betterCount + localRankIndex);
     } catch (e) {
       console.error("Error calculating global rank", e);
       submitFinalRank(localRankIndex);
     }
   }
 
-  // 4. Submit
+  // 5. Submit
   const submitFinalRank = (finalRankIndex) => {
     const ratingLabel = ratingOptions.find((_, i) => i === selectedRating)?.label || "N/A";
     
@@ -122,12 +149,13 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   };
 
   const opponent = existingList[mid]; 
+  const opponentImg = opponent?.targetId?.imageUrl || "https://placehold.co/60";
 
   return (
     <div className="rating-modal-overlay" onClick={onClose}>
       <div className="rating-modal" onClick={(e) => e.stopPropagation()}>
         
-        {/* HEADER - Always visible */}
+        {/* HEADER */}
         <div className="rating-modal-header">
           <img 
             src={imageUrl} 
@@ -169,7 +197,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
           </>
         )}
 
-        {/* VERSUS PHASE (Horizontal Cards Style) */}
+        {/* VERSUS PHASE */}
         {mode === 'ranking' && opponent && (
           <div className="versus-container">
             <div className="versus-question">Which {targetType} do you prefer?</div>
@@ -177,9 +205,12 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
             <div className="versus-wrapper">
               {/* CARD 1: New Song */}
               <div className="versus-card" onClick={() => handleChoice('new')}>
+                <img src={imageUrl} alt={title} className="versus-card-image" />
                 <div className="versus-card-title">{title}</div>
                 <div className="versus-card-artist">{artist}</div>
-                <div className="versus-card-rank">New</div>
+                
+                {/* Updated: Added 'new' class for red color */}
+                <div className="versus-card-rank new">New</div>
               </div>
 
               {/* CENTER BADGE */}
@@ -187,16 +218,43 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
 
               {/* CARD 2: Opponent */}
               <div className="versus-card" onClick={() => handleChoice('old')}>
+                <img 
+                  src={opponentImg} 
+                  alt={opponent.targetId?.title} 
+                  className="versus-card-image"
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/60'; }}
+                />
                 <div className="versus-card-title">{opponent.targetId?.title || opponent.title}</div>
                 <div className="versus-card-artist">{opponent.targetId?.artist || opponent.artist}</div>
-                <div className="versus-card-rank">Rank #{mid + 1}</div>
+                
+                <div className="versus-card-rank">Rank #{betterCount + mid + 1}</div>
+                <div className="versus-card-score">{opponent.rating?.toFixed(1)}</div>
               </div>
             </div>
 
-            {/* Controls (Hidden placeholder) */}
-            <div className="versus-controls">
-               <button className="versus-action-btn" style={{visibility: 'hidden'}}>
-                 ↩ Undo
+            {/* CONTROLS */}
+            <div className="versus-controls" style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+               <button 
+                 className="versus-action-btn" 
+                 onClick={handleUndo}
+                 style={{ visibility: history.length > 0 ? 'visible' : 'hidden' }}
+               >
+                 <RotateCcw size={18} /> Undo
+               </button>
+
+               <button 
+                 className="versus-action-btn" 
+                 onClick={handleTooTough}
+               >
+                 <HelpCircle size={18} /> Too tough
+               </button>
+
+               <button 
+                 className="versus-action-btn" 
+                 onClick={handleSkip}
+                 style={{ visibility: mid > 0 ? 'visible' : 'hidden' }}
+               >
+                 Skip <SkipForward size={18} />
                </button>
             </div>
           </div>

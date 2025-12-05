@@ -1,3 +1,5 @@
+/* ... existing styles ... */
+
 .rating-modal-overlay {
   position: fixed;
   top: 0;
@@ -55,6 +57,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: #000;
+  text-align: left;
 }
 
 .rating-modal-info p {
@@ -86,17 +89,18 @@
   text-align: center;
 }
 
+/* CHOICES */
 .rating-modal-choices {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: row; 
+  justify-content: space-between; 
   gap: 12px;
   padding: 8px 0;
 }
 
 .rating-choice {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;
@@ -111,7 +115,7 @@
 }
 
 .rating-circle {
-  width: 48px;
+  width: 48px; 
   height: 48px;
   border-radius: 50%;
   margin-bottom: 8px; 
@@ -147,6 +151,7 @@
   font-weight: 700;
 }
 
+/* NOTES BTN */
 .rating-modal-notes {
   margin-bottom: 24px;
 }
@@ -174,6 +179,7 @@
   font-size: 1.2rem;
 }
 
+/* SUBMIT BTN */
 .rating-submit-btn {
   width: 100%;
   padding: 16px;
@@ -191,6 +197,7 @@
   cursor: not-allowed;
 }
 
+/* COMMENT POPUP */
 .comment-popup-overlay {
   position: absolute;
   top: 0;
@@ -246,7 +253,7 @@
   color: #000;
 }
 
-/* === VERSUS STYLES (Horizontal Cards) === */
+/* === VERSUS STYLES === */
 
 .versus-header-context {
   text-align: center;
@@ -268,7 +275,6 @@
   color: #000;
 }
 
-/* Container for the two cards */
 .versus-wrapper {
   display: flex;
   align-items: stretch;
@@ -284,15 +290,15 @@
   background: white;
   border: 2px solid #111; 
   border-radius: 16px;
-  padding: 24px 12px;
+  padding: 20px 12px; 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; 
   text-align: center;
   cursor: pointer;
   transition: transform 0.1s, background-color 0.2s;
-  min-height: 140px;
+  min-height: 180px; 
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
@@ -304,9 +310,18 @@
   transform: scale(0.98);
 }
 
-/* The OR Badge */
+.versus-card-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .versus-or {
-  background: #86219A; 
+  background: #154734; 
   color: white;
   width: 40px;
   height: 40px;
@@ -326,25 +341,41 @@
 }
 
 .versus-card-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800; 
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: #000;
   font-family: serif; 
   line-height: 1.2;
 }
 
 .versus-card-artist {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #555;
   font-weight: 500;
+  margin-bottom: auto; 
 }
 
+/* CHANGED: Default is now black for standard ranks */
 .versus-card-rank {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 0.75rem;
-  color: #86219A; 
+  color: #000000; 
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* NEW: Specific red class for "New" label */
+.versus-card-rank.new {
+  color: #ff0000;
+}
+
+.versus-card-score {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 4px;
 }
 
 .versus-controls {
@@ -357,7 +388,7 @@
 .versus-action-btn {
   background: none;
   border: none;
-  color: #86219A;
+  color: #154734;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
