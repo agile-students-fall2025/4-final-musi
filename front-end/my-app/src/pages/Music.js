@@ -57,6 +57,9 @@ function Music() {
           avgScore: response.data.score || prevData.avgScore, 
         }));
         
+        // Dispatch custom event to refresh album list if on album page
+        window.dispatchEvent(new CustomEvent('reviewSubmitted'));
+        
         // Updated Toast Message & Duration (5s)
         setToast(`You gave ${ratingInfo.title} by ${ratingInfo.artist} a ${response.data.score}!`);
         setTimeout(() => setToast(''), 5000);

@@ -3,17 +3,17 @@ import AlbumSong from "./AlbumSong";
 import axios from "axios";
 import "./AlbumList.css";
 
-function AlbumList({ artist, title, onRatingClick }) {
+function AlbumList({ artist, title, onRatingClick, refreshTrigger }) {
   const [album, setAlbum] = useState([]);
 
-  useEffect(() => {
+  const fetchAlbumSongs = () => {
     if (!artist || !title) {
       return; 
     }
     const encodedArtist = encodeURIComponent(artist);
     const encodedTitle = encodeURIComponent(title);
 
-    const API_URL = `http://localhost:3000/api/albumlist/${encodedArtist}/${encodedTitle}`;
+    const API_URL = `http://localhost:3001/api/albumlist/${encodedArtist}/${encodedTitle}`;
 
     axios.get(API_URL)
       .then(response => {
@@ -23,7 +23,21 @@ function AlbumList({ artist, title, onRatingClick }) {
         console.error("Error fetching album songs:", error);
         setAlbum([]);
       });
+  };
 
+  useEffect(() => {
+    fetchAlbumSongs();
+  }, [artist, title, refreshTrigger]);
+
+  // Listen for review submission events to refresh the list
+  useEffect(() => {
+    const handleReviewSubmitted = () => {
+      fetchAlbumSongs();
+    };
+    window.addEventListener('reviewSubmitted', handleReviewSubmitted);
+    return () => {
+      window.removeEventListener('reviewSubmitted', handleReviewSubmitted);
+    };
   }, [artist, title]);
 
   return (
@@ -34,10 +48,13 @@ function AlbumList({ artist, title, onRatingClick }) {
           <AlbumSong
             key={song.id}
             id={song.id}
+            spotifyId={song.spotifyId}
             title={song.title}
             artist={song.artist}
             isRated={song.isRated}
             score={song.score}
+            isBookmarked={song.isBookmarked}
+            imageUrl={song.imageUrl}
             onRatingClick={onRatingClick}
           />
         ))}
