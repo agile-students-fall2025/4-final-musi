@@ -1,0 +1,150 @@
+.likes-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.likes-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.likes-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.likes-modal-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.likes-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.likes-modal-close:hover {
+  color: #000;
+}
+
+.likes-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.likes-modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.likes-modal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.likes-modal-item:last-child {
+  border-bottom: none;
+}
+
+.likes-modal-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.likes-modal-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.likes-modal-user-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.likes-modal-user-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.likes-modal-user-username {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.likes-modal-follow-btn {
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.likes-modal-follow-btn.follow {
+  background-color: #000;
+  color: #fff;
+}
+
+.likes-modal-follow-btn.follow:hover {
+  opacity: 0.85;
+}
+
+.likes-modal-follow-btn.following {
+  background-color: #f0f0f0;
+  color: #000;
+}
+
+.likes-modal-follow-btn.following:hover {
+  background-color: #e0e0e0;
+}
+

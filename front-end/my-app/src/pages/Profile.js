@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { theme } from "../theme";
 import SongItem from "../components/SongItem";
 import Sidebar from "../components/Sidebar";
+import LikesModal from "../components/LikesModal";
 import "../components/Score.css";
 import axios from "axios";
 
@@ -643,6 +644,7 @@ function Profile() {
   const [editingReview, setEditingReview] = useState(null);
   const [editingReviewText, setEditingReviewText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [likesModalReviewId, setLikesModalReviewId] = useState(null);
 
   const handleEditPhotoClick = () => {
     if (fileInputRef.current) {
@@ -825,31 +827,51 @@ const handleRefresh = async () => {
   };
 
   // likes (optimistic)
-  const handleLike = (id) => {
+  const handleLike = async (id, e) => {
+    e?.stopPropagation();
+    const item = activity.find((it) => it.id === id);
+    if (!item) return;
+
+    const wasLiked = item.isLiked;
+    // Optimistic update
     setActivity((prev) =>
       prev.map((it) =>
         it.id === id
           ? {
               ...it,
-              isLiked: !it.isLiked,
-              likes: it.isLiked ? it.likes - 1 : it.likes + 1,
+              isLiked: !wasLiked,
+              likes: wasLiked ? it.likes - 1 : it.likes + 1,
             }
           : it
       )
     );
-    axios.post(`/api/profile/activity/${id}/like`).catch(() => {
+
+    try {
+      const response = await axios.post(`/api/reviews/${id}/like`);
+      // Update with server response
       setActivity((prev) =>
         prev.map((it) =>
           it.id === id
-            ? {
-                ...it,
-                isLiked: !it.isLiked,
-                likes: it.isLiked ? it.likes - 1 : it.likes + 1,
-              }
+            ? { ...it, isLiked: response.data.isLiked, likes: response.data.likesCount }
             : it
         )
       );
-    });
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert on error
+      setActivity((prev) =>
+        prev.map((it) =>
+          it.id === id
+            ? { ...it, isLiked: wasLiked, likes: wasLiked ? it.likes + 1 : it.likes - 1 }
+            : it
+        )
+      );
+    }
+  };
+
+  const handleLikesClick = (id, e) => {
+    e.stopPropagation();
+    setLikesModalReviewId(id);
   };
 
   // edit flow
@@ -1205,14 +1227,19 @@ if (loading) {
 
                   <InteractionBar>
                     <InteractionLeft>
-                      <LikeButton onClick={() => handleLike(item.id)}>
+                      <LikeButton onClick={(e) => handleLike(item.id, e)}>
                         <Heart
                           size={16}
                           fill={item.isLiked ? "#ff6b6b" : "none"}
                           color={item.isLiked ? "#ff6b6b" : "#666"}
                         />
-                        <span>{item.likes} likes</span>
                       </LikeButton>
+                      <span
+                        onClick={(e) => handleLikesClick(item.id, e)}
+                        style={{ cursor: "pointer", userSelect: "none" }}
+                      >
+                        {item.likes} {item.likes === 1 ? "like" : "likes"}
+                      </span>
                     </InteractionLeft>
                     <InteractionRight>
                       <span>{item.bookmarks} bookmarks</span>
@@ -1483,6 +1510,12 @@ if (loading) {
           Save
         </SaveButton>
       </InputModalOverlay>
+      {likesModalReviewId && (
+        <LikesModal
+          reviewId={likesModalReviewId}
+          onClose={() => setLikesModalReviewId(null)}
+        />
+      )}
     </>
   );
 }
