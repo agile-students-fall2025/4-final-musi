@@ -329,9 +329,6 @@ function Feed() {
     }
   };
 
-  if (loading) return <Container><Section><div>Loading…</div></Section></Container>;
-  if (err) return <Container><Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section></Container>;
-
   const visibleFeedData = feedData.slice(0, visibleCount);
   const hasMore = visibleCount < feedData.length;
 
@@ -377,11 +374,17 @@ function Feed() {
         </FilterButtons>
       </SearchContainer>
 
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Featured Lists</SectionTitle>
-          <SeeAll>See all</SeeAll>
-        </SectionHeader>
+      {loading ? (
+        <Section><div>Loading…</div></Section>
+      ) : err ? (
+        <Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section>
+      ) : (
+        <>
+          <Section>
+            <SectionHeader>
+              <SectionTitle>Featured Lists</SectionTitle>
+              <SeeAll>See all</SeeAll>
+            </SectionHeader>
 
         <FeaturedLists>
           {featured.map((list) => (
@@ -500,6 +503,8 @@ function Feed() {
 
       {loadingMore && hasMore && (
         <LoadingIndicator>Loading more...</LoadingIndicator>
+      )}
+        </>
       )}
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
