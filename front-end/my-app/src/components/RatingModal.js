@@ -150,7 +150,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   };
 
   const opponent = existingList[mid]; 
-  const opponentImg = opponent?.targetId?.imageUrl || "https://placehold.co/60";
+  const opponentImg = opponent?.targetId?.coverUrl || "https://placehold.co/60";
 
   return (
     <div className="rating-modal-overlay" onClick={onClose}>

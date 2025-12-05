@@ -605,7 +605,6 @@ app.get('/api/scores/:type/:artist/:title', async (req, res) => {
     try {
         const userReview = await Review.findOne({ userId, targetId });
         const isRated = !!userReview;
-        
         let rank = "-";
         
         if (isRated) {
@@ -655,7 +654,7 @@ app.get('/api/scores/:type/:artist/:title', async (req, res) => {
             responseData = {
                 scores: [userScore, friendScore, globalScore],
                 counts: ["You", friendCount, globalCount],
-                scoreTitles: ["Your Musi Rating", "Friend Score", "User Score"],
+                scoreTitles: ["Your Musi Rating", "Friend Score", "Average Score"],
                 descriptions: [
                     `#<strong>${rank}</strong> on your list of ${type === 'Song' ? 'songs' : 'albums'}`, 
                     friendCount === 1 ? `What <strong>1 friend</strong> thinks` : `What your <strong>${friendCount} friends</strong> think`, 
@@ -666,7 +665,7 @@ app.get('/api/scores/:type/:artist/:title', async (req, res) => {
             responseData = {
                 scores: ["-", friendScore, globalScore], 
                 counts: [0, friendCount, globalCount],
-                scoreTitles: ["Rec Score", "Friend Score", "User Score"],
+                scoreTitles: ["Rec Score", "Friend Score", "Average Score"],
                 descriptions: [
                     "How much we think <strong>you</strong> will like it",
                     friendCount === 1 ? `What <strong>1 friend</strong> thinks` : `What your <strong>${friendCount} friends</strong> think`, 
