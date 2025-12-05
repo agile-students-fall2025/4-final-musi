@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Search, Menu, Heart, Bookmark } from "lucide-react";
+import { Search, Menu, Heart, Bookmark, Check, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import "../components/Score.css";
@@ -27,14 +27,37 @@ const SearchInput = styled.input`
   flex: 1; border: none; background: none; outline: none; margin-left: 8px;
   font-size: 0.9rem; color: #666; ::placeholder{ color:#999; }
 `;
-const FilterButtons = styled.div`display: flex; gap: 8px;`;
+
+// Updated styling for scrolling tabs
+const FilterButtons = styled.div`
+  display: flex; 
+  gap: 10px; 
+  overflow-x: auto; 
+  padding-bottom: 4px;
+  
+  /* Hide scrollbar for cleaner look */
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+`;
+
+// Reverted styling to use accent colors as requested
 const FilterButton = styled.button`
   background: ${(p) => (p.active ? theme.colors.accent : "white")};
   color: ${(p) => (p.active ? "white" : theme.colors.accent)};
   border: 1px solid ${theme.colors.accent};
-  border-radius: 20px; padding: 8px 16px; font-size: 0.85rem; font-weight: 500;
-  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  border-radius: 20px; 
+  padding: 8px 16px; 
+  font-size: 0.85rem; 
+  font-weight: 500;
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 `;
+
 const Section = styled.div`padding: 20px;`;
 const SectionHeader = styled.div`display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;`;
 const SectionTitle = styled.h3`
@@ -132,43 +155,9 @@ const Button = styled.button`
   }
 `;
 
-const FEATURED_LISTS = [
-  {
-    title: "Study flow",
-    tracks: [
-      { id: 1, title: "Got to Be Real", subtitle: "Song • Cheryl Lynn" },
-      { id: 2, title: "September", subtitle: "Song • Earth, Wind & Fire" },
-      { id: 3, title: "Boogie Wonderland", subtitle: "Song • Earth, Wind & Fire, The Emotions" },
-      { id: 4, title: "Ain’t Nobody", subtitle: "Song • Chaka Khan" },
-      { id: 5, title: "Le Freak", subtitle: "Song • CHIC" },
-    ],
-  },
-  {
-    title: "RapCaviar",
-    tracks: [
-      { id: 11, title: "Meltdown", subtitle: "Song • Travis Scott, Drake" },
-      { id: 12, title: "First Person Shooter", subtitle: "Song • Drake, J. Cole" },
-      { id: 13, title: "Rich Flex", subtitle: "Song • Drake, 21 Savage" },
-      { id: 14, title: "BROTHER STONE", subtitle: "Song • Don Toliver" },
-      { id: 15, title: "Knife Talk", subtitle: "Song • Drake, 21 Savage, Project Pat" },
-    ],
-  },
-  {
-    title: "Teenage Fever",
-    tracks: [
-      { id: 21, title: "drivers license", subtitle: "Song • Olivia Rodrigo" },
-      { id: 22, title: "Heather", subtitle: "Song • Conan Gray" },
-      { id: 23, title: "Telepatía", subtitle: "Song • Kali Uchis" },
-      { id: 24, title: "Sweater Weather", subtitle: "Song • The Neighbourhood" },
-      { id: 25, title: "Someone You Loved", subtitle: "Song • Lewis Capaldi" },
-    ],
-  },
-];
-
 function Feed() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("trending");
   const [featured, setFeatured] = useState([]);
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,27 +170,28 @@ function Feed() {
       .catch((e) => console.error("featured-lists error:", e));
   }, []);
 
-  // load feed for the selected tab
   useEffect(() => {
     setLoading(true);
     setErr(null);
-    axios.get("/api/feed", { params: { tab: activeTab } })
+    axios.get("/api/feed", { params: { tab: "trending" } })
       .then((r) => setFeedData(Array.isArray(r.data?.items) ? r.data.items : []))
       .catch((e) => setErr(e.message || "Failed to load feed"))
       .finally(() => setLoading(false));
-  }, [activeTab]);
+  }, []);
 
-  const handleTabChange = (tab) => setActiveTab(tab);
+  // Navigation Handler for Tabs
+  const handleTabClick = (tabName) => {
+    // Navigate to Lists page with the specific tab active
+    navigate("/app/lists", { state: { tab: tabName } });
+  };
 
   const handleLike = (itemId) => {
-    // optimistic UI
     setFeedData((prev) =>
       prev.map((it) =>
         it.id === itemId ? { ...it, isLiked: !it.isLiked, likes: it.isLiked ? it.likes - 1 : it.likes + 1 } : it
       )
     );
     axios.post(`/api/feed/${itemId}/like`).catch(() => {
-      // revert on failure
       setFeedData((prev) =>
         prev.map((it) =>
           it.id === itemId ? { ...it, isLiked: !it.isLiked, likes: it.isLiked ? it.likes - 1 : it.likes + 1 } : it
@@ -261,15 +251,17 @@ function Feed() {
           />
         </SearchBar>
 
+        {/* Updated Tabs - Now redirects to Lists Page */}
         <FilterButtons>
-          <FilterButton active={activeTab === "trending"} onClick={() => handleTabChange("trending")}>
-            Trending
+          {/* Added Trending Button - Deselected by default (same style as others) */}
+          <FilterButton onClick={() => handleTabClick("trending")}>
+            <TrendingUp size={16} /> Trending
           </FilterButton>
-          <FilterButton active={activeTab === "friend-recs"} onClick={() => handleTabChange("friend-recs")}>
-            Friend recs
+          <FilterButton onClick={() => handleTabClick("recs from friends")}>
+            <Users size={16} /> Friend recs
           </FilterButton>
-          <FilterButton active={activeTab === "new-releases"} onClick={() => handleTabChange("new-releases")}>
-            New releases
+          <FilterButton onClick={() => handleTabClick("new releases")}>
+            <Disc size={16} /> New releases
           </FilterButton>
         </FilterButtons>
       </SearchContainer>
