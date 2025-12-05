@@ -185,6 +185,7 @@ function Feed() {
   const [err, setErr] = useState(null);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [activeTab, setActiveTab] = useState("trending");
 
   // load featured lists (once)
   useEffect(() => {
@@ -223,14 +224,37 @@ function Feed() {
 
   // Add scroll event listener
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Navigation Handler for Tabs
-  const handleTabClick = (tabName) => {
-    // Navigate to Lists page with the specific tab active
-    navigate("/app/lists", { state: { tab: tabName } });
+  // Tab click handler for filtering feed
+  const handleTabClick = async (tab) => {
+    setLoading(true);
+    setErr(null);
+    setVisibleCount(10); // Reset visible count
+    setActiveTab(tab);
+
+    let params = {};
+    
+    if (tab === "trending") {
+      params = { tab: "trending" };
+    } else if (tab === "recs from friends") {
+      params = { tab: "friend-recs" };
+    } else if (tab === "new releases") {
+      params = { tab: "new-releases" };
+    }
+
+    try {
+      const response = await axios.get("/api/feed", { params });
+      setFeedData(
+        Array.isArray(response.data?.items) ? response.data.items : []
+      );
+    } catch (e) {
+      setErr(e.message || "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLike = async (itemId, e) => {
@@ -330,16 +354,24 @@ function Feed() {
           />
         </SearchBar>
 
-        {/* Updated Tabs - Now redirects to Lists Page */}
+        {/* Updated Tabs - Now filters feed content */}
         <FilterButtons>
-          {/* Added Trending Button - Deselected by default (same style as others) */}
-          <FilterButton onClick={() => handleTabClick("trending")}>
+          <FilterButton 
+            active={activeTab === "trending"}
+            onClick={() => handleTabClick("trending")}
+          >
             <TrendingUp size={16} /> Trending
           </FilterButton>
-          <FilterButton onClick={() => handleTabClick("recs from friends")}>
+          <FilterButton 
+            active={activeTab === "recs from friends"}
+            onClick={() => handleTabClick("recs from friends")}
+          >
             <Users size={16} /> Friend recs
           </FilterButton>
-          <FilterButton onClick={() => handleTabClick("new releases")}>
+          <FilterButton 
+            active={activeTab === "new releases"}
+            onClick={() => handleTabClick("new releases")}
+          >
             <Disc size={16} /> New releases
           </FilterButton>
         </FilterButtons>
@@ -408,18 +440,22 @@ function Feed() {
               <TimeStamp>{item.time}</TimeStamp>
             </UserDetails>
             <FeedScoreContainer>
-              <div className="score-item">
-                <div className="score-circle-container">
-                  <div className="score-circle">
-                    <span 
-                      className="score-number" 
-                      style={{ color: getScoreColor(item.rating) }}
-                    >
-                      {item.rating}
-                    </span>
+              {item.rating ? (
+                <div className="score-item">
+                  <div className="score-circle-container">
+                    <div className="score-circle">
+                      <span 
+                        className="score-number" 
+                        style={{ color: getScoreColor(item.rating) }}
+                      >
+                        {item.rating}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ fontSize: '1.2rem' }}>🔥</div>
+              )}
             </FeedScoreContainer>
           </UserInfo>
 
