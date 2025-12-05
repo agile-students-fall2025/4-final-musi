@@ -181,12 +181,17 @@ function Search() {
         {results.length > 0 && (
           <SectionTitle>Music</SectionTitle>
         )}
-        {results.map((item) => (
+        {results.map((item) => {
+          // Format subtitle: "Song • Artist" or "Album • Artist"
+          const musicType = item.musicType === 'Album' ? 'Album' : 'Song';
+          const subtitle = `${musicType} • ${item.artist}`;
+          
+          return (
           <SongItem
             key={item.id}
             title={item.title}
-            subtitle={`${item.musicType || 'Song'} • ${item.artist}`}
-            meta={(item.tags || []).join(", ")}
+            subtitle={subtitle}
+            meta={null}
             score={item.score}
             showScore={false}
             showBookmark={true}
@@ -217,7 +222,8 @@ function Search() {
               }
             }}
           />
-        ))}
+          );
+        })}
       </ResultsContainer>
       {toast && (
         <div
