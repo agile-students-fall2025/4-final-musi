@@ -1,3 +1,5 @@
+/* ... existing styles ... */
+
 .rating-modal-overlay {
   position: fixed;
   top: 0;
@@ -86,17 +88,18 @@
   text-align: center;
 }
 
+/* CHOICES */
 .rating-modal-choices {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: row; 
+  justify-content: space-between; 
   gap: 12px;
   padding: 8px 0;
 }
 
 .rating-choice {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;
@@ -111,7 +114,7 @@
 }
 
 .rating-circle {
-  width: 48px;
+  width: 48px; 
   height: 48px;
   border-radius: 50%;
   margin-bottom: 8px; 
@@ -147,6 +150,7 @@
   font-weight: 700;
 }
 
+/* NOTES BTN */
 .rating-modal-notes {
   margin-bottom: 24px;
 }
@@ -174,6 +178,7 @@
   font-size: 1.2rem;
 }
 
+/* SUBMIT BTN */
 .rating-submit-btn {
   width: 100%;
   padding: 16px;
@@ -191,6 +196,7 @@
   cursor: not-allowed;
 }
 
+/* COMMENT POPUP */
 .comment-popup-overlay {
   position: absolute;
   top: 0;
@@ -246,7 +252,7 @@
   color: #000;
 }
 
-/* === VERSUS STYLES (Horizontal Cards) === */
+/* === VERSUS STYLES === */
 
 .versus-header-context {
   text-align: center;
@@ -313,7 +319,6 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* The OR Badge */
 .versus-or {
   background: #154734; 
   color: white;
@@ -350,6 +355,7 @@
   margin-bottom: auto; 
 }
 
+/* CHANGED: Default is now black for standard ranks */
 .versus-card-rank {
   margin-top: 12px;
   font-size: 0.75rem;
@@ -357,6 +363,18 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* NEW: Specific red class for "New" label */
+.versus-card-rank.new {
+  color: #ff0000;
+}
+
+.versus-card-score {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 4px;
 }
 
 .versus-controls {
@@ -376,72 +394,4 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.rating-modal-choices {
-  display: flex;
-  flex-direction: row; 
-  justify-content: space-between; 
-  gap: 12px;
-  padding: 8px 0;
-}
-
-.rating-choice {
-  display: flex;
-  flex-direction: column; 
-  align-items: center;
-  justify-content: flex-start;
-  cursor: pointer;
-  padding: 12px 8px;
-  flex: 1; 
-  border-radius: 12px;
-  transition: background-color 0.2s;
-}
-
-.rating-choice:hover {
-  background-color: #f9f9f9;
-}
-
-.rating-circle {
-  width: 48px; 
-  height: 48px;
-  border-radius: 50%;
-  margin-bottom: 8px; 
-  margin-right: 0; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.rating-circle.selected {
-  transform: scale(1.1);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.checkmark {
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.reaction-label {
-  font-size: 0.85rem;
-  color: #6b6b6b;
-  font-weight: 500;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.reaction-label.selected {
-  color: #000;
-  font-weight: 700;
-}
-
-.versus-card-score {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #000;
-  margin-top: 4px;
 }

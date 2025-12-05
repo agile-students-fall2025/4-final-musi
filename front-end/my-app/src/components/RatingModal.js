@@ -192,7 +192,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
               </button>
             </div>
             <button className="rating-submit-btn" onClick={handleStartRanking} disabled={mode === 'loading'}>
-              {mode === 'loading' ? "Loading List..." : "Next"}
+              {mode === 'loading' ? "Loading List..." : "Next: Rank it"}
             </button>
           </>
         )}
@@ -208,7 +208,9 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
                 <img src={imageUrl} alt={title} className="versus-card-image" />
                 <div className="versus-card-title">{title}</div>
                 <div className="versus-card-artist">{artist}</div>
-                <div className="versus-card-rank">New</div>
+                
+                {/* Updated: Added 'new' class for red color */}
+                <div className="versus-card-rank new">New</div>
               </div>
 
               {/* CENTER BADGE */}
@@ -226,7 +228,6 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
                 <div className="versus-card-artist">{opponent.targetId?.artist || opponent.artist}</div>
                 
                 <div className="versus-card-rank">Rank #{betterCount + mid + 1}</div>
-                {/* NEW: Score Display */}
                 <div className="versus-card-score">{opponent.rating?.toFixed(1)}</div>
               </div>
             </div>
