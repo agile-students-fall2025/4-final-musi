@@ -171,7 +171,8 @@ const reviewSchema = new Schema(
 
     rating: { type: Number, min: 0, max: 10 },
     ratingIndex: { type: Number, enum: [0, 1, 2], default: 0 }, // 0: Liked, 1: Fine, 2: Disliked
-    text: String
+    text: String,
+    likes: [{ type: Schema.Types.ObjectId, ref: "User" }] // Array of user IDs who liked this review
   },
   { timestamps: true }
 );

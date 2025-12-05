@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark, Check, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
+import LikesModal from "../components/LikesModal";
 import "../components/Score.css";
 import axios from "axios";
 
@@ -162,6 +163,7 @@ function Feed() {
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [likesModalReviewId, setLikesModalReviewId] = useState(null);
 
   // load featured lists (once)
   useEffect(() => {
@@ -185,19 +187,47 @@ function Feed() {
     navigate("/app/lists", { state: { tab: tabName } });
   };
 
-  const handleLike = (itemId) => {
+  const handleLike = async (itemId, e) => {
+    e?.stopPropagation();
+    const item = feedData.find((it) => it.id === itemId);
+    if (!item) return;
+
+    const wasLiked = item.isLiked;
+    // Optimistic update
     setFeedData((prev) =>
       prev.map((it) =>
-        it.id === itemId ? { ...it, isLiked: !it.isLiked, likes: it.isLiked ? it.likes - 1 : it.likes + 1 } : it
+        it.id === itemId
+          ? { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 }
+          : it
       )
     );
-    axios.post(`/api/feed/${itemId}/like`).catch(() => {
+
+    try {
+      const response = await axios.post(`/api/reviews/${itemId}/like`);
+      // Update with server response
       setFeedData((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, isLiked: !it.isLiked, likes: it.isLiked ? it.likes - 1 : it.likes + 1 } : it
+          it.id === itemId
+            ? { ...it, isLiked: response.data.isLiked, likes: response.data.likesCount }
+            : it
         )
       );
-    });
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert on error
+      setFeedData((prev) =>
+        prev.map((it) =>
+          it.id === itemId
+            ? { ...it, isLiked: wasLiked, likes: wasLiked ? it.likes + 1 : it.likes - 1 }
+            : it
+        )
+      );
+    }
+  };
+
+  const handleLikesClick = (itemId, e) => {
+    e.stopPropagation();
+    setLikesModalReviewId(itemId);
   };
 
   const openFeatured = (list) => {
@@ -346,10 +376,15 @@ function Feed() {
 
           <InteractionBar>
             <InteractionLeft>
-              <LikeButton onClick={() => handleLike(item.id)}>
+              <LikeButton onClick={(e) => handleLike(item.id, e)}>
                 <Heart size={16} fill={item.isLiked ? "#ff6b6b" : "none"} color={item.isLiked ? "#ff6b6b" : "#666"} />
-                <span>{item.likes} likes</span>
               </LikeButton>
+              <span
+                onClick={(e) => handleLikesClick(item.id, e)}
+                style={{ cursor: "pointer", userSelect: "none" }}
+              >
+                {item.likes} {item.likes === 1 ? "like" : "likes"}
+              </span>
             </InteractionLeft>
             <InteractionRight>
               <button
@@ -374,6 +409,12 @@ function Feed() {
       ))}
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {likesModalReviewId && (
+        <LikesModal
+          reviewId={likesModalReviewId}
+          onClose={() => setLikesModalReviewId(null)}
+        />
+      )}
     </Container>
   );
 }

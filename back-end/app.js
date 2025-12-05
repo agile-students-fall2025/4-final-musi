@@ -984,6 +984,12 @@ app.get('/api/users/:username/profile', async (req, res) => {
     const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
     const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
 
+    // Get current user's liked reviews
+    const userLikedReviews = await Review.find({
+      likes: currentUserId
+    }).select('_id').lean().exec();
+    const likedReviewIds = new Set(userLikedReviews.map(r => String(r._id)));
+
     const activity = reviews.map((r) => {
       const isSong = r.targetType === 'Song';
       const meta = isSong
@@ -1003,6 +1009,10 @@ app.get('/api/users/:username/profile', async (req, res) => {
         day: 'numeric',
       });
 
+      const likesArray = Array.isArray(r.likes) ? r.likes : [];
+      const likesCount = likesArray.length;
+      const isLiked = likedReviewIds.has(String(r._id));
+
       return {
         id: r._id,
         user: user.name || user.username,
@@ -1013,9 +1023,9 @@ app.get('/api/users/:username/profile', async (req, res) => {
         rating,
         time,
         review: r.text || '',
-        likes: 0,
+        likes: likesCount,
         bookmarks: 0,
-        isLiked: false,
+        isLiked,
         artist,
         title,
         musicType: r.targetType,
@@ -1381,6 +1391,12 @@ app.get("/api/feed", async (req, res) => {
     const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
     const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
 
+    // Get current user's liked reviews
+    const userLikedReviews = await Review.find({
+      likes: userId
+    }).select('_id').lean().exec();
+    const likedReviewIds = new Set(userLikedReviews.map(r => String(r._id)));
+
     const items = reviews.map((r) => {
       const reviewer = userMap.get(String(r.userId)) || {};
       const isSong = r.targetType === "Song";
@@ -1399,6 +1415,9 @@ app.get("/api/feed", async (req, res) => {
       });
 
       const color = reviewer.avatarColor || computeAvatarColor(reviewer.username || "");
+      const likesArray = Array.isArray(r.likes) ? r.likes : [];
+      const likesCount = likesArray.length;
+      const isLiked = likedReviewIds.has(String(r._id));
 
       return {
         id: r._id,
@@ -1410,9 +1429,9 @@ app.get("/api/feed", async (req, res) => {
         rating,
         time,
         review: r.text || "",
-        likes: 0,
+        likes: likesCount,
         bookmarks: 0,
-        isLiked: false,
+        isLiked,
         artist,
         title,
         musicType: r.targetType,
@@ -1427,9 +1446,135 @@ app.get("/api/feed", async (req, res) => {
   }
 });
 
-// like/unlike toggle stub
-app.post("/api/feed/:id/like", (req, res) => {
-  res.json({ ok: true, id: req.params.id });
+// Like/unlike a review
+app.post("/api/reviews/:reviewId/like", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reviewId = req.params.reviewId;
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    const likesArray = Array.isArray(review.likes) ? review.likes : [];
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isLiked = likesArray.some(id => String(id) === String(userId));
+
+    if (isLiked) {
+      // Unlike: remove user from likes array
+      review.likes = likesArray.filter(id => String(id) !== String(userId));
+    } else {
+      // Like: add user to likes array
+      review.likes = [...likesArray, userObjectId];
+    }
+
+    await review.save();
+
+    res.json({ 
+      ok: true, 
+      reviewId,
+      isLiked: !isLiked,
+      likesCount: review.likes.length
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+// Legacy endpoint for feed (redirects to new endpoint)
+app.post("/api/feed/:id/like", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reviewId = req.params.id;
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    const likesArray = Array.isArray(review.likes) ? review.likes : [];
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isLiked = likesArray.some(id => String(id) === String(userId));
+
+    if (isLiked) {
+      review.likes = likesArray.filter(id => String(id) !== String(userId));
+    } else {
+      review.likes = [...likesArray, userObjectId];
+    }
+
+    await review.save();
+
+    res.json({ 
+      ok: true, 
+      reviewId,
+      isLiked: !isLiked,
+      likesCount: review.likes.length
+    });
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+// Get users who liked a review
+app.get("/api/reviews/:reviewId/likes", async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const reviewId = req.params.reviewId;
+
+    const review = await Review.findById(reviewId)
+      .populate({
+        path: 'likes',
+        select: 'username name profilePictureUrl avatarColor followers following',
+        populate: [
+          { path: 'followers', select: '_id' },
+          { path: 'following', select: '_id' }
+        ]
+      })
+      .lean()
+      .exec();
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    const likedUsers = (review.likes || []).map(user => {
+      const followerIds = (user.followers || []).map((u) => String(u._id));
+      const followingIds = (user.following || []).map((u) => String(u._id));
+      
+      const isFollowing = followerIds.includes(String(currentUserId));
+      const isFollower = followingIds.includes(String(currentUserId));
+      const isCurrentUser = String(user._id) === String(currentUserId);
+
+      let followButtonText = 'Follow';
+      if (isCurrentUser) {
+        followButtonText = null; // Don't show button for current user
+      } else if (isFollowing) {
+        followButtonText = 'Following';
+      } else if (isFollower) {
+        followButtonText = 'Follow back';
+      }
+
+      return {
+        _id: user._id,
+        username: user.username || '',
+        name: user.name || user.username || '',
+        profilePictureUrl: user.profilePictureUrl || '',
+        avatarColor: user.avatarColor || computeAvatarColor(user.username || ''),
+        isFollowing,
+        isFollower,
+        isCurrentUser,
+        followButtonText
+      };
+    });
+
+    res.json({ users: likedUsers });
+  } catch (error) {
+    console.error('Error fetching review likes:', error);
+    res.status(500).json({ error: 'Failed to fetch review likes' });
+  }
 });
 
 app.post('/api/onboarding', (req, res) => {
@@ -1559,6 +1704,12 @@ app.get('/api/profile', async (req, res) => {
     const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
     const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
 
+    // Get current user's liked reviews
+    const userLikedReviews = await Review.find({
+      likes: userId
+    }).select('_id').lean().exec();
+    const likedReviewIds = new Set(userLikedReviews.map(r => String(r._id)));
+
     const activity = reviews.map((r) => {
       const isSong = r.targetType === 'Song';
       const meta = isSong
@@ -1578,6 +1729,10 @@ app.get('/api/profile', async (req, res) => {
         day: 'numeric',
       });
 
+      const likesArray = Array.isArray(r.likes) ? r.likes : [];
+      const likesCount = likesArray.length;
+      const isLiked = likedReviewIds.has(String(r._id));
+
       return {
         id: r._id,
         user: user.name || user.username,
@@ -1588,9 +1743,9 @@ app.get('/api/profile', async (req, res) => {
         rating,
         time,
         review: r.text || '',
-        likes: 0,
+        likes: likesCount,
         bookmarks: 0,
-        isLiked: false,
+        isLiked,
         artist,
         title,
         musicType: r.targetType,
@@ -1743,26 +1898,35 @@ let PROFILE_ACTIVITY = [
   },
 ];
 
-// POST like toggle on activity item
-app.post('/api/profile/activity/:id/like', (req, res) => {
+// POST like toggle on activity item (legacy endpoint, redirects to new endpoint)
+app.post('/api/profile/activity/:id/like', async (req, res) => {
   try {
     const userId = req.user.id;
-    const id = Number(req.params.id);
-    let found = false;
+    const reviewId = req.params.id;
 
-    PROFILE_ACTIVITY = PROFILE_ACTIVITY.map((it) => {
-      if (it.id !== id) return it;
-      
-      found = true;
-      const wasLiked = it.isLiked;
-      return { ...it, isLiked: !wasLiked, likes: wasLiked ? it.likes - 1 : it.likes + 1 };
-    });
-
-    if (!found) {
-      return res.status(404).json({ error: 'Activity item not found' });
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
     }
 
-    res.json({ ok: true, id });
+    const likesArray = Array.isArray(review.likes) ? review.likes : [];
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isLiked = likesArray.some(id => String(id) === String(userId));
+
+    if (isLiked) {
+      review.likes = likesArray.filter(id => String(id) !== String(userId));
+    } else {
+      review.likes = [...likesArray, userObjectId];
+    }
+
+    await review.save();
+
+    res.json({ 
+      ok: true, 
+      id: reviewId,
+      isLiked: !isLiked,
+      likesCount: review.likes.length
+    });
   } catch (error) {
     console.error('Error toggling like:', error);
     res.status(500).json({ error: 'Failed to toggle like' });

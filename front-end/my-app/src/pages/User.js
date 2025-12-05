@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft } from 'lucide-react';
+import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, Heart } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
+import LikesModal from '../components/LikesModal';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../components/Score.css';
@@ -543,6 +544,21 @@ const InteractionRight = styled.div`
   color: #666;
 `;
 
+const LikeButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #666;
+  padding: 0;
+  &:hover {
+    color: #333;
+  }
+`;
+
 function User() {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -552,6 +568,54 @@ function User() {
   const [activity, setActivity] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [likesModalReviewId, setLikesModalReviewId] = useState(null);
+
+  const handleLike = async (id, e) => {
+    e?.stopPropagation();
+    const item = activity.find((it) => it.id === id);
+    if (!item) return;
+
+    const wasLiked = item.isLiked;
+    // Optimistic update
+    setActivity((prev) =>
+      prev.map((it) =>
+        it.id === id
+          ? {
+              ...it,
+              isLiked: !wasLiked,
+              likes: wasLiked ? it.likes - 1 : it.likes + 1,
+            }
+          : it
+      )
+    );
+
+    try {
+      const response = await axios.post(`/api/reviews/${id}/like`);
+      // Update with server response
+      setActivity((prev) =>
+        prev.map((it) =>
+          it.id === id
+            ? { ...it, isLiked: response.data.isLiked, likes: response.data.likesCount }
+            : it
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert on error
+      setActivity((prev) =>
+        prev.map((it) =>
+          it.id === id
+            ? { ...it, isLiked: wasLiked, likes: wasLiked ? it.likes + 1 : it.likes - 1 }
+            : it
+        )
+      );
+    }
+  };
+
+  const handleLikesClick = (id, e) => {
+    e.stopPropagation();
+    setLikesModalReviewId(id);
+  };
 
   useEffect(() => {
     if (!username) {
@@ -586,7 +650,14 @@ function User() {
     };
 
     fetchUserProfile();
-  }, [username]);
+  }, [username, navigate]);
+
+  // Redirect to /app/profile if viewing own profile
+  useEffect(() => {
+    if (profile && profile.isCurrentUser) {
+      navigate('/app/profile', { replace: true });
+    }
+  }, [profile, navigate]);
 
   const formatDate = (date) => {
     if (!date) return 'Recently';
@@ -867,7 +938,19 @@ function User() {
 
                     <InteractionBar>
                       <InteractionLeft>
-                        <span>{item.likes} likes</span>
+                        <LikeButton onClick={(e) => handleLike(item.id, e)}>
+                          <Heart
+                            size={16}
+                            fill={item.isLiked ? "#ff6b6b" : "none"}
+                            color={item.isLiked ? "#ff6b6b" : "#666"}
+                          />
+                        </LikeButton>
+                        <span
+                          onClick={(e) => handleLikesClick(item.id, e)}
+                          style={{ cursor: "pointer", userSelect: "none" }}
+                        >
+                          {item.likes} {item.likes === 1 ? "like" : "likes"}
+                        </span>
                       </InteractionLeft>
                       <InteractionRight>
                         <span>{item.bookmarks} bookmarks</span>
@@ -1023,6 +1106,12 @@ function User() {
           </FormSection>
         </ModalContent>
       </ModalOverlay>
+      {likesModalReviewId && (
+        <LikesModal
+          reviewId={likesModalReviewId}
+          onClose={() => setLikesModalReviewId(null)}
+        />
+      )}
     </>
   );
 }
