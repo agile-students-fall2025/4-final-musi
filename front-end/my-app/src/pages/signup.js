@@ -128,6 +128,36 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
+const SectionHeader = styled.div`
+  color: ${theme.colors.text};
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 18px 16px;
+  border: none;
+  border-radius: 16px;
+  background: ${theme.colors.background_secondary};
+  color: ${theme.colors.text};
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  
+  option {
+    background: ${theme.colors.background};
+    color: ${theme.colors.text};
+  }
+`;
+
 function Signup() {
   const { register } = useContext(AuthContext);
 
@@ -138,10 +168,26 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Security questions
+  const [securityQuestion1, setSecurityQuestion1] = useState("");
+  const [securityAnswer1, setSecurityAnswer1] = useState("");
+  const [securityQuestion2, setSecurityQuestion2] = useState("");
+  const [securityAnswer2, setSecurityAnswer2] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const securityQuestions = [
+    "What was the name of your first pet?",
+    "What city were you born in?",
+    "What is your mother's maiden name?",
+    "What was the name of your elementary school?",
+    "What is your favorite book?",
+    "What was your childhood nickname?",
+    "What is the name of your favorite teacher?",
+  ];
 
   // Password validation checks
   const hasValidLength = password.length >= 8 && password.length <= 20;
@@ -168,10 +214,23 @@ function Signup() {
       return setError("Passwords do not match.");
     }
 
+    if (!securityQuestion1 || !securityAnswer1.trim()) {
+      return setError("Please select and answer the first security question.");
+    }
+
+    if (!securityQuestion2 || !securityAnswer2.trim()) {
+      return setError("Please select and answer the second security question.");
+    }
+
     setLoading(true);
 
     try {
-      await register(username, email, password);
+      await register(username, email, password, {
+        securityQuestion1,
+        securityAnswer1,
+        securityQuestion2,
+        securityAnswer2,
+      });
 
       // Go directly to onboarding after signup
       navigate("/onboarding");
@@ -244,6 +303,49 @@ function Signup() {
             Letters, numbers, and special characters
           </Requirement>
         </PasswordRequirements>
+
+        <SectionHeader>
+          Security Questions (for password recovery)
+        </SectionHeader>
+        
+        <Select
+          value={securityQuestion1}
+          onChange={(e) => setSecurityQuestion1(e.target.value)}
+          required
+        >
+          <option value="">Select Security Question 1</option>
+          {securityQuestions.map((q) => (
+            <option key={q} value={q}>{q}</option>
+          ))}
+        </Select>
+
+        <Input
+          type="text"
+          value={securityAnswer1}
+          onChange={(e) => setSecurityAnswer1(e.target.value)}
+          placeholder="Answer to Question 1"
+          required
+        />
+
+        <Select
+          value={securityQuestion2}
+          onChange={(e) => setSecurityQuestion2(e.target.value)}
+          required
+        >
+          <option value="">Select Security Question 2</option>
+          {securityQuestions.filter(q => q !== securityQuestion1).map((q) => (
+            <option key={q} value={q}>{q}</option>
+          ))}
+        </Select>
+
+        <Input
+          type="text"
+          value={securityAnswer2}
+          onChange={(e) => setSecurityAnswer2(e.target.value)}
+          placeholder="Answer to Question 2"
+          required
+        />
+
         <Button type="submit" disabled={loading}>
           {loading ? "Creating account..." : "Create account"}
         </Button>

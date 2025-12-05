@@ -9,7 +9,7 @@ require("dotenv").config();
 // @desc    Register user & get token
 // @access  Public
 router.post("/register", async (req, res) => {
-  const { username, email, password, name } = req.body;
+  const { username, email, password, name, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2 } = req.body;
 
   try {
     let user = await User.findOne({ email });
@@ -17,11 +17,27 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
     }
 
+    // Hash security answers
+    let hashedAnswer1 = "";
+    let hashedAnswer2 = "";
+    if (securityAnswer1) {
+      const salt1 = await bcrypt.genSalt(10);
+      hashedAnswer1 = await bcrypt.hash(securityAnswer1.toLowerCase().trim(), salt1);
+    }
+    if (securityAnswer2) {
+      const salt2 = await bcrypt.genSalt(10);
+      hashedAnswer2 = await bcrypt.hash(securityAnswer2.toLowerCase().trim(), salt2);
+    }
+
     user = new User({
       username,
       email,
       password,
       name,
+      securityQuestion1: securityQuestion1 || "",
+      securityAnswer1: hashedAnswer1,
+      securityQuestion2: securityQuestion2 || "",
+      securityAnswer2: hashedAnswer2,
     });
 
     user.updateStreak();
@@ -231,6 +247,93 @@ router.get('/streak', auth, async (req, res) => {
       totalLogins: user.totalLogins
     });
   } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   POST api/auth/forgot-password
+// @desc    Get security questions for email
+// @access  Public
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email }).select('securityQuestion1 securityQuestion2');
+    
+    if (!user) {
+      return res.status(404).json({ msg: "No account found with this email address" });
+    }
+
+    if (!user.securityQuestion1 || !user.securityQuestion2) {
+      return res.status(400).json({ msg: "This account was created before security questions were available. Please contact support to reset your password." });
+    }
+
+    res.json({ 
+      securityQuestion1: user.securityQuestion1,
+      securityQuestion2: user.securityQuestion2
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   POST api/auth/verify-security
+// @desc    Verify security question answers
+// @access  Public
+router.post('/verify-security', async (req, res) => {
+  const { email, answer1, answer2 } = req.body;
+
+  try {
+    const user = await User.findOne({ email }).select('securityAnswer1 securityAnswer2');
+    
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Compare answers (case-insensitive)
+    const isMatch1 = await bcrypt.compare(answer1.toLowerCase().trim(), user.securityAnswer1);
+    const isMatch2 = await bcrypt.compare(answer2.toLowerCase().trim(), user.securityAnswer2);
+
+    if (!isMatch1 || !isMatch2) {
+      return res.status(400).json({ msg: "Security answers do not match" });
+    }
+
+    // Generate a temporary reset token
+    const payload = { user: { id: user.id } };
+    const resetToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+    res.json({ resetToken });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   POST api/auth/reset-password
+// @desc    Reset password with reset token
+// @access  Public
+router.post('/reset-password', async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+
+  try {
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.user.id);
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Update password (will be hashed by pre-save hook)
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ msg: "Password reset successful" });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(400).json({ msg: "Reset token expired" });
+    }
     console.error(err.message);
     res.status(500).send('Server error');
   }

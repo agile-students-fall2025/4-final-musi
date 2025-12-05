@@ -14,6 +14,12 @@ const userSchema = new Schema(
     dateJoined: { type: Date, default: Date.now },
     bio: { type: String, default: "" },
 
+    // Security questions for password recovery
+    securityQuestion1: { type: String, default: "" },
+    securityAnswer1: { type: String, default: "" },
+    securityQuestion2: { type: String, default: "" },
+    securityAnswer2: { type: String, default: "" },
+
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
