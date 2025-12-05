@@ -264,7 +264,8 @@ export default function Lists() {
                   showBookmark={activeTab === "want" || activeTab === "new releases" || activeTab === "trending"}
                   bookmarked={song.bookmarked || (activeTab === "want")}
                   onPlusClick={() => goToMusic(song)}
-                onBookmarkClick={async (e) => {
+                  dividerTop={i > 0}
+                  onBookmarkClick={async (e) => {
                   e.stopPropagation();
                   try {
                     const type = song.musicType ?? "Song";
@@ -331,8 +332,6 @@ export default function Lists() {
                       : "Failed to update Want to listen");
                   }
                 }}
-              imageUrl={song.imageUrl}
-                dividerTop={i > 0}
               />
             </li>
           ))}
