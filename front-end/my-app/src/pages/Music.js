@@ -132,7 +132,7 @@ function Music() {
       </div>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
       
-      <Scores title={title} artist={artist} isRated={musicData?.isRated} />
+      <Scores title={title} artist={artist} musicType={musicType} />
 
       {musicType === "Album" && (
         <AlbumList 

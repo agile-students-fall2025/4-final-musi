@@ -10,7 +10,7 @@ function Scores({musicType, title, artist}) {
     const [descriptions, setDescriptions] = useState(["", "", ""]);
     useEffect(() => {
         if (!artist || !title) return;
-
+        
         const API_URL = `http://localhost:3001/api/scores/${musicType}/${artist}/${title}`;
 
         axios.get(API_URL)
