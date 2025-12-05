@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { RotateCcw, HelpCircle, SkipForward } from "lucide-react";
+import { theme } from "../theme";
 import "./RatingModal.css";
 
 function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, spotifyId }) {
@@ -27,9 +28,9 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   const [betterCount, setBetterCount] = useState(0);
 
   const ratingOptions = [
-    { label: "I liked it!", color: "#000000" }, 
-    { label: "It was fine", color: "#6b6b6b" },
-    { label: "I didn't like it", color: "#d3d3d3" }
+    { label: "I liked it!", color: theme.colors.green }, 
+    { label: "It was fine", color: theme.colors.yellow },
+    { label: "I didn't like it", color: theme.colors.red }
   ];
 
   const filterOutCurrentSong = (list) => {
@@ -178,7 +179,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
               <div className="rating-modal-choices">
                 {ratingOptions.map((option, i) => (
                   <div key={option.label} className="rating-choice" onClick={() => setSelectedRating(i)}>
-                    <div className={`rating-circle ${selectedRating === i ? "selected" : ""}`} style={{ backgroundColor: selectedRating === i ? '#000' : option.color }}>
+                    <div className={`rating-circle ${selectedRating === i ? "selected" : ""}`} style={{ backgroundColor: option.color }}>
                       {selectedRating === i && <span className="checkmark">✓</span>}
                     </div>
                     <span className={`reaction-label ${selectedRating === i ? "selected" : ""}`}>{option.label}</span>
