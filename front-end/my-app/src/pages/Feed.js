@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark, Check, Users, Disc, TrendingUp } from "lucide-react";
@@ -141,6 +141,13 @@ const FeedScoreContainer = styled.div`
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
 
+const LoadingIndicator = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 0.9rem;
+`;
+
 const Button = styled.button`
   background-color: ${theme.colors.primary};
   color: white;
@@ -162,8 +169,10 @@ function Feed() {
   const [featured, setFeatured] = useState([]);
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [err, setErr] = useState(null);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   // load featured lists (once)
   useEffect(() => {
@@ -180,6 +189,31 @@ function Feed() {
       .catch((e) => setErr(e.message || "Failed to load feed"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (loadingMore || visibleCount >= feedData.length) return;
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+
+    // Trigger when user scrolls to 80% of the page
+    if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+      setLoadingMore(true);
+      // Simulate loading delay
+      setTimeout(() => {
+        setVisibleCount((prev) => prev + 10);
+        setLoadingMore(false);
+      }, 500);
+    }
+  }, [loadingMore, visibleCount, feedData.length]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Navigation Handler for Tabs
   const handleTabClick = (tabName) => {
@@ -262,6 +296,9 @@ function Feed() {
   if (loading) return <Container><Section><div>Loading…</div></Section></Container>;
   if (err) return <Container><Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section></Container>;
 
+  const visibleFeedData = feedData.slice(0, visibleCount);
+  const hasMore = visibleCount < feedData.length;
+
   return (
     <Container>
       <Header>
@@ -320,7 +357,7 @@ function Feed() {
 
       <Section><SectionTitle>Your Feed</SectionTitle></Section>
 
-      {feedData.map((item) => (
+      {visibleFeedData.map((item) => (
         <FeedItem key={item.id}>
           <UserInfo>
             <Avatar
@@ -407,6 +444,10 @@ function Feed() {
           </InteractionBar>
         </FeedItem>
       ))}
+
+      {loadingMore && hasMore && (
+        <LoadingIndicator>Loading more...</LoadingIndicator>
+      )}
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       {likesModalReviewId && (
