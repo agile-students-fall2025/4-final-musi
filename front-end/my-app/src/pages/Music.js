@@ -17,7 +17,7 @@ function Music() {
   const [musicData, setMusicData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [refreshKey, setRefreshKey] = useState(0);
   // Toast State
   const [toast, setToast] = useState('');
 
@@ -63,6 +63,8 @@ function Music() {
         // Updated Toast Message & Duration (5s)
         setToast(`You gave ${ratingInfo.title} by ${ratingInfo.artist} a ${response.data.score}!`);
         setTimeout(() => setToast(''), 5000);
+
+        setRefreshKey(prevKey => prevKey + 1);
       })
       .catch(err => {
         console.error('Failed to save rating:', err);
@@ -105,7 +107,7 @@ function Music() {
           setLoading(false);
         });
 
-  }, [musicType, artist, title]);
+  }, [musicType, artist, title, refreshKey]);
 
   if (loading) {
     return <div className="Music-loading">Loading...</div>; 
@@ -132,7 +134,7 @@ function Music() {
       </div>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
       
-      <Scores title={title} artist={artist} musicType={musicType} />
+      <Scores title={title} artist={artist} musicType={musicType} refreshTrigger={refreshKey} />
 
       {musicType === "Album" && (
         <AlbumList 

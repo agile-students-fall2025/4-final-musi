@@ -3,14 +3,14 @@ import Score from "./Score";
 import axios from "axios";
 import "./Score.css";
 
-function Scores({musicType, title, artist}) {
+function Scores({musicType, title, artist, refreshTrigger}) {
     const [scores, setScores] = useState([0, 0, 0]);
     const [counts, setCounts] = useState([0, 0, 0]);
     const [scoreTitles, setScoreTitles] = useState(["","",""])
     const [descriptions, setDescriptions] = useState(["", "", ""]);
     useEffect(() => {
         if (!artist || !title) return;
-        
+
         const API_URL = `http://localhost:3001/api/scores/${musicType}/${artist}/${title}`;
 
         axios.get(API_URL)
@@ -25,7 +25,7 @@ function Scores({musicType, title, artist}) {
                 console.error("Error fetching scores data:", error);
             });
             
-    }, [artist, title, musicType]);
+    }, [artist, title, musicType, refreshTrigger]);
     return (
         <div className="scores-section">
             <h3 className="scores-title">Scores</h3>
