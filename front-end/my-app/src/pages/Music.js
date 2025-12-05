@@ -17,6 +17,9 @@ function Music() {
   const [musicData, setMusicData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Toast State
+  const [toast, setToast] = useState('');
 
   const handleRatingClick = (songTitle, songArtist, type, rated, id) => {
     const testId = `${type}-${songArtist}-${songTitle}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -41,7 +44,8 @@ function Music() {
     };
 
     if (!payload.targetId) {
-      alert("Error: Missing Target ID. Cannot save rating.");
+      setToast("Error: Missing Target ID");
+      setTimeout(() => setToast(''), 3000);
       return;
     }
 
@@ -52,38 +56,15 @@ function Music() {
           isRated: true,
           avgScore: response.data.score || prevData.avgScore, 
         }));
-
-        // Remove from "Want to listen" if present
-        const type = ratingInfo.targetType || selectedSong?.musicType || musicType;
-        const slugId = `${type}-${selectedSong?.artist || artist}-${selectedSong?.title || title}`
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, '-');
-
-        const removals = [];
-        if (ratingInfo.spotifyId) {
-          removals.push(
-            axios.post('http://localhost:3001/api/want/remove', {
-              spotifyId: ratingInfo.spotifyId,
-            })
-          );
-        }
-        removals.push(
-          axios.post('http://localhost:3001/api/want/remove', {
-            spotifyId: slugId,
-          })
-        );
-
-        Promise.allSettled(removals).catch(() => {});
-
-        // Dispatch event to notify other pages (like Profile) that profile data should refresh
-        window.dispatchEvent(new CustomEvent('reviewSubmitted'));
-
-        alert(`Successfully ranked #${response.data.rank} on your list!`);
+        
+        // Updated Toast Message & Duration (5s)
+        setToast(`You gave ${ratingInfo.title} by ${ratingInfo.artist} a ${response.data.score}!`);
+        setTimeout(() => setToast(''), 5000);
       })
       .catch(err => {
         console.error('Failed to save rating:', err);
-        const serverMsg = err.response ? err.response.data : err.message;
-        alert(`Failed to save rating: ${JSON.stringify(serverMsg)}`);
+        setToast("Failed to save rating");
+        setTimeout(() => setToast(''), 3000);
       })
       .finally(() => {
         setShowRatingModal(false);
@@ -139,8 +120,6 @@ function Music() {
     <div className="Music">
       <ImageHeader 
         {...musicData} 
-        spotifyId={musicData.spotifyId}
-        spotifyUrl={musicData.spotifyUrl}
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
       />
       <div className="description">
@@ -150,7 +129,7 @@ function Music() {
       </div>
       {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
       
-      <Scores title={title} artist={artist} musicType={musicType} />
+      <Scores title={title} artist={artist} isRated={musicData?.isRated} />
 
       {musicType === "Album" && (
         <AlbumList 
@@ -169,6 +148,29 @@ function Music() {
           onClose={handleCancelModal}  
           onSubmit={handleRatingSubmit} 
         />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: "80px",
+            transform: "translateX(-50%)",
+            background: "#111",
+            color: "#fff",
+            padding: "12px 24px",
+            borderRadius: "999px",
+            fontSize: "0.95rem",
+            fontWeight: "600",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+            zIndex: 2000,
+            whiteSpace: "nowrap"
+          }}
+        >
+          {toast}
+        </div>
       )}
     </div>
   );
