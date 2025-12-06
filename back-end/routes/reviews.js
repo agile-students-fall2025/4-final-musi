@@ -115,7 +115,7 @@ router.post('/rate-ranked', auth, async (req, res) => {
         newScore = 10 - (index * step);
       }
 
-      review.rating = parseFloat(newScore.toFixed(2));
+      review.rating = parseFloat(newScore.toFixed(1));
       return review.save();
     });
 

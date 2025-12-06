@@ -1239,7 +1239,10 @@ app.get("/api/users/:username/profile", async (req, res) => {
       };
     });
 
-    res.json({ profile, activity });
+    // Add taste data using the same function as /api/profile
+    const taste = await generateTasteData(user._id, reviews, songs, songMap);
+
+    res.json({ profile, activity, taste });
   } catch (error) {
     console.error("Error fetching public user profile:", error.message);
     res.status(500).json({ error: "Failed to fetch user profile" });
@@ -2067,6 +2070,142 @@ app.post("/api/onboarding", (req, res) => {
   });
 });
 
+// ===== HELPER FUNCTION FOR TASTE DATA =====
+
+async function generateTasteData(userId, reviews, songs, songMap) {
+  try {
+    // Get Spotify access token
+    const accessToken = await getSpotifyAccessToken();
+    
+    // Genre counting
+    const genreCounts = {};
+    const artistsSet = new Set();
+    
+    // Get song reviews only (filter out albums)
+    const songReviews = reviews.filter(r => r.targetType === 'Song');
+    
+    // Fetch artist data from Spotify for each song
+    for (const review of songReviews) {
+      const song = songMap.get(review.targetId);
+      if (!song || !song.artist) continue;
+      
+      artistsSet.add(song.artist);
+      
+      try {
+        // Search for artist on Spotify to get genres
+        const artistSearchResp = await axios.get('https://api.spotify.com/v1/search', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            q: song.artist,
+            type: 'artist',
+            limit: 1,
+          },
+        });
+        
+        const artistData = artistSearchResp.data?.artists?.items?.[0];
+        if (artistData && artistData.genres && artistData.genres.length > 0) {
+          // Add each genre to the count
+          artistData.genres.forEach(genre => {
+            const capitalizedGenre = genre
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+            genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching artist data for ${song.artist}:`, error.message);
+      }
+    }
+    
+    // Calculate total genre count
+    const totalGenres = Object.values(genreCounts).reduce((sum, count) => sum + count, 0);
+    
+    // Sort genres by count and get top 4
+    const sortedGenres = Object.entries(genreCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4);
+    
+    // Calculate "Other" category
+    const top4Count = sortedGenres.reduce((sum, [, count]) => sum + count, 0);
+    const otherCount = totalGenres - top4Count;
+    
+    // Define colors for the pie chart
+    const colors = ['#4A4A4A', '#C0C0C0', '#6B6B6B', '#E8E8E8', '#A8A8A8'];
+    
+    // Build genres array with percentages
+    const genres = sortedGenres.map(([name, count], index) => ({
+      name,
+      value: totalGenres > 0 ? (count / totalGenres) * 100 : 0,
+      color: colors[index]
+    }));
+    
+    // Add "Other" category if there are more than 4 genres
+    if (otherCount > 0) {
+      genres.push({
+        name: 'Other',
+        value: totalGenres > 0 ? (otherCount / totalGenres) * 100 : 0,
+        color: colors[4]
+      });
+    }
+    
+    // If no genres found, use placeholder
+    if (genres.length === 0) {
+      genres.push({ name: 'No Data', value: 100, color: '#E8E8E8' });
+    }
+    
+    // Get top 5 rated songs
+    const topRatedReviews = songReviews
+      .filter(r => songMap.has(r.targetId))
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 5);
+    
+    const topTracks = topRatedReviews.map((review, index) => {
+      const song = songMap.get(review.targetId);
+      return {
+        id: review._id,
+        title: song.title || 'Unknown',
+        artist: song.artist || 'Unknown',
+        tags: [], // Could enhance this with genres if needed
+        score: parseFloat(review.rating.toFixed(1)),
+        imageUrl: song.imageUrl || song.coverUrl || ''
+      };
+    });
+    
+    // If no top tracks, provide a placeholder
+    if (topTracks.length === 0) {
+      topTracks.push({ 
+        id: 1, 
+        title: "No ratings yet", 
+        artist: "Start rating songs!", 
+        tags: [], 
+        score: 0 
+      });
+    }
+    
+    return {
+      genres,
+      topTracks,
+      insights: {
+        artistsListened: artistsSet.size,
+        songsRated: songReviews.length
+      }
+    };
+    
+  } catch (error) {
+    console.error('Error generating taste data:', error);
+    // Return fallback data on error
+    return {
+      genres: [{ name: 'Error Loading', value: 100, color: '#E8E8E8' }],
+      topTracks: [{ id: 1, title: "Error", artist: "Try again later", tags: [], score: 0 }],
+      insights: {
+        artistsListened: 0,
+        songsRated: reviews.filter(r => r.targetType === 'Song').length
+      }
+    };
+  }
+}
+
 // ===== PROFILE ROUTES - FETCH FROM MONGODB =====
 
 // GET full profile bundle from MongoDB
@@ -2249,28 +2388,8 @@ app.get("/api/profile", async (req, res) => {
       };
     });
 
-    // Mock taste data (replace with real data later)
-    const taste = {
-      genres: [
-        { name: "R&B", value: 32, color: "#4A4A4A" },
-        { name: "Pop", value: 28, color: "#C0C0C0" },
-        { name: "Hip Hop", value: 24, color: "#6B6B6B" },
-        { name: "Rock", value: 16, color: "#E8E8E8" },
-      ],
-      topTracks: [
-        {
-          id: 1,
-          title: "Sample Track",
-          artist: "Sample Artist",
-          tags: ["Pop"],
-          score: 8.0,
-        },
-      ],
-      insights: {
-        artistsListened: 10,
-        songsRated: user.reviews?.length || 0,
-      },
-    };
+    // Real taste data from Spotify and user reviews
+    const taste = await generateTasteData(userId, reviews, songs, songMap);
 
     res.json({
       profile,
