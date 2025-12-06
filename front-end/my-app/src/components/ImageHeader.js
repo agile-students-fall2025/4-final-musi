@@ -104,13 +104,13 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
                 className="icon" 
               />
             </button>
-            <button className="image-header-action-btn" title="Bookmark" onClick={toggleBookmark}>
+            {!isRated && <button className="image-header-action-btn" title="Bookmark" onClick={toggleBookmark}>
               <img 
                 src={isBookmarked ? '/filled-bookmark.png' : '/empty-bookmark.png'} 
                 alt="Bookmark" 
                 className="icon" 
               />
-            </button>
+            </button>}
           </div>
 
         </div>

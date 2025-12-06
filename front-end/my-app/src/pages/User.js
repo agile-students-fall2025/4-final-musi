@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import {
-  Share,
-  Menu,
-  Edit,
-  ChevronRight,
-  Star,
-  Flame,
-  ChevronLeft,
-  Heart,
-} from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { theme } from "../theme";
-import FollowButton from "../components/FollowButton";
-import LikesModal from "../components/LikesModal";
-import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
-import "../components/Score.css";
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { Share, Menu, Edit, ChevronRight, Star, Flame, ChevronLeft, Heart } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { theme } from '../theme';
+import FollowButton from '../components/FollowButton';
+import LikesModal from '../components/LikesModal';
+import SongItem from '../components/SongItem';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
+import '../components/Score.css';
 
 const getScoreColor = (rating) => {
   const numRating = parseFloat(rating);
