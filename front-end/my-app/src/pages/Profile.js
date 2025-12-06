@@ -1343,8 +1343,9 @@ if (loading) {
                   <SongItem
                     title={t.title}
                     subtitle={`Song • ${t.artist}`}
-                    meta={t.tags.join(", ")}
+                    meta={t.tags && t.tags.length > 0 ? t.tags.join(", ") : ""}
                     score={t.score}
+                    imageUrl={t.imageUrl}
                     dividerTop={i > 0}
                   />
                 </li>

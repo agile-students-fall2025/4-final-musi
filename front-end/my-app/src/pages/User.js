@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
 import LikesModal from '../components/LikesModal';
+import SongItem from '../components/SongItem';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../components/Score.css';
@@ -569,6 +570,9 @@ function User() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
+  const [genres, setGenres] = useState([]);
+  const [topTracks, setTopTracks] = useState([]);
+  const [insights, setInsights] = useState({});
 
   const handleLike = async (id, e) => {
     e?.stopPropagation();
@@ -641,6 +645,9 @@ function User() {
         const data = response.data.profile;
         setProfile(data);
         setActivity(response.data.activity || []);
+        setGenres(response.data.taste?.genres || []);
+        setTopTracks(response.data.taste?.topTracks || []);
+        setInsights(response.data.taste?.insights || {});
         setIsFollowing(!!data.isFollowing);
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -664,19 +671,6 @@ function User() {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
-
-  const genreData = [
-    { name: 'R&B', value: 32, color: '#4A4A4A' },
-    { name: 'Pop', value: 28, color: '#C0C0C0' },
-    { name: 'Hip Hop', value: 24, color: '#6B6B6B' },
-    { name: 'Rock', value: 16, color: '#E8E8E8' },
-  ];
-
-  const topTracks = [
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-    { title: 'Got to Be Real', artist: 'Song • Cheryl Lynn' },
-  ];
 
   if (loading) {
     return (
@@ -971,7 +965,7 @@ function User() {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={genreData}
+                    data={genres}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -979,78 +973,89 @@ function User() {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {genreData.map((entry, index) => (
+                    {genres.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
 
-              <ChartLegend style={{
-                left: '10%',
-                top: '50%',
-                transform: 'translateY(-50%)'
-              }}>
-                <LegendItem>
-                  <LegendColor color="#E8E8E8" />
-                  <span>Rock</span>
-                </LegendItem>
-                <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>16.00%</span>
-                </LegendItem>
-                <LegendItem style={{ marginTop: '8px' }}>
-                  <LegendColor color="#6B6B6B" />
-                  <span>Hip Hop</span>
-                </LegendItem>
-                <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>24.00%</span>
-                </LegendItem>
+              {/* Dynamic legends matching Profile.js */}
+              <ChartLegend
+                style={{
+                  left: '10%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                {genres.slice(2, 4).map((g, i) => (
+                  <React.Fragment key={`L1-${i}`}>
+                    <LegendItem>
+                      <LegendColor color={g.color} />
+                      <span>{g.name}</span>
+                    </LegendItem>
+                    <LegendItem>
+                      <span style={{ marginLeft: '20px', fontSize: '.8rem' }}>
+                        {g.value.toFixed(2)}%
+                      </span>
+                    </LegendItem>
+                  </React.Fragment>
+                ))}
               </ChartLegend>
-
-              <ChartLegend style={{
-                right: '10%',
-                top: '50%',
-                transform: 'translateY(-50%)'
-              }}>
-                <LegendItem>
-                  <LegendColor color="#4A4A4A" />
-                  <span>R&B</span>
-                </LegendItem>
-                <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>32.00%</span>
-                </LegendItem>
-                <LegendItem style={{ marginTop: '8px' }}>
-                  <LegendColor color="#C0C0C0" />
-                  <span>Pop</span>
-                </LegendItem>
-                <LegendItem>
-                  <span style={{ marginLeft: '20px', fontSize: '0.8rem' }}>28.00%</span>
-                </LegendItem>
+              <ChartLegend
+                style={{
+                  right: '10%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                {genres.slice(0, 2).map((g, i) => (
+                  <React.Fragment key={`L2-${i}`}>
+                    <LegendItem>
+                      <LegendColor color={g.color} />
+                      <span>{g.name}</span>
+                    </LegendItem>
+                    <LegendItem>
+                      <span style={{ marginLeft: '20px', fontSize: '.8rem' }}>
+                        {g.value.toFixed(2)}%
+                      </span>
+                    </LegendItem>
+                  </React.Fragment>
+                ))}
               </ChartLegend>
             </ChartContainer>
 
             <SectionTitle>YOUR TOP TRACKS</SectionTitle>
-            <TrackList>
-              {topTracks.map((track, index) => (
-                <TrackItem key={index}>
-                  <TrackImage />
-                  <TrackInfo>
-                    <TrackTitle>{track.title}</TrackTitle>
-                    <TrackArtist>{track.artist}</TrackArtist>
-                  </TrackInfo>
-                </TrackItem>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {topTracks.map((t, i) => (
+                <li 
+                  key={t.id}
+                  onClick={() => {
+                    navigate(`/app/music/Song/${encodeURIComponent(t.artist)}/${encodeURIComponent(t.title)}`);
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  <SongItem
+                    title={t.title}
+                    subtitle={`Song • ${t.artist}`}
+                    meta={t.tags && t.tags.length > 0 ? t.tags.join(", ") : ""}
+                    score={t.score}
+                    imageUrl={t.imageUrl}
+                    dividerTop={i > 0}
+                  />
+                </li>
               ))}
-            </TrackList>
+            </ul>
 
             <SectionTitle>INSIGHTS</SectionTitle>
             <InsightsGrid>
               <InsightCard>
-                <InsightLabel>Total Logins</InsightLabel>
-                <InsightValue>{profile.totalLogins}</InsightValue>
+                <InsightLabel>Artists Listened</InsightLabel>
+                <InsightValue>{insights.artistsListened ?? 0}</InsightValue>
               </InsightCard>
               <InsightCard>
-                <InsightLabel>Longest Streak</InsightLabel>
-                <InsightValue>{profile.longestStreak}</InsightValue>
+                <InsightLabel>Songs Rated</InsightLabel>
+                <InsightValue>{insights.songsRated ?? 0}</InsightValue>
               </InsightCard>
             </InsightsGrid>
           </TabContent>
