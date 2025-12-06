@@ -3,6 +3,17 @@ import styled from "styled-components";
 import { Plus, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 
+const getScoreColor = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 8) {
+    return theme.colors.green;
+  } else if (numRating > 5) {
+    return theme.colors.yellow;
+  } else {
+    return theme.colors.red;
+  }
+};
+
 const Card = styled.article`
   display: grid;
   grid-template-columns: 56px 1fr auto;
@@ -64,7 +75,9 @@ const Score = styled.div`
   font-size: 1rem;
 `;
 
-
+const ScoreNumber = styled.span`
+  color: ${(props) => props.scoreColor || theme.colors.text};
+`;
 
 const IconButton = styled.button`
   background: none;
@@ -115,7 +128,11 @@ export default function SongItem({
       </Body>
 
       <RightSection>
-        {showScore && <Score>{score}</Score>}
+        {showScore && (
+          <Score>
+            <ScoreNumber scoreColor={getScoreColor(score)}>{score}</ScoreNumber>
+          </Score>
+        )}
         {showPlus && (
           <CircleIconButton
             aria-label="Add"

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Search, Menu, Heart, Bookmark, Check, Users, Disc, TrendingUp } from "lucide-react";
@@ -141,6 +141,13 @@ const FeedScoreContainer = styled.div`
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
 
+const LoadingIndicator = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 0.9rem;
+`;
+
 const Button = styled.button`
   background-color: ${theme.colors.primary};
   color: white;
@@ -156,14 +163,29 @@ const Button = styled.button`
   }
 `;
 
+// Helper function to get score color based on rating
+const getScoreColor = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 8) {
+    return theme.colors.green;
+  } else if (numRating > 5) {
+    return theme.colors.yellow;
+  } else {
+    return theme.colors.red;
+  }
+};
+
 function Feed() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [featured, setFeatured] = useState([]);
   const [feedData, setFeedData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [err, setErr] = useState(null);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [activeTab, setActiveTab] = useState("trending");
 
   // load featured lists (once)
   useEffect(() => {
@@ -181,10 +203,58 @@ function Feed() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Navigation Handler for Tabs
-  const handleTabClick = (tabName) => {
-    // Navigate to Lists page with the specific tab active
-    navigate("/app/lists", { state: { tab: tabName } });
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (loadingMore || visibleCount >= feedData.length) return;
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = window.innerHeight;
+
+    // Trigger when user scrolls to 80% of the page
+    if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+      setLoadingMore(true);
+      // Simulate loading delay
+      setTimeout(() => {
+        setVisibleCount((prev) => prev + 10);
+        setLoadingMore(false);
+      }, 500);
+    }
+  }, [loadingMore, visibleCount, feedData.length]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Tab click handler for filtering feed
+  const handleTabClick = async (tab) => {
+    setLoading(true);
+    setErr(null);
+    setVisibleCount(10); // Reset visible count
+    setActiveTab(tab);
+
+    let params = {};
+    
+    if (tab === "trending") {
+      params = { tab: "trending" };
+    } else if (tab === "recs from friends") {
+      params = { tab: "friend-recs" };
+    } else if (tab === "new releases") {
+      params = { tab: "new-releases" };
+    }
+
+    try {
+      const response = await axios.get("/api/feed", { params });
+      setFeedData(
+        Array.isArray(response.data?.items) ? response.data.items : []
+      );
+    } catch (e) {
+      setErr(e.message || "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLike = async (itemId, e) => {
@@ -259,8 +329,8 @@ function Feed() {
     }
   };
 
-  if (loading) return <Container><Section><div>Loading…</div></Section></Container>;
-  if (err) return <Container><Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section></Container>;
+  const visibleFeedData = feedData.slice(0, visibleCount);
+  const hasMore = visibleCount < feedData.length;
 
   return (
     <Container>
@@ -281,26 +351,40 @@ function Feed() {
           />
         </SearchBar>
 
-        {/* Updated Tabs - Now redirects to Lists Page */}
+        {/* Updated Tabs - Now filters feed content */}
         <FilterButtons>
-          {/* Added Trending Button - Deselected by default (same style as others) */}
-          <FilterButton onClick={() => handleTabClick("trending")}>
+          <FilterButton 
+            active={activeTab === "trending"}
+            onClick={() => handleTabClick("trending")}
+          >
             <TrendingUp size={16} /> Trending
           </FilterButton>
-          <FilterButton onClick={() => handleTabClick("recs from friends")}>
+          <FilterButton 
+            active={activeTab === "recs from friends"}
+            onClick={() => handleTabClick("recs from friends")}
+          >
             <Users size={16} /> Friend recs
           </FilterButton>
-          <FilterButton onClick={() => handleTabClick("new releases")}>
+          <FilterButton 
+            active={activeTab === "new releases"}
+            onClick={() => handleTabClick("new releases")}
+          >
             <Disc size={16} /> New releases
           </FilterButton>
         </FilterButtons>
       </SearchContainer>
 
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Featured Lists</SectionTitle>
-          <SeeAll>See all</SeeAll>
-        </SectionHeader>
+      {loading ? (
+        <Section><div>Loading…</div></Section>
+      ) : err ? (
+        <Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section>
+      ) : (
+        <>
+          <Section>
+            <SectionHeader>
+              <SectionTitle>Featured Lists</SectionTitle>
+              <SeeAll>See all</SeeAll>
+            </SectionHeader>
 
         <FeaturedLists>
           {featured.map((list) => (
@@ -320,7 +404,7 @@ function Feed() {
 
       <Section><SectionTitle>Your Feed</SectionTitle></Section>
 
-      {feedData.map((item) => (
+      {visibleFeedData.map((item) => (
         <FeedItem key={item.id}>
           <UserInfo>
             <Avatar
@@ -359,13 +443,22 @@ function Feed() {
               <TimeStamp>{item.time}</TimeStamp>
             </UserDetails>
             <FeedScoreContainer>
-              <div className="score-item">
-                <div className="score-circle-container">
-                  <div className="score-circle">
-                    <span className="score-number">{item.rating}</span>
+              {item.rating ? (
+                <div className="score-item">
+                  <div className="score-circle-container">
+                    <div className="score-circle">
+                      <span 
+                        className="score-number" 
+                        style={{ color: getScoreColor(item.rating) }}
+                      >
+                        {item.rating}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ fontSize: '1.2rem' }}>🔥</div>
+              )}
             </FeedScoreContainer>
           </UserInfo>
 
@@ -407,6 +500,12 @@ function Feed() {
           </InteractionBar>
         </FeedItem>
       ))}
+
+      {loadingMore && hasMore && (
+        <LoadingIndicator>Loading more...</LoadingIndicator>
+      )}
+        </>
+      )}
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       {likesModalReviewId && (

@@ -106,6 +106,8 @@ export default function Lists() {
   const [loadingSongs, setLoadingSongs] = useState(true);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   // Update activeTab only when navigating to this page with state
   // location.key changes on every navigation, so this detects new navigations
@@ -138,15 +140,19 @@ export default function Lists() {
   useEffect(() => {
     setLoadingSongs(true);
     setError(null);
+    setVisibleCount(10); // Reset visible count when tab changes
 
     const params = { tab: tabToApi(activeTab), limit: 50, offset: 0 };
+    console.log("Fetching lists with params:", params);
 
     axios
       .get("/api/lists", { params })
       .then((response) => {
+        console.log("Lists API response:", response.data);
         const items = Array.isArray(response.data?.items)
           ? response.data.items
           : [];
+        console.log("Processed items:", items.length);
         setSongs(items);
       })
       .catch((err) => {
@@ -155,6 +161,30 @@ export default function Lists() {
       })
       .finally(() => setLoadingSongs(false));
   }, [activeTab]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || visibleCount >= songs.length) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+
+      // Trigger when user scrolls to 80% of the page
+      if (scrollTop + clientHeight >= scrollHeight * 0.8) {
+        setLoadingMore(true);
+        // Simulate loading delay
+        setTimeout(() => {
+          setVisibleCount((prev) => prev + 10);
+          setLoadingMore(false);
+        }, 500);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadingMore, visibleCount, songs.length]);
 
   const goToMusic = (song) => {
     const type = song.musicType ?? "Song";
@@ -165,7 +195,7 @@ export default function Lists() {
     );
   };
 
-  if (loadingTabs || loadingSongs) {
+  if (loadingTabs) {
     return <div style={{ padding: 16 }}>Loading…</div>;
   }
 
@@ -191,7 +221,9 @@ export default function Lists() {
           <Tabs tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
         )}
 
-        {songs.length === 0 && (activeTab === "listened" || activeTab === "want") ? (
+        {loadingSongs ? (
+          <div style={{ padding: 16, textAlign: "center" }}>Loading…</div>
+        ) : songs.length === 0 && (activeTab === "listened" || activeTab === "want") ? (
           <EmptyState>
             <EmptyStateText>
               {activeTab === "listened"
@@ -208,25 +240,32 @@ export default function Lists() {
           <EmptyState>
             <EmptyStateText>No new releases available at the moment</EmptyStateText>
           </EmptyState>
+        ) : songs.length === 0 && activeTab === "trending" ? (
+          <EmptyState>
+            <EmptyStateText>No trending songs available at the moment</EmptyStateText>
+          </EmptyState>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {songs.map((song, i) => (
-            <li
-              key={`${song.id ?? `${song.artist}-${song.title}`}-${i}`}
-              onClick={() => goToMusic(song)}
-              style={{ cursor: "pointer" }}
-            >
-              <SongItem
-                title={song.title}
-                subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
-                meta={(song.tags ?? []).join(", ")}
-                score={song.score}
-                showScore={activeTab !== "want" && activeTab !== "new releases"}
-                showPlus={activeTab === "want" || activeTab === "new releases"}
-                showBookmark={activeTab === "want" || activeTab === "new releases"}
-                bookmarked={song.bookmarked || (activeTab === "want")}
-                onPlusClick={() => goToMusic(song)}
-                onBookmarkClick={async (e) => {
+          <>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {songs.slice(0, visibleCount).map((song, i) => (
+              <li
+                key={`${song.id ?? `${song.artist}-${song.title}`}-${i}`}
+                onClick={() => goToMusic(song)}
+                style={{ cursor: "pointer" }}
+              >
+                <SongItem
+                  title={song.title}
+                  subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
+                  meta={(song.tags ?? []).join(", ")}
+                  score={song.score}
+                  imageUrl={song.imageUrl}
+                  showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending"}
+                  showPlus={activeTab === "want" || activeTab === "new releases" || activeTab === "trending"}
+                  showBookmark={activeTab === "want" || activeTab === "new releases" || activeTab === "trending"}
+                  bookmarked={song.bookmarked || (activeTab === "want")}
+                  onPlusClick={() => goToMusic(song)}
+                  dividerTop={i > 0}
+                  onBookmarkClick={async (e) => {
                   e.stopPropagation();
                   try {
                     const type = song.musicType ?? "Song";
@@ -293,12 +332,14 @@ export default function Lists() {
                       : "Failed to update Want to listen");
                   }
                 }}
-              imageUrl={song.imageUrl}
-                dividerTop={i > 0}
               />
             </li>
           ))}
           </ul>
+          {loadingMore && visibleCount < songs.length && (
+            <div style={{ padding: 16, textAlign: "center" }}>Loading more...</div>
+          )}
+          </>
         )}
       </Main>
 
