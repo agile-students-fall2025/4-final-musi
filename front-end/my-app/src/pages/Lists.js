@@ -4,9 +4,10 @@ import { theme } from "../theme";
 import SectionHeader from "../components/SectionHeader";
 import Tabs from "../components/Tabs";
 import SongItem from "../components/SongItem";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import { ChevronLeft } from "lucide-react";
 
 const Container = styled.div`
   min-height: 100vh;
@@ -20,6 +21,16 @@ const TopBar = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: ${theme.colors.text};
 `;
 
 const TopTitle = styled.h1`
@@ -96,8 +107,10 @@ const tabToApi = (key) => {
 export default function Lists() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { username } = useParams();
   const initialTab = location.state?.tab || "listened";
   const lastLocationKey = useRef(location.key);
+  const isViewingOtherUser = !!username;
   
   const [activeTab, setActiveTab] = useState(initialTab);
   const [tabs, setTabs] = useState([]);
@@ -108,6 +121,10 @@ export default function Lists() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [listenedCount, setListenedCount] = useState(0);
+  const [wantCount, setWantCount] = useState(0);
+  const [bothCount, setBothCount] = useState(0);
   
   // Update activeTab only when navigating to this page with state
   // location.key changes on every navigation, so this detects new navigations
@@ -124,17 +141,55 @@ export default function Lists() {
 
 
   useEffect(() => {
-    setLoadingTabs(true);
-    axios
-      .get("/api/tabs")
-      .then((response) => {
-        setTabs(response.data || []);
-      })
-      .catch((err) => {
-        console.error("Error fetching tabs:", err);
-      })
-      .finally(() => setLoadingTabs(false));
-  }, []);
+    if (isViewingOtherUser) {
+      // Fetch user's profile to get counts
+      Promise.all([
+        axios.get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/profile`),
+        axios.get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/lists`, { 
+          params: { tab: 'both', limit: 1 } 
+        })
+      ])
+        .then(([profileResponse, bothResponse]) => {
+          const profile = profileResponse.data.profile;
+          setUserName(profile?.name || username);
+          setListenedCount(profile?.listenedCount || 0);
+          setWantCount(profile?.wantCount || 0);
+          const bothCountValue = bothResponse.data?.count || 0;
+          setBothCount(bothCountValue);
+          
+          // Set tabs with counts
+          setTabs([
+            { key: "listened", label: "Listened", count: profile?.listenedCount || 0 },
+            { key: "want", label: "Want to listen", count: profile?.wantCount || 0 },
+            { key: "both", label: "Music you both listen to", count: bothCountValue },
+          ]);
+          setLoadingTabs(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching user profile or both count:", err);
+          setUserName(username);
+          // Set tabs without counts on error
+          setTabs([
+            { key: "listened", label: "Listened" },
+            { key: "want", label: "Want to listen" },
+            { key: "both", label: "Music you both listen to" },
+          ]);
+          setLoadingTabs(false);
+        });
+    } else {
+      // For current user's lists, fetch tabs from API
+      setLoadingTabs(true);
+      axios
+        .get("/api/tabs")
+        .then((response) => {
+          setTabs(response.data || []);
+        })
+        .catch((err) => {
+          console.error("Error fetching tabs:", err);
+        })
+        .finally(() => setLoadingTabs(false));
+    }
+  }, [username, isViewingOtherUser]);
 
   // Fetch songs list whenever the active tab changes
   useEffect(() => {
@@ -142,25 +197,40 @@ export default function Lists() {
     setError(null);
     setVisibleCount(10); // Reset visible count when tab changes
 
-    const params = { tab: tabToApi(activeTab), limit: 50, offset: 0 };
-    console.log("Fetching lists with params:", params);
-
-    axios
-      .get("/api/lists", { params })
-      .then((response) => {
-        console.log("Lists API response:", response.data);
-        const items = Array.isArray(response.data?.items)
-          ? response.data.items
-          : [];
-        console.log("Processed items:", items.length);
-        setSongs(items);
-      })
-      .catch((err) => {
-        console.error("Error fetching songs:", err);
-        setError(err.message || "Failed to load songs");
-      })
-      .finally(() => setLoadingSongs(false));
-  }, [activeTab]);
+    if (isViewingOtherUser) {
+      // Use user-specific endpoint
+      const params = { tab: activeTab === "both" ? "both" : tabToApi(activeTab), limit: 50, offset: 0 };
+      axios
+        .get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/lists`, { params })
+        .then((response) => {
+          const items = Array.isArray(response.data?.items)
+            ? response.data.items
+            : [];
+          setSongs(items);
+        })
+        .catch((err) => {
+          console.error("Error fetching user lists:", err);
+          setError(err.message || "Failed to load lists");
+        })
+        .finally(() => setLoadingSongs(false));
+    } else {
+      // Use current user's lists endpoint
+      const params = { tab: tabToApi(activeTab), limit: 50, offset: 0 };
+      axios
+        .get("/api/lists", { params })
+        .then((response) => {
+          const items = Array.isArray(response.data?.items)
+            ? response.data.items
+            : [];
+          setSongs(items);
+        })
+        .catch((err) => {
+          console.error("Error fetching songs:", err);
+          setError(err.message || "Failed to load songs");
+        })
+        .finally(() => setLoadingSongs(false));
+    }
+  }, [activeTab, username, isViewingOtherUser]);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -206,13 +276,22 @@ export default function Lists() {
   return (
     <Container>
       <TopBar>
-        <div />
-        <TopTitle>MY LISTS</TopTitle>
-        <Hamburger onClick={() => setIsSidebarOpen(true)}>
-          <span />
-          <span />
-          <span />
-        </Hamburger>
+        {isViewingOtherUser ? (
+          <BackButton onClick={() => navigate(`/app/user/${encodeURIComponent(username)}`)}>
+            <ChevronLeft size={22} />
+          </BackButton>
+        ) : (
+          <div />
+        )}
+        <TopTitle>{isViewingOtherUser ? `${userName || username}'s Lists`.toUpperCase() : "MY LISTS"}</TopTitle>
+        {!isViewingOtherUser && (
+          <Hamburger onClick={() => setIsSidebarOpen(true)}>
+            <span />
+            <span />
+            <span />
+          </Hamburger>
+        )}
+        {isViewingOtherUser && <div />}
       </TopBar>
 
       <Main>
@@ -223,18 +302,37 @@ export default function Lists() {
 
         {loadingSongs ? (
           <div style={{ padding: 16, textAlign: "center" }}>Loading…</div>
-        ) : songs.length === 0 && (activeTab === "listened" || activeTab === "want") ? (
+        ) : songs.length === 0 && activeTab === "listened" ? (
           <EmptyState>
             <EmptyStateText>
-              {activeTab === "listened"
-                ? "You haven't reviewed any songs yet"
+              {isViewingOtherUser
+                ? `${userName || username} hasn't reviewed any songs yet`
+                : "You haven't reviewed any songs yet"}
+            </EmptyStateText>
+            {!isViewingOtherUser && (
+              <EmptyStateButton onClick={() => navigate("/app/search")}>
+                Find a song to review
+              </EmptyStateButton>
+            )}
+          </EmptyState>
+        ) : songs.length === 0 && activeTab === "want" ? (
+          <EmptyState>
+            <EmptyStateText>
+              {isViewingOtherUser
+                ? `${userName || username}'s Want to listen list is empty`
                 : "Your Want to listen list is empty"}
             </EmptyStateText>
-            <EmptyStateButton onClick={() => navigate("/app/search")}>
-              {activeTab === "listened"
-                ? "Find a song to review"
-                : "Find songs to add"}
-            </EmptyStateButton>
+            {!isViewingOtherUser && (
+              <EmptyStateButton onClick={() => navigate("/app/search")}>
+                Find songs to add
+              </EmptyStateButton>
+            )}
+          </EmptyState>
+        ) : songs.length === 0 && activeTab === "both" ? (
+          <EmptyState>
+            <EmptyStateText>
+              You and {userName || username} haven't listened to any of the same songs yet
+            </EmptyStateText>
           </EmptyState>
         ) : songs.length === 0 && activeTab === "new releases" ? (
           <EmptyState>
@@ -259,10 +357,15 @@ export default function Lists() {
                   meta={(song.tags ?? []).join(", ")}
                   score={song.score}
                   imageUrl={song.imageUrl}
-                  showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending"}
-                  showPlus={activeTab === "want" || activeTab === "new releases" || activeTab === "trending"}
-                  showBookmark={activeTab === "want" || activeTab === "new releases" || activeTab === "trending"}
+                  showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both"}
+                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
+                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
                   bookmarked={song.bookmarked || (activeTab === "want")}
+                  twoScores={activeTab === "both" ? {
+                    yourScore: song.currentUserScore,
+                    theirScore: song.score,
+                    theirName: userName || username || "User"
+                  } : null}
                   onPlusClick={() => goToMusic(song)}
                   dividerTop={i > 0}
                   onBookmarkClick={async (e) => {

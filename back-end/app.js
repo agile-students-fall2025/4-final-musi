@@ -1409,6 +1409,242 @@ app.get("/api/leaderboard", async (req, res) => {
   }
 });
 
+// Get user-specific lists (listened, want, both)
+app.get('/api/users/:username/lists', authMiddleware, async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { tab = 'listened' } = req.query;
+    const currentUserId = req.user.id;
+
+    // Find the target user
+    const targetUser = await User.findOne({ username })
+      .select('_id username wantList')
+      .lean()
+      .exec();
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const targetUserId = targetUser._id;
+    let rows = [];
+
+    if (tab === 'listened') {
+      // All songs/albums the target user has reviewed
+      const reviews = await Review.find({ userId: targetUserId })
+        .sort({ rating: -1, createdAt: -1 })
+        .lean()
+        .exec();
+
+      if (reviews.length) {
+        const songIds = reviews
+          .filter((r) => r.targetType === 'Song')
+          .map((r) => r.targetId);
+        const albumIds = reviews
+          .filter((r) => r.targetType === 'Album')
+          .map((r) => r.targetId);
+
+        const [songs, albums] = await Promise.all([
+          songIds.length
+            ? Song.find({ spotifyId: { $in: songIds } })
+                .lean()
+                .exec()
+            : [],
+          albumIds.length
+            ? Album.find({ spotifyId: { $in: albumIds } })
+                .lean()
+                .exec()
+            : [],
+        ]);
+
+        const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+        const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+        rows = reviews.map((r) => {
+          const isSong = r.targetType === 'Song';
+          const meta = isSong
+            ? songMap.get(r.targetId) || {}
+            : albumMap.get(r.targetId) || {};
+
+          return {
+            id: r._id,
+            spotifyId: meta.spotifyId || r.targetId,
+            title: meta.title || 'Unknown',
+            artist: meta.artist || 'Unknown',
+            imageUrl: meta.imageUrl || meta.coverUrl || '',
+            tags: [],
+            score: typeof r.rating === 'number' ? r.rating.toFixed(1) : null,
+            musicType: r.targetType,
+            bookmarked: false,
+          };
+        });
+      }
+    } else if (tab === 'want') {
+      // Songs/albums the target user bookmarked (want-to-listen)
+      const wantIds = Array.isArray(targetUser.wantList) ? targetUser.wantList : [];
+
+      if (wantIds.length) {
+        const [songs, albums, reviews] = await Promise.all([
+          Song.find({ spotifyId: { $in: wantIds } })
+            .lean()
+            .exec(),
+          Album.find({ spotifyId: { $in: wantIds } })
+            .lean()
+            .exec(),
+          Review.find({ userId: targetUserId }).select('targetId').lean().exec(),
+        ]);
+
+        const reviewedIds = new Set(reviews.map((r) => r.targetId));
+
+        const slugify = (type, artistName, titleName) =>
+          `${type}-${artistName}-${titleName}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
+
+        rows = [
+          ...songs
+            .filter(
+              (s) =>
+                !reviewedIds.has(slugify('Song', s.artist || '', s.title || ''))
+            )
+            .map((s) => ({
+              id: s._id,
+              spotifyId: s.spotifyId,
+              title: s.title || 'Unknown',
+              artist: s.artist || 'Unknown',
+              imageUrl: s.imageUrl || s.coverUrl || '',
+              tags: [],
+              score: null,
+              musicType: 'Song',
+              bookmarked: false,
+            })),
+          ...albums
+            .filter(
+              (a) =>
+                !reviewedIds.has(
+                  slugify('Album', a.artist || '', a.title || '')
+                )
+            )
+            .map((a) => ({
+              id: a._id,
+              spotifyId: a.spotifyId,
+              title: a.title || 'Unknown',
+              artist: a.artist || 'Unknown',
+              imageUrl: a.imageUrl || a.coverUrl || '',
+              tags: [],
+              score: null,
+              musicType: 'Album',
+              bookmarked: false,
+            })),
+        ];
+      }
+    } else if (tab === 'both') {
+      // Music both users have reviewed (intersection)
+      const [currentUserReviews, targetUserReviews] = await Promise.all([
+        Review.find({ userId: currentUserId })
+          .select('targetId targetType rating')
+          .lean()
+          .exec(),
+        Review.find({ userId: targetUserId })
+          .select('targetId targetType rating')
+          .lean()
+          .exec(),
+      ]);
+
+      // Create sets of reviewed targetIds for both users
+      const currentUserTargetIds = new Set(
+        currentUserReviews.map((r) => `${r.targetType}-${r.targetId}`)
+      );
+      const targetUserTargetIds = new Set(
+        targetUserReviews.map((r) => `${r.targetType}-${r.targetId}`)
+      );
+
+      // Find intersection
+      const bothReviewed = targetUserReviews.filter((r) =>
+        currentUserTargetIds.has(`${r.targetType}-${r.targetId}`)
+      );
+
+      if (bothReviewed.length) {
+        const songIds = bothReviewed
+          .filter((r) => r.targetType === 'Song')
+          .map((r) => r.targetId);
+        const albumIds = bothReviewed
+          .filter((r) => r.targetType === 'Album')
+          .map((r) => r.targetId);
+
+        const [songs, albums] = await Promise.all([
+          songIds.length
+            ? Song.find({ spotifyId: { $in: songIds } })
+                .lean()
+                .exec()
+            : [],
+          albumIds.length
+            ? Album.find({ spotifyId: { $in: albumIds } })
+                .lean()
+                .exec()
+            : [],
+        ]);
+
+        const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+        const albumMap = new Map(albums.map((a) => [a.spotifyId, a]));
+
+        // Create a map of current user's ratings for comparison
+        const currentUserRatingMap = new Map(
+          currentUserReviews.map((r) => [
+            `${r.targetType}-${r.targetId}`,
+            r.rating,
+          ])
+        );
+
+        rows = bothReviewed.map((r) => {
+          const isSong = r.targetType === 'Song';
+          const meta = isSong
+            ? songMap.get(r.targetId) || {}
+            : albumMap.get(r.targetId) || {};
+
+          const currentUserRating = currentUserRatingMap.get(
+            `${r.targetType}-${r.targetId}`
+          );
+
+          return {
+            id: r._id,
+            spotifyId: meta.spotifyId || r.targetId,
+            title: meta.title || 'Unknown',
+            artist: meta.artist || 'Unknown',
+            imageUrl: meta.imageUrl || meta.coverUrl || '',
+            tags: [],
+            score: typeof r.rating === 'number' ? r.rating.toFixed(1) : null,
+            currentUserScore:
+              typeof currentUserRating === 'number'
+                ? currentUserRating.toFixed(1)
+                : null,
+            musicType: r.targetType,
+            bookmarked: false,
+          };
+        });
+
+        // Sort by target user's rating (highest first)
+        rows.sort((a, b) => {
+          const scoreA = parseFloat(a.score) || 0;
+          const scoreB = parseFloat(b.score) || 0;
+          return scoreB - scoreA;
+        });
+      }
+    }
+
+    // For 'both' tab, also return the count
+    const response = { items: rows };
+    if (tab === 'both') {
+      response.count = rows.length;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching user lists:', error);
+    res.status(500).json({ error: 'Failed to fetch user lists' });
+  }
+});
+
 app.get("/api/albumlist/:artist/:title", async (req, res) => {
   try {
     const { artist, title } = req.params;

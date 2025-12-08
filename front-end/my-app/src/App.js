@@ -34,7 +34,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/app/feed" replace />} />
           <Route path="/feed" element={<Feed />} />
-          <Route path="/lists" element={<Lists />} /> 
+          <Route path="/lists" element={<Lists />} />
+          <Route path="/users/:username/lists" element={<Lists />} /> 
           <Route path="/search" element={<Search />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
