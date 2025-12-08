@@ -149,7 +149,7 @@ export default function SongItem({
             aria-label="Bookmark"
             onClick={(e) => {
               e.stopPropagation();
-              if (onBookmarkClick) onBookmarkClick();
+              if (onBookmarkClick) onBookmarkClick(e);
             }}
           >
             <Bookmark

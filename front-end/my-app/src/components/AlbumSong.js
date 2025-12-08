@@ -19,8 +19,10 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
   }, [isRated]);
 
   const handleBookmarkClick = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     try {
       if (isBookmarked) {
@@ -45,8 +47,10 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
   };
 
   const handleRatingClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (onRatingClick) {
       onRatingClick(title, artist, "Song", rated, spotifyId || id);
     }
@@ -63,6 +67,7 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
         {rated ? (
           <>
             <button
+              type="button"
               className="album-song-btn"
               title="Edit Rating"
               onClick={handleRatingClick}
@@ -74,6 +79,7 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
         ) : (
           <>
             <button
+              type="button"
               className="album-song-btn"
               title="Rate"
               onClick={handleRatingClick}
@@ -81,6 +87,7 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
               <img src="/plus.png" alt="Rate" className="icon" />
             </button>
             <button
+              type="button"
               className="album-song-btn"
               title="Bookmark"
               onClick={handleBookmarkClick}
