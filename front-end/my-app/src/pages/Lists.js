@@ -342,6 +342,14 @@ export default function Lists() {
           <EmptyState>
             <EmptyStateText>No trending songs available at the moment</EmptyStateText>
           </EmptyState>
+        ) : songs.length === 0 && activeTab === "recs from friends" ? (
+          <EmptyState>
+            <EmptyStateText>
+              {isViewingOtherUser
+                ? `${userName || username} doesn't have any friend recommendations yet`
+                : "No recommendations from friends yet. Follow more people to see their recommendations!"}
+            </EmptyStateText>
+          </EmptyState>
         ) : (
           <>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -358,13 +366,20 @@ export default function Lists() {
                   score={song.score}
                   imageUrl={song.imageUrl}
                   showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both"}
-                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
-                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
+                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
+                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
                   bookmarked={song.bookmarked || (activeTab === "want")}
                   twoScores={activeTab === "both" ? {
                     yourScore: song.currentUserScore,
                     theirScore: song.score,
                     theirName: userName || username || "User"
+                  } : null}
+                  friendRating={activeTab === "recs from friends" && song.friendRating ? {
+                    username: song.friendRating.username,
+                    name: song.friendRating.name,
+                    onUsernameClick: (username) => {
+                      navigate(`/app/user/${encodeURIComponent(username)}`);
+                    }
                   } : null}
                   onPlusClick={() => goToMusic(song)}
                   dividerTop={i > 0}
@@ -402,8 +417,8 @@ export default function Lists() {
                             : t
                         )
                       );
-                    } else if (activeTab === "new releases") {
-                      // Add to want list
+                    } else if (activeTab === "new releases" || activeTab === "recs from friends") {
+                      // Toggle want list
                       if (song.bookmarked) {
                         await axios.post("http://localhost:3001/api/want/remove", {
                           spotifyId,
