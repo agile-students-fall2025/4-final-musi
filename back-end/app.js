@@ -2076,70 +2076,85 @@ async function generateTasteData(userId, reviews, songs, songMap) {
   try {
     // Get Spotify access token
     const accessToken = await getSpotifyAccessToken();
-    
+
     // Genre counting
     const genreCounts = {};
     const artistsSet = new Set();
-    
+
     // Get song reviews only (filter out albums)
     const songReviews = reviews.filter(r => r.targetType === 'Song');
-    
-    // Fetch artist data from Spotify for each song
-    for (const review of songReviews) {
-      const song = songMap.get(review.targetId);
-      if (!song || !song.artist) continue;
-      
-      artistsSet.add(song.artist);
-      
-      try {
-        // Search for artist on Spotify to get genres
-        const artistSearchResp = await axios.get('https://api.spotify.com/v1/search', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params: {
-            q: song.artist,
-            type: 'artist',
-            limit: 1,
-          },
-        });
-        
-        const artistData = artistSearchResp.data?.artists?.items?.[0];
-        if (artistData && artistData.genres && artistData.genres.length > 0) {
-          // Add each genre to the count
-          artistData.genres.forEach(genre => {
-            const capitalizedGenre = genre
-              .split(' ')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(' ');
-            genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
+
+    // Collect unique artists from reviewed songs (limit to reduce latency)
+    const uniqueArtists = Array.from(
+      new Set(
+        songReviews
+          .map(review => {
+            const song = songMap.get(review.targetId);
+            return song && song.artist ? song.artist : null;
+          })
+          .filter(Boolean)
+      )
+    ).slice(0, 10); // Limit external calls to 10 artists
+
+    // Fetch artist genres in parallel
+    const artistGenreResults = await Promise.all(
+      uniqueArtists.map(async (artist) => {
+        try {
+          const artistSearchResp = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params: {
+              q: artist,
+              type: 'artist',
+              limit: 1,
+            },
           });
+
+          const artistData = artistSearchResp.data?.artists?.items?.[0];
+          const genres = artistData?.genres || [];
+          return { artist, genres };
+        } catch (error) {
+          console.error(`Error fetching artist data for ${artist}:`, error.message);
+          return { artist, genres: [] };
         }
-      } catch (error) {
-        console.error(`Error fetching artist data for ${song.artist}:`, error.message);
-      }
-    }
-    
+      })
+    );
+
+    // Count genres
+    artistGenreResults.forEach(({ genres }) => {
+      genres.forEach(genre => {
+        const capitalizedGenre = genre
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
+      });
+    });
+
+    // Track total unique artists listened (based on reviews)
+    uniqueArtists.forEach(a => artistsSet.add(a));
+
     // Calculate total genre count
     const totalGenres = Object.values(genreCounts).reduce((sum, count) => sum + count, 0);
-    
+
     // Sort genres by count and get top 4
     const sortedGenres = Object.entries(genreCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4);
-    
+
     // Calculate "Other" category
     const top4Count = sortedGenres.reduce((sum, [, count]) => sum + count, 0);
     const otherCount = totalGenres - top4Count;
-    
+
     // Define colors for the pie chart
     const colors = ['#4A4A4A', '#C0C0C0', '#6B6B6B', '#E8E8E8', '#A8A8A8'];
-    
+
     // Build genres array with percentages
     const genres = sortedGenres.map(([name, count], index) => ({
       name,
       value: totalGenres > 0 ? (count / totalGenres) * 100 : 0,
       color: colors[index]
     }));
-    
+
     // Add "Other" category if there are more than 4 genres
     if (otherCount > 0) {
       genres.push({
@@ -2148,18 +2163,18 @@ async function generateTasteData(userId, reviews, songs, songMap) {
         color: colors[4]
       });
     }
-    
+
     // If no genres found, use placeholder
     if (genres.length === 0) {
       genres.push({ name: 'No Data', value: 100, color: '#E8E8E8' });
     }
-    
+
     // Get top 5 rated songs
     const topRatedReviews = songReviews
       .filter(r => songMap.has(r.targetId))
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 5);
-    
+
     const topTracks = topRatedReviews.map((review, index) => {
       const song = songMap.get(review.targetId);
       return {
@@ -2171,7 +2186,7 @@ async function generateTasteData(userId, reviews, songs, songMap) {
         imageUrl: song.imageUrl || song.coverUrl || ''
       };
     });
-    
+
     // If no top tracks, provide a placeholder
     if (topTracks.length === 0) {
       topTracks.push({ 
@@ -2182,7 +2197,7 @@ async function generateTasteData(userId, reviews, songs, songMap) {
         score: 0 
       });
     }
-    
+
     return {
       genres,
       topTracks,
@@ -2191,7 +2206,7 @@ async function generateTasteData(userId, reviews, songs, songMap) {
         songsRated: songReviews.length
       }
     };
-    
+
   } catch (error) {
     console.error('Error generating taste data:', error);
     // Return fallback data on error
