@@ -548,6 +548,146 @@ app.get("/api/lists", async (req, res) => {
         console.error("Full error:", error);
         rows = [];
       }
+    } else if (tab === "friends") {
+      // Songs that the user hasn't rated, but people they're following have
+      // Ordered by highest reviewed (average rating) to lowest
+      try {
+        const currentUser = await User.findById(userId)
+          .select("following")
+          .lean()
+          .exec();
+        const friendIds = (currentUser?.following || []).map((id) => String(id));
+
+        if (friendIds.length === 0) {
+          rows = [];
+        } else {
+          // Get all reviews from friends (only Songs) with user information
+          const friendReviews = await Review.find({
+            userId: { $in: friendIds },
+            targetType: "Song",
+          })
+            .populate("userId", "username name")
+            .select("targetId rating userId")
+            .lean()
+            .exec();
+
+          if (friendReviews.length === 0) {
+            rows = [];
+          } else {
+            // Get current user's reviewed songs to filter them out
+            const userReviews = await Review.find({
+              userId,
+              targetType: "Song",
+            })
+              .select("targetId")
+              .lean()
+              .exec();
+            const userReviewedTargetIds = new Set(
+              userReviews.map((r) => r.targetId)
+            );
+
+            // Group reviews by targetId and calculate average rating
+            // Also track the friend with the highest rating for each song
+            const songReviewMap = new Map();
+            friendReviews.forEach((review) => {
+              const targetId = review.targetId;
+              // Skip songs the user has already reviewed
+              if (userReviewedTargetIds.has(targetId)) {
+                return;
+              }
+
+              if (!songReviewMap.has(targetId)) {
+                songReviewMap.set(targetId, {
+                  targetId,
+                  ratings: [],
+                  totalRating: 0,
+                  count: 0,
+                  topFriend: null, // Store friend with highest rating
+                  topRating: -1,
+                });
+              }
+              const entry = songReviewMap.get(targetId);
+              entry.ratings.push(review.rating);
+              entry.totalRating += review.rating;
+              entry.count += 1;
+
+              // Track friend with highest rating
+              if (review.rating > entry.topRating && review.userId) {
+                entry.topRating = review.rating;
+                entry.topFriend = {
+                  username: review.userId.username || "",
+                  name: review.userId.name || review.userId.username || "",
+                };
+              }
+            });
+
+            // Convert to array and calculate average ratings
+            const songsWithRatings = Array.from(songReviewMap.values()).map(
+              (entry) => ({
+                targetId: entry.targetId,
+                avgRating: entry.totalRating / entry.count,
+                count: entry.count,
+                friend: entry.topFriend, // Include friend info
+              })
+            );
+
+            // Sort by highest average rating to lowest
+            songsWithRatings.sort((a, b) => b.avgRating - a.avgRating);
+
+            // Get unique targetIds
+            const targetIds = songsWithRatings.map((s) => s.targetId);
+
+            if (targetIds.length === 0) {
+              rows = [];
+            } else {
+              // Fetch song metadata and user's want list
+              const [songs, user] = await Promise.all([
+                Song.find({
+                  spotifyId: { $in: targetIds },
+                })
+                  .lean()
+                  .exec(),
+                User.findById(userId).select("wantList").lean().exec(),
+              ]);
+
+              const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
+              const wantListSet = new Set(wantList);
+
+              // Create a map for quick lookup
+              const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+
+              // Build rows maintaining the sorted order
+              rows = songsWithRatings
+                .map((songRating) => {
+                  const song = songMap.get(songRating.targetId);
+                  if (!song) return null;
+
+                  return {
+                    id: song._id,
+                    spotifyId: song.spotifyId,
+                    title: song.title || "Unknown",
+                    artist: song.artist || "Unknown",
+                    imageUrl: song.coverUrl || "",
+                    tags: [],
+                    score: songRating.avgRating.toFixed(1),
+                    musicType: "Song",
+                    bookmarked: wantListSet.has(song.spotifyId),
+                    friendRating: songRating.friend
+                      ? {
+                          username: songRating.friend.username,
+                          name: songRating.friend.name,
+                        }
+                      : null,
+                  };
+                })
+                .filter((item) => item !== null);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching friends recommendations:", error);
+        rows = [];
+      }
     } else {
       // For now, unsupported tabs return empty
       rows = [];

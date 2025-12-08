@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import SectionHeader from "../components/SectionHeader";
 import Tabs from "../components/Tabs";
@@ -8,6 +8,69 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { ChevronLeft } from "lucide-react";
+
+const pulse = keyframes`
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+`;
+
+const SkeletonSongItem = styled.div`
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  padding: 24px 0;
+  border-bottom: 1px solid ${theme.colors.outline};
+  align-items: center;
+`;
+
+const SkeletonImage = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SkeletonLine = styled.div`
+  height: ${props => props.height || '16px'};
+  width: ${props => props.width || '100%'};
+  border-radius: 4px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonScore = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonTabs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  overflow-x: auto;
+`;
+
+const SkeletonTab = styled.div`
+  height: 32px;
+  min-width: 80px;
+  border-radius: 16px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
 
 const Container = styled.div`
   min-height: 100vh;
@@ -266,7 +329,46 @@ export default function Lists() {
   };
 
   if (loadingTabs) {
-    return <div style={{ padding: 16 }}>Loading…</div>;
+    return (
+      <Container>
+        <TopBar>
+          {isViewingOtherUser ? (
+            <BackButton onClick={() => navigate(`/app/user/${encodeURIComponent(username)}`)}>
+              <ChevronLeft size={22} />
+            </BackButton>
+          ) : (
+            <div />
+          )}
+          <TopTitle>{isViewingOtherUser ? `${username}'s Lists`.toUpperCase() : "MY LISTS"}</TopTitle>
+          {!isViewingOtherUser && (
+            <Hamburger>
+              <span />
+              <span />
+              <span />
+            </Hamburger>
+          )}
+          {isViewingOtherUser && <div />}
+        </TopBar>
+        <Main>
+          <SectionHeader title="Songs" />
+          <SkeletonTabs>
+            {[...Array(4)].map((_, index) => (
+              <SkeletonTab key={`tab-skeleton-${index}`} />
+            ))}
+          </SkeletonTabs>
+          {[...Array(5)].map((_, index) => (
+            <SkeletonSongItem key={`song-skeleton-${index}`}>
+              <SkeletonImage />
+              <SkeletonContent>
+                <SkeletonLine height="16px" width="60%" />
+                <SkeletonLine height="14px" width="40%" />
+              </SkeletonContent>
+              <SkeletonScore />
+            </SkeletonSongItem>
+          ))}
+        </Main>
+      </Container>
+    );
   }
 
   if (error) {
@@ -301,7 +403,32 @@ export default function Lists() {
         )}
 
         {loadingSongs ? (
-          <div style={{ padding: 16, textAlign: "center" }}>Loading…</div>
+          <>
+            {[...Array(8)].map((_, index) => (
+              <SkeletonSongItem key={`song-skeleton-${index}`}>
+                <SkeletonImage />
+                <SkeletonContent>
+                  <SkeletonLine height="16px" width="60%" />
+                  <SkeletonLine height="14px" width="40%" />
+                </SkeletonContent>
+                {(activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both") && (
+                  <SkeletonScore />
+                )}
+                {(activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends") && (
+                  <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                    <SkeletonScore style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
+                    <SkeletonScore style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
+                  </div>
+                )}
+                {activeTab === "both" && (
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <SkeletonScore />
+                    <SkeletonScore />
+                  </div>
+                )}
+              </SkeletonSongItem>
+            ))}
+          </>
         ) : songs.length === 0 && activeTab === "listened" ? (
           <EmptyState>
             <EmptyStateText>
@@ -342,6 +469,14 @@ export default function Lists() {
           <EmptyState>
             <EmptyStateText>No trending songs available at the moment</EmptyStateText>
           </EmptyState>
+        ) : songs.length === 0 && activeTab === "recs from friends" ? (
+          <EmptyState>
+            <EmptyStateText>
+              {isViewingOtherUser
+                ? `${userName || username} doesn't have any friend recommendations yet`
+                : "No recommendations from friends yet. Follow more people to see their recommendations!"}
+            </EmptyStateText>
+          </EmptyState>
         ) : (
           <>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -358,13 +493,20 @@ export default function Lists() {
                   score={song.score}
                   imageUrl={song.imageUrl}
                   showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both"}
-                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
-                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending")}
+                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
+                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
                   bookmarked={song.bookmarked || (activeTab === "want")}
                   twoScores={activeTab === "both" ? {
                     yourScore: song.currentUserScore,
                     theirScore: song.score,
                     theirName: userName || username || "User"
+                  } : null}
+                  friendRating={activeTab === "recs from friends" && song.friendRating ? {
+                    username: song.friendRating.username,
+                    name: song.friendRating.name,
+                    onUsernameClick: (username) => {
+                      navigate(`/app/user/${encodeURIComponent(username)}`);
+                    }
                   } : null}
                   onPlusClick={() => goToMusic(song)}
                   dividerTop={i > 0}
@@ -402,8 +544,8 @@ export default function Lists() {
                             : t
                         )
                       );
-                    } else if (activeTab === "new releases") {
-                      // Add to want list
+                    } else if (activeTab === "new releases" || activeTab === "recs from friends") {
+                      // Toggle want list
                       if (song.bookmarked) {
                         await axios.post("/api/want/remove", {
                           spotifyId,

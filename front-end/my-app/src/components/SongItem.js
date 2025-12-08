@@ -60,7 +60,7 @@ const Meta = styled.div`
 const RightSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 `;
 
 const Score = styled.div`
@@ -117,6 +117,31 @@ const ScoreLabel = styled.div`
   max-width: 56px;
 `;
 
+const ScoreWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+`;
+
+const FriendRatingLabel = styled.div`
+  font-size: 0.6rem;
+  color: ${theme.colors.subtext};
+  text-align: center;
+  line-height: 1.2;
+  max-width: 56px;
+`;
+
+const FriendUsername = styled.span`
+  color: #444;
+  cursor: pointer;
+  
+  &:hover {
+    text-decoration: underline;
+    color: ${theme.colors.text};
+  }
+`;
+
 const ScoreValue = styled.span`
   color: ${(props) => props.scoreColor || theme.colors.text};
   font-size: 1rem;
@@ -154,6 +179,7 @@ export default function SongItem({
   imageUrl,
   onPlusClick,
   twoScores = null, // { yourScore, theirScore, theirName }
+  friendRating = null, // { username, name, onUsernameClick }
 }) {
   return (
     <Card onClick={onClick}>
@@ -196,11 +222,6 @@ export default function SongItem({
           </TwoScoreContainer>
         ) : (
           <>
-            {showScore && (
-              <Score>
-                <ScoreNumber scoreColor={getScoreColor(score)}>{score}</ScoreNumber>
-              </Score>
-            )}
             {showPlus && (
               <CircleIconButton
                 aria-label="Add"
@@ -226,6 +247,32 @@ export default function SongItem({
                   fill={bookmarked ? theme.colors.primary : "none"}
                 />
               </IconButton>
+            )}
+            {showScore && (
+              friendRating ? (
+                <ScoreWrapper>
+                  <Score>
+                    <ScoreNumber scoreColor={getScoreColor(score)}>{score}</ScoreNumber>
+                  </Score>
+                  <FriendRatingLabel>
+                    <FriendUsername
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (friendRating.onUsernameClick) {
+                          friendRating.onUsernameClick(friendRating.username);
+                        }
+                      }}
+                    >
+                      {friendRating.name}
+                    </FriendUsername>
+                    's rating
+                  </FriendRatingLabel>
+                </ScoreWrapper>
+              ) : (
+                <Score>
+                  <ScoreNumber scoreColor={getScoreColor(score)}>{score}</ScoreNumber>
+                </Score>
+              )
             )}
           </>
         )}
