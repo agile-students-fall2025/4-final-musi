@@ -13,7 +13,7 @@ function AlbumList({ artist, title, onRatingClick, refreshTrigger }) {
     const encodedArtist = encodeURIComponent(artist);
     const encodedTitle = encodeURIComponent(title);
 
-    const API_URL = `http://localhost:3001/api/albumlist/${encodedArtist}/${encodedTitle}`;
+    const API_URL = `/api/albumlist/${encodedArtist}/${encodedTitle}`;
 
     axios.get(API_URL)
       .then(response => {

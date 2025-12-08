@@ -11,7 +11,7 @@ function Scores({musicType, title, artist, refreshTrigger}) {
     useEffect(() => {
         if (!artist || !title) return;
 
-        const API_URL = `http://localhost:3001/api/scores/${musicType}/${artist}/${title}`;
+        const API_URL = `/api/scores/${musicType}/${artist}/${title}`;
 
         axios.get(API_URL)
             .then(response => {

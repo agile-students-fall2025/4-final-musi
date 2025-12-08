@@ -26,12 +26,12 @@ function AlbumSong({ id, title, artist, isRated, score, onRatingClick, spotifyId
     
     try {
       if (isBookmarked) {
-        await axios.post('http://localhost:3001/api/want/remove', {
+        await axios.post('/api/want/remove', {
           spotifyId: spotifyId || id,
         });
         setIsBookmarked(false);
       } else {
-        await axios.post('http://localhost:3001/api/want', {
+        await axios.post('/api/want', {
           spotifyId: spotifyId || id,
           title,
           artist,

@@ -95,10 +95,10 @@ function Search() {
     
     try {
       const [musicRes, userRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/search', {
+        axios.get('/api/search', {
           params: { q: term }
         }),
-        axios.get('http://localhost:3001/api/search/users', {
+        axios.get('/api/search/users', {
         params: { q: term }
         })
       ]);
@@ -118,14 +118,14 @@ function Search() {
   const handleUserFollowToggle = async (targetUser) => {
     try {
       if (targetUser.isFollowing) {
-        await axios.post(`http://localhost:3001/api/users/${targetUser.id}/unfollow`);
+        await axios.post(`/api/users/${targetUser.id}/unfollow`);
         setUserResults((prev) =>
           prev.map((u) =>
             u.id === targetUser.id ? { ...u, isFollowing: false } : u
           )
         );
       } else {
-        await axios.post(`http://localhost:3001/api/users/${targetUser.id}/follow`);
+        await axios.post(`/api/users/${targetUser.id}/follow`);
         setUserResults((prev) =>
           prev.map((u) =>
             u.id === targetUser.id ? { ...u, isFollowing: true } : u
@@ -204,7 +204,7 @@ function Search() {
             }
             onBookmarkClick={async () => {
               try {
-                await axios.post('http://localhost:3001/api/want', {
+                await axios.post('/api/want', {
                   spotifyId: item.id,
                   title: item.title,
                   artist: item.artist,

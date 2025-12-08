@@ -317,7 +317,7 @@ function Feed() {
         .toLowerCase()
         .replace(/[^a-z0-9]/g, '-');
 
-      await axios.post("http://localhost:3001/api/want", {
+      await axios.post("/api/want", {
         spotifyId,
         title: item.title,
         artist: item.artist,

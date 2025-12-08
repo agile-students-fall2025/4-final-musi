@@ -12,7 +12,7 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
     const toggleBookmark = async () => {
       try {
         if (isBookmarked) {
-          await fetch("http://localhost:3001/api/want/remove", {
+          await fetch("/api/want/remove", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -22,7 +22,7 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
           });
           setIsBookmarked(false);
         } else {
-          await fetch("http://localhost:3001/api/want", {
+          await fetch("/api/want", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

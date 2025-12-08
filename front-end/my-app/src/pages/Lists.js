@@ -144,8 +144,8 @@ export default function Lists() {
     if (isViewingOtherUser) {
       // Fetch user's profile to get counts
       Promise.all([
-        axios.get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/profile`),
-        axios.get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/lists`, { 
+        axios.get(`/api/users/${encodeURIComponent(username)}/profile`),
+        axios.get(`/api/users/${encodeURIComponent(username)}/lists`, { 
           params: { tab: 'both', limit: 1 } 
         })
       ])
@@ -201,7 +201,7 @@ export default function Lists() {
       // Use user-specific endpoint
       const params = { tab: activeTab === "both" ? "both" : tabToApi(activeTab), limit: 50, offset: 0 };
       axios
-        .get(`http://localhost:3001/api/users/${encodeURIComponent(username)}/lists`, { params })
+        .get(`/api/users/${encodeURIComponent(username)}/lists`, { params })
         .then((response) => {
           const items = Array.isArray(response.data?.items)
             ? response.data.items
@@ -380,7 +380,7 @@ export default function Lists() {
 
                     if (activeTab === "want") {
                       // Remove from want list
-                      await axios.post("http://localhost:3001/api/want/remove", {
+                      await axios.post("/api/want/remove", {
                         spotifyId,
                       });
 
@@ -405,7 +405,7 @@ export default function Lists() {
                     } else if (activeTab === "new releases") {
                       // Add to want list
                       if (song.bookmarked) {
-                        await axios.post("http://localhost:3001/api/want/remove", {
+                        await axios.post("/api/want/remove", {
                           spotifyId,
                         });
                         setSongs((prev) =>
@@ -414,7 +414,7 @@ export default function Lists() {
                           )
                         );
                       } else {
-                        await axios.post("http://localhost:3001/api/want", {
+                        await axios.post("/api/want", {
                           spotifyId,
                           title: song.title,
                           artist: song.artist,

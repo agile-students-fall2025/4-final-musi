@@ -44,7 +44,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
   const handleStartRanking = async () => {
     setMode('loading');
     try {
-      const res = await axios.get(`http://localhost:3001/api/reviews/my-list?type=${targetType}`);
+      const res = await axios.get(`/api/reviews/my-list?type=${targetType}`);
       
       const allItems = filterOutCurrentSong(res.data || []);
       

@@ -15,7 +15,7 @@ function Leaderboard() {
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:3001/api/leaderboard', {
+        const response = await axios.get('/api/leaderboard', {
           params: { filter }
         });
         setLeaderboardData(response.data.users || []); 

@@ -10,7 +10,7 @@ function FriendScore({ musicType, artist, title }) {
       return;
     }
 
-    const API_URL = `http://localhost:3001/api/friendscores/${encodeURIComponent(musicType)}/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
+    const API_URL = `/api/friendscores/${encodeURIComponent(musicType)}/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
 
     axios.get(API_URL)
       .then(response => {

@@ -25,7 +25,7 @@ function Followers() {
     }
     const encodedUsername = encodeURIComponent(username);
 
-    const API_URL = `http://localhost:3001/api/followers/${encodedUsername}`;
+    const API_URL = `/api/followers/${encodedUsername}`;
 
     axios.get(API_URL)
       .then(response => {
@@ -44,7 +44,7 @@ function Followers() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:3001/api/users/${userId}/unfollow`,
+        `/api/users/${userId}/unfollow`,
         {},
         token ? {
           headers: {
@@ -76,7 +76,7 @@ function Followers() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `http://localhost:3001/api/users/${userId}/follow`,
+        `/api/users/${userId}/follow`,
         {},
         token ? {
           headers: {

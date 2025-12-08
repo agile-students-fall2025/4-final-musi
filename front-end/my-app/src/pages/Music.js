@@ -49,7 +49,7 @@ function Music() {
       return;
     }
 
-    axios.post('http://localhost:3001/api/reviews/rate-ranked', payload)
+    axios.post('/api/reviews/rate-ranked', payload)
       .then(response => {
         setMusicData(prevData => ({
           ...prevData,
@@ -93,7 +93,7 @@ function Music() {
     const encodedArtist = encodeURIComponent(artist);
     const encodedTitle = encodeURIComponent(title);
     
-    const API_URL = `http://localhost:3001/api/music/${musicType}/${encodedArtist}/${encodedTitle}`;
+    const API_URL = `/api/music/${musicType}/${encodedArtist}/${encodedTitle}`;
 
     axios.get(API_URL)
         .then(response => {

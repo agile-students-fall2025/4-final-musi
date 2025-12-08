@@ -938,7 +938,7 @@ if (loading) {
   const recordActivity = async (activity = "listened") => {
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/streak/activity",
+        "/api/streak/activity",
         {
           activity: activity,
         }
