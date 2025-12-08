@@ -851,7 +851,7 @@ function User() {
         </StatsRow>
 
         <ListItem
-          onClick={() => navigate("/app/lists", { state: { tab: "listened" } })}
+          onClick={() => navigate(`/app/users/${encodeURIComponent(profile.username)}/lists`, { state: { tab: "listened" } })}
         >
           <ListItemLeft>
             <span>🎧</span>
@@ -864,7 +864,7 @@ function User() {
         </ListItem>
 
         <ListItem
-          onClick={() => navigate("/app/lists", { state: { tab: "want" } })}
+          onClick={() => navigate(`/app/users/${encodeURIComponent(profile.username)}/lists`, { state: { tab: "want" } })}
         >
           <ListItemLeft>
             <span>🔖</span>
@@ -876,10 +876,12 @@ function User() {
           </div>
         </ListItem>
 
-        <ListItem>
+        <ListItem
+          onClick={() => navigate(`/app/users/${encodeURIComponent(profile.username)}/lists`, { state: { tab: "both" } })}
+        >
           <ListItemLeft>
             <span>🔗</span>
-            <ListItemText>Music you both like</ListItemText>
+            <ListItemText>Music you both listen to</ListItemText>
           </ListItemLeft>
           <ChevronRight size={20} color="#999" />
         </ListItem>
