@@ -7,11 +7,137 @@ import AlbumList from "../components/AlbumList";
 import RatingModal from "../components/RatingModal.js";
 import SpotifySample from "../components/SpotifySample";
 import axios from "axios";
-import { useParams } from 'react-router-dom'; 
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
+import styled, { keyframes } from 'styled-components';
+import { theme } from '../theme';
 import "./Music.css";
+
+const pulse = keyframes`
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+`;
+
+const SkeletonContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const SkeletonImageHeader = styled.div`
+  width: 100%;
+  height: 400px;
+  background: ${theme.colors.background_secondary};
+  position: relative;
+  overflow: hidden;
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonContent = styled.div`
+  width: 480px;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SkeletonLine = styled.div`
+  height: ${props => props.height || '20px'};
+  width: ${props => props.width || '100%'};
+  border-radius: 4px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonVibe = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 1rem;
+`;
+
+const SkeletonTag = styled.div`
+  height: 24px;
+  width: 80px;
+  border-radius: 12px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+`;
+
+const SkeletonScoresContainer = styled.div`
+  width: 480px;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SkeletonScoreRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid ${theme.colors.outline};
+`;
+
+const SkeletonScoreCircle = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+`;
+
+const SkeletonScoreText = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const SkeletonSpotifyPlayer = styled.div`
+  width: 480px;
+  height: 80px;
+  border-radius: 12px;
+  background: ${theme.colors.background_secondary};
+  animation: ${pulse} 1.5s ease-in-out infinite;
+  margin-top: 1rem;
+`;
+
+const BackButtonContainer = styled.div`
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+`;
+
+const BackButton = styled.button`
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+`;
 
 function Music() {
   const { musicType, artist, title } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedSong, setSelectedSong] = useState(null);
   const [musicData, setMusicData] = useState(null);
@@ -82,6 +208,19 @@ function Music() {
     setSelectedSong(null);
   };
 
+  const handleBack = () => {
+    // Check if we came from search results
+    if (location.state?.fromSearch && location.state?.searchTerm) {
+      // Navigate back to search with the search term
+      navigate('/app/search', {
+        state: { searchTerm: location.state.searchTerm }
+      });
+    } else {
+      // Otherwise, use browser back
+      navigate(-1);
+    }
+  };
+
   useEffect(() => {
     if (!musicType || !artist || !title) {
       setLoading(false);
@@ -110,7 +249,50 @@ function Music() {
   }, [musicType, artist, title, refreshKey]);
 
   if (loading) {
-    return <div className="Music-loading">Loading...</div>; 
+    return (
+      <SkeletonContainer>
+        <BackButtonContainer>
+          <BackButton onClick={handleBack} aria-label="Go back">
+            <ChevronLeft size={24} color={theme.colors.text} />
+          </BackButton>
+        </BackButtonContainer>
+        <SkeletonImageHeader />
+        <SkeletonContent>
+          <SkeletonVibe>
+            <SkeletonTag />
+            <SkeletonTag />
+            <SkeletonTag />
+          </SkeletonVibe>
+        </SkeletonContent>
+        {musicType === "Song" && <SkeletonSpotifyPlayer />}
+        <SkeletonScoresContainer>
+          {[...Array(3)].map((_, index) => (
+            <SkeletonScoreRow key={`score-skeleton-${index}`}>
+              <SkeletonScoreCircle />
+              <SkeletonScoreText>
+                <SkeletonLine height="16px" width="60%" />
+                <SkeletonLine height="14px" width="40%" />
+              </SkeletonScoreText>
+            </SkeletonScoreRow>
+          ))}
+        </SkeletonScoresContainer>
+        {musicType === "Album" && (
+          <SkeletonScoresContainer>
+            <SkeletonLine height="20px" width="200px" />
+            {[...Array(5)].map((_, index) => (
+              <SkeletonScoreRow key={`album-song-skeleton-${index}`}>
+                <SkeletonScoreCircle />
+                <SkeletonScoreText>
+                  <SkeletonLine height="16px" width="70%" />
+                  <SkeletonLine height="14px" width="50%" />
+                </SkeletonScoreText>
+              </SkeletonScoreRow>
+            ))}
+          </SkeletonScoresContainer>
+        )}
+        <BottomNavBar />
+      </SkeletonContainer>
+    );
   }
 
   if (error) {
@@ -123,6 +305,11 @@ function Music() {
 
   return (
     <div className="Music">
+      <BackButtonContainer>
+        <BackButton onClick={handleBack} aria-label="Go back">
+          <ChevronLeft size={24} color={theme.colors.text} />
+        </BackButton>
+      </BackButtonContainer>
       <ImageHeader 
         {...musicData} 
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
