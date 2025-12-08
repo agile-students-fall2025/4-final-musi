@@ -266,7 +266,7 @@ export default function Lists() {
                   onPlusClick={() => goToMusic(song)}
                   dividerTop={i > 0}
                   onBookmarkClick={async (e) => {
-                  e.stopPropagation();
+                  if (e) e.stopPropagation();
                   try {
                     const type = song.musicType ?? "Song";
                     const spotifyId =
