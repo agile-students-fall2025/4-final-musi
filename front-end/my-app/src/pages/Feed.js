@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
-import { Search, Menu, Heart, Bookmark, Users, Disc, TrendingUp } from "lucide-react";
+import { Search, Menu, Heart, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import LikesModal from "../components/LikesModal";
@@ -145,6 +145,12 @@ const Artwork = styled.div`
   background: #666;
   background-size: cover;
   background-position: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 const ReviewText = styled.p`font-size: 0.9rem; color: #333; line-height: 1.4; margin: 12px 0; text-align: left;`;
 const InteractionBar = styled.div`display: flex; justify-content: space-between; align-items: center; margin-top: 12px;`;
@@ -356,24 +362,6 @@ function Feed() {
     navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
   };
 
-  const handleBookmark = async (item) => {
-    try {
-      const type = item.musicType || "Song";
-      const spotifyId = `${type}-${item.artist}-${item.title}`
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-');
-
-      await axios.post("/api/want", {
-        spotifyId,
-        title: item.title,
-        artist: item.artist,
-        musicType: type,
-      });
-    } catch (e) {
-      console.error("Failed to add to want list:", e);
-      alert("Failed to add to Want to listen");
-    }
-  };
 
   const visibleFeedData = feedData.slice(0, visibleCount);
   const hasMore = visibleCount < feedData.length;
@@ -535,7 +523,10 @@ function Feed() {
           </UserInfo>
 
           {item.imageUrl && (
-            <Artwork style={{ backgroundImage: `url(${item.imageUrl})` }} />
+            <Artwork 
+              style={{ backgroundImage: `url(${item.imageUrl})` }}
+              onClick={() => goToMusic(item)}
+            />
           )}
           <ReviewText>{item.review}</ReviewText>
 
@@ -551,24 +542,6 @@ function Feed() {
                 {item.likes} {item.likes === 1 ? "like" : "likes"}
               </span>
             </InteractionLeft>
-            <InteractionRight>
-              <button
-                onClick={() => handleBookmark(item)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: "0.85rem",
-                  color: "#666",
-                }}
-              >
-                <Bookmark size={16} />
-                <span>Want to listen</span>
-              </button>
-            </InteractionRight>
           </InteractionBar>
         </FeedItem>
       ))}
