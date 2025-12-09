@@ -2060,8 +2060,9 @@ app.get("/api/feed", async (req, res) => {
       Array.isArray(currentUser.following) &&
       currentUser.following.length > 0;
 
+    // Include current user's reviews along with reviews from people they follow
     const baseQuery = hasFollowing
-      ? { userId: { $in: currentUser.following } }
+      ? { userId: { $in: [...currentUser.following, userId] } }
       : {};
 
     let sortOption;
@@ -2117,9 +2118,9 @@ app.get("/api/feed", async (req, res) => {
             };
           });
 
-          // Also get top rated user reviews
+          // Also get latest user reviews
           const userReviews = await Review.find(baseQuery)
-            .sort({ rating: -1, createdAt: -1 })
+            .sort({ createdAt: -1 })
             .limit(20)
             .lean()
             .exec();
@@ -2212,12 +2213,12 @@ app.get("/api/feed", async (req, res) => {
           return res.json({ tab, total: allItems.length, items: allItems });
         } catch (error) {
           console.error("Error fetching Spotify trending:", error);
-          // Fall back to just user reviews
-          sortOption = { rating: -1, createdAt: -1 };
+          // Fall back to just user reviews - latest first
+          sortOption = { createdAt: -1 };
         }
         break;
       default:
-        sortOption = { rating: -1, createdAt: -1 };
+        sortOption = { createdAt: -1 };
         break;
     }
 

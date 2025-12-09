@@ -1,19 +1,29 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import { RotateCcw, HelpCircle, SkipForward } from "lucide-react";
 import { theme } from "../theme";
 import "./RatingModal.css";
 
-function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, spotifyId }) {
+function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, spotifyId, initialRating, initialComment }) {
   const { token } = useContext(AuthContext);
   const targetType = musicType ? musicType.toLowerCase() : "song";
 
   // State
-  const [selectedRating, setSelectedRating] = useState(0); 
+  const [selectedRating, setSelectedRating] = useState(initialRating !== undefined ? initialRating : 0); 
   const [showCommentPopup, setShowCommentPopup] = useState(false);
-  const [comment, setComment] = useState("");
-  const [mode, setMode] = useState('initial'); 
+  const [comment, setComment] = useState(initialComment || "");
+  const [mode, setMode] = useState('initial');
+  
+  // Update state when initialRating or initialComment changes (for editing)
+  useEffect(() => {
+    if (initialRating !== undefined) {
+      setSelectedRating(initialRating);
+    }
+    if (initialComment !== undefined) {
+      setComment(initialComment);
+    }
+  }, [initialRating, initialComment]); 
   const [existingList, setExistingList] = useState([]);
   
   // Binary Search State
