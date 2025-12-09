@@ -728,6 +728,245 @@ app.get("/api/lists", async (req, res) => {
         console.error("Error fetching friends recommendations:", error);
         rows = [];
       }
+    } else if (tab === "recs") {
+      // Personalized recommendations: Combine friend recs + Spotify algorithm
+      try {
+        console.log("Fetching personalized recommendations for userId:", userId);
+        
+        // Part 1: Get friend recommendations (songs rated 8+ that user hasn't reviewed)
+        const currentUser = await User.findById(userId)
+          .select("following wantList")
+          .lean()
+          .exec();
+        const friendIds = (currentUser?.following || []).map((id) => String(id));
+        const wantList = Array.isArray(currentUser?.wantList) ? currentUser.wantList : [];
+        
+        let friendRecsRows = [];
+        
+        if (friendIds.length > 0) {
+          // Get high-rated reviews from friends (8+)
+          const highRatedFriendReviews = await Review.find({
+            userId: { $in: friendIds },
+            targetType: "Song",
+            rating: { $gte: 8 },
+          })
+            .populate("userId", "username name")
+            .select("targetId rating userId")
+            .lean()
+            .exec();
+
+          // Get user's reviewed songs to filter them out
+          const userReviews = await Review.find({
+            userId,
+            targetType: "Song",
+          })
+            .select("targetId")
+            .lean()
+            .exec();
+          const userReviewedIds = new Set(userReviews.map((r) => r.targetId));
+
+          // Filter out songs user has already reviewed
+          const unreviewedFriendRecs = highRatedFriendReviews.filter(
+            (r) => !userReviewedIds.has(r.targetId)
+          );
+
+          if (unreviewedFriendRecs.length > 0) {
+            const targetIds = unreviewedFriendRecs.map((r) => r.targetId);
+            const songs = await Song.find({
+              spotifyId: { $in: targetIds },
+            })
+              .lean()
+              .exec();
+
+            const songMap = new Map(songs.map((s) => [s.spotifyId, s]));
+            
+            friendRecsRows = unreviewedFriendRecs
+              .map((rec) => {
+                const song = songMap.get(rec.targetId);
+                if (!song) return null;
+
+                return {
+                  id: song._id,
+                  spotifyId: song.spotifyId,
+                  title: song.title || "Unknown",
+                  artist: song.artist || "Unknown",
+                  imageUrl: song.coverUrl || "",
+                  tags: ["Friend Recommendation"],
+                  score: null,
+                  musicType: "Song",
+                  bookmarked: wantList.includes(song.spotifyId),
+                  friendRating: rec.userId
+                    ? {
+                        username: rec.userId.username || "",
+                        name: rec.userId.name || rec.userId.username || "",
+                      }
+                    : null,
+                };
+              })
+              .filter((item) => item !== null)
+              .slice(0, 15); // Limit friend recs to 15
+          }
+        }
+
+        // Part 2: Get Spotify algorithm recommendations based on user's top-rated songs
+        let spotifyRecsRows = [];
+        
+        try {
+          // Get user's top-rated songs and albums (8-10 rating) to use as seed tracks
+          const topReviews = await Review.find({
+            userId,
+            rating: { $gte: 8, $lte: 10 },
+          })
+            .sort({ rating: -1 })
+            .limit(10)
+            .select("targetId targetType")
+            .lean()
+            .exec();
+
+          console.log("Found top-rated items (8-10 rating):", topReviews.length);
+
+          if (topReviews.length > 0) {
+            const songIds = topReviews
+              .filter((r) => r.targetType === "Song")
+              .map((r) => r.targetId);
+            const albumIds = topReviews
+              .filter((r) => r.targetType === "Album")
+              .map((r) => r.targetId);
+
+            const [topSongs, topAlbums] = await Promise.all([
+              songIds.length
+                ? Song.find({ spotifyId: { $in: songIds } })
+                    .select("spotifyId")
+                    .lean()
+                    .exec()
+                : [],
+              albumIds.length
+                ? Album.find({ spotifyId: { $in: albumIds } })
+                    .select("spotifyId")
+                    .lean()
+                    .exec()
+                : [],
+            ]);
+
+            const seedTracks = topSongs
+              .map((s) => s.spotifyId)
+              .filter(Boolean)
+              .slice(0, 5); // Spotify allows up to 5 seed tracks
+
+            console.log("Using seed tracks:", seedTracks.length);
+
+            if (seedTracks.length > 0) {
+              const accessToken = await getSpotifyAccessToken();
+              const recsResp = await axios.get(
+                "https://api.spotify.com/v1/recommendations",
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  params: {
+                    seed_tracks: seedTracks.join(","),
+                    limit: 30,
+                    market: "US",
+                  },
+                }
+              );
+
+              const recTracks = recsResp.data?.tracks || [];
+              console.log("Got Spotify recommendations:", recTracks.length);
+
+              // Filter out songs user has already reviewed
+              const userReviewedIds = new Set(
+                (await Review.find({ userId, targetType: "Song" })
+                  .select("targetId")
+                  .lean()
+                  .exec()
+                ).map((r) => r.targetId)
+              );
+
+              spotifyRecsRows = recTracks
+                .filter((track) => !userReviewedIds.has(track.id))
+                .map((track) => {
+                  const artistNames = (track.artists || [])
+                    .map((a) => a.name)
+                    .join(", ");
+                  return {
+                    id: track.id,
+                    spotifyId: track.id,
+                    title: track.name || "Unknown",
+                    artist: artistNames || "Unknown",
+                    imageUrl: track.album?.images?.[0]?.url || "",
+                    tags: ["Recommended for You"],
+                    score: null,
+                    musicType: "Song",
+                    bookmarked: wantList.includes(track.id),
+                  };
+                });
+            } else {
+              console.log("No seed tracks available, will use fallback");
+            }
+          } else {
+            console.log("User has no 8-10 rated items, will use fallback");
+          }
+        } catch (spotifyError) {
+          console.error("Error fetching Spotify recommendations:", spotifyError.message);
+          // Fallback: If recommendations API fails, use popular search results
+          console.log("Falling back to popular tracks from search");
+          try {
+            const accessToken = await getSpotifyAccessToken();
+            const searchResp = await axios.get(
+              "https://api.spotify.com/v1/search",
+              {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                params: {
+                  q: "year:2024-2025",
+                  type: "track",
+                  limit: 30,
+                  market: "US",
+                },
+              }
+            );
+
+            const tracks = searchResp.data?.tracks?.items || [];
+            console.log("Got popular tracks from search:", tracks.length);
+
+            // Filter out songs user has already reviewed
+            const userReviewedIds = new Set(
+              (await Review.find({ userId, targetType: "Song" })
+                .select("targetId")
+                .lean()
+                .exec()
+              ).map((r) => r.targetId)
+            );
+
+            spotifyRecsRows = tracks
+              .filter((track) => !userReviewedIds.has(track.id))
+              .map((track) => {
+                const artistNames = (track.artists || [])
+                  .map((a) => a.name)
+                  .join(", ");
+                return {
+                  id: track.id,
+                  spotifyId: track.id,
+                  title: track.name || "Unknown",
+                  artist: artistNames || "Unknown",
+                  imageUrl: track.album?.images?.[0]?.url || "",
+                  tags: ["Popular Now"],
+                  score: null,
+                  musicType: "Song",
+                  bookmarked: wantList.includes(track.id),
+                };
+              });
+          } catch (fallbackError) {
+            console.error("Error in fallback search:", fallbackError.message);
+          }
+        }
+
+        // Combine: Friend recs first, then Spotify recs
+        rows = [...friendRecsRows, ...spotifyRecsRows];
+        console.log("Total recommendations:", rows.length, "(", friendRecsRows.length, "from friends,", spotifyRecsRows.length, "from Spotify)");
+        
+      } catch (error) {
+        console.error("Error fetching personalized recommendations:", error);
+        rows = [];
+      }
     } else {
       // For now, unsupported tabs return empty
       rows = [];
