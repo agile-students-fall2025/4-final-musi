@@ -4,10 +4,10 @@ import axios from "axios";
 import "./Score.css";
 
 function Scores({musicType, title, artist, refreshTrigger}) {
-    const [scores, setScores] = useState([0, 0, 0]);
-    const [counts, setCounts] = useState([0, 0, 0]);
-    const [scoreTitles, setScoreTitles] = useState(["","",""])
-    const [descriptions, setDescriptions] = useState(["", "", ""]);
+    const [scores, setScores] = useState([0, 0]);
+    const [counts, setCounts] = useState([0, 0]);
+    const [scoreTitles, setScoreTitles] = useState(["",""])
+    const [descriptions, setDescriptions] = useState(["", ""]);
     useEffect(() => {
         if (!artist || !title) return;
         const encodedArtist = encodeURIComponent(artist);
