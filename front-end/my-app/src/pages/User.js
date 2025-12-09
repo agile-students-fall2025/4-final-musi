@@ -534,6 +534,12 @@ const Artwork = styled.div`
   background-size: cover;
   background-position: center;
   margin: 12px 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 const ReviewText = styled.p`
@@ -1023,9 +1029,6 @@ function User() {
                           {item.likes} {item.likes === 1 ? "like" : "likes"}
                         </span>
                       </InteractionLeft>
-                      <InteractionRight>
-                        <span>{item.bookmarks} bookmarks</span>
-                      </InteractionRight>
                     </InteractionBar>
                   </FeedItem>
                 );

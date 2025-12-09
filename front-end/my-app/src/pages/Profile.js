@@ -337,6 +337,12 @@ const Artwork = styled.div`
   background-size: cover;
   background-position: center;
   margin: 12px 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 const ReviewText = styled.p`
   font-size: 0.9rem;
@@ -1221,7 +1227,10 @@ if (loading) {
                   </UserInfo>
 
                   {item.imageUrl && (
-                    <Artwork style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                    <Artwork 
+                      style={{ backgroundImage: `url(${item.imageUrl})` }}
+                      onClick={() => goToMusicFromFeed(item)}
+                    />
                   )}
                   <ReviewText>{renderReviewWithLinks(item)}</ReviewText>
 
@@ -1241,9 +1250,6 @@ if (loading) {
                         {item.likes} {item.likes === 1 ? "like" : "likes"}
                       </span>
                     </InteractionLeft>
-                    <InteractionRight>
-                      <span>{item.bookmarks} bookmarks</span>
-                    </InteractionRight>
                   </InteractionBar>
 
                   {activeReviewMenuId === item.id && (
