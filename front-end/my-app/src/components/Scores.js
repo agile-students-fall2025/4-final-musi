@@ -10,8 +10,9 @@ function Scores({musicType, title, artist, refreshTrigger}) {
     const [descriptions, setDescriptions] = useState(["", "", ""]);
     useEffect(() => {
         if (!artist || !title) return;
-
-        const API_URL = `/api/scores/${musicType}/${artist}/${title}`;
+        const encodedArtist = encodeURIComponent(artist);
+        const encodedTitle = encodeURIComponent(title);
+        const API_URL = `/api/scores/${musicType}/${encodedArtist}/${encodedTitle}`;
 
         axios.get(API_URL)
             .then(response => {

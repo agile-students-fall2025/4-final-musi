@@ -145,7 +145,28 @@ app.get("/api/music/:type/:artist/:title", authMiddleware, async (req, res) => {
     if (!spotifyItem) {
       console.warn("No Spotify item found for", { type, artist, title });
     }
-
+    let genres = [];
+    
+    if (spotifyItem && spotifyItem.artists && spotifyItem.artists.length > 0) {
+      const mainArtistId = spotifyItem.artists[0].id;
+      
+      if (mainArtistId) {
+        try {
+          const artistResp = await axios.get(
+            `https://api.spotify.com/v1/artists/${mainArtistId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+          
+          if (artistResp.data && artistResp.data.genres) {
+            genres = artistResp.data.genres;
+          }
+        } catch (artistErr) {
+          console.warn("Failed to fetch artist genres:", artistErr.message);
+        }
+      }
+    }
     // 3) Normalize Spotify data
     const imageUrl = isSong
       ? spotifyItem?.album?.images?.[0]?.url || ""
@@ -178,7 +199,7 @@ app.get("/api/music/:type/:artist/:title", authMiddleware, async (req, res) => {
 
       imageUrl,
       vibe: [], // could be enhanced later with audio features
-      genre: [], // could be enhanced later with artist/album genres
+      genre: genres, // could be enhanced later with artist/album genres
       year,
       isBookmarked: wantList.includes(spotifyId),
       spotifyUrl,

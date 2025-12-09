@@ -5,7 +5,6 @@ import ImageHeader from "../components/ImageHeader";
 import Scores from "../components/Scores";
 import AlbumList from "../components/AlbumList";
 import RatingModal from "../components/RatingModal.js";
-import SpotifySample from "../components/SpotifySample";
 import axios from "axios";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -134,6 +133,14 @@ const BackButton = styled.button`
   }
 `;
 
+const DescriptionText = styled.div`
+  text-align: left;
+  color: ${theme.colors.accent};
+  font-size: 1.4rem; 
+  line-height: 1rem;
+  font-weight: 600;
+`;
+
 function Music() {
   const { musicType, artist, title } = useParams();
   const navigate = useNavigate();
@@ -144,7 +151,6 @@ function Music() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  // Toast State
   const [toast, setToast] = useState('');
 
   const handleRatingClick = (songTitle, songArtist, type, rated, id) => {
@@ -183,10 +189,8 @@ function Music() {
           avgScore: response.data.score || prevData.avgScore, 
         }));
         
-        // Dispatch custom event to refresh album list if on album page
         window.dispatchEvent(new CustomEvent('reviewSubmitted'));
         
-        // Updated Toast Message & Duration (5s)
         setToast(`You gave ${ratingInfo.title} by ${ratingInfo.artist} a ${response.data.score}!`);
         setTimeout(() => setToast(''), 5000);
 
@@ -209,14 +213,11 @@ function Music() {
   };
 
   const handleBack = () => {
-    // Check if we came from search results
     if (location.state?.fromSearch && location.state?.searchTerm) {
-      // Navigate back to search with the search term
       navigate('/app/search', {
         state: { searchTerm: location.state.searchTerm }
       });
     } else {
-      // Otherwise, use browser back
       navigate(-1);
     }
   };
@@ -247,6 +248,11 @@ function Music() {
         });
 
   }, [musicType, artist, title, refreshKey]);
+
+  const formatGenre = (g) => {
+    if (!g) return "";
+    return g.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
 
   if (loading) {
     return (
@@ -303,6 +309,16 @@ function Music() {
     return <div className="Music-error">No data found.</div>;
   }
 
+  const typeDisplay = musicData.musicType;
+  const yearDisplay = musicData.year;
+  const genreDisplay = (musicData.genre && musicData.genre.length > 0)
+    ? musicData.genre.map(formatGenre).join(", ")
+    : null;
+
+  const descriptionString = [typeDisplay, yearDisplay, genreDisplay]
+    .filter(Boolean) // Remove null or undefined values
+    .join(" • ");
+
   return (
     <div className="Music">
       <BackButtonContainer>
@@ -310,17 +326,16 @@ function Music() {
           <ChevronLeft size={24} color={theme.colors.text} />
         </BackButton>
       </BackButtonContainer>
+      
       <ImageHeader 
         {...musicData} 
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
       />
       <div className="description">
-        <div className="vibe">
-          {musicData?.vibe?.join(" • ")}
-        </div>
+      <DescriptionText>
+        {descriptionString}
+      </DescriptionText>
       </div>
-      {musicType === "Song" && <SpotifySample title={title} artist={artist} />}
-      
       <Scores title={title} artist={artist} musicType={musicType} refreshTrigger={refreshKey} />
 
       {musicType === "Album" && (
@@ -342,7 +357,6 @@ function Music() {
         />
       )}
 
-      {/* Toast Notification */}
       {toast && (
         <div
           style={{
