@@ -163,7 +163,9 @@ function Music() {
       musicType: type,
       isRated: rated,
       imageUrl: musicData.imageUrl,
-      spotifyId: finalId
+      spotifyId: finalId,
+      initialRating: rated ? musicData.userRating : undefined, 
+      initialComment: rated ? musicData.userReview : undefined 
     });
     setShowRatingModal(true);
   };
@@ -205,6 +207,66 @@ function Music() {
         setShowRatingModal(false);
         setSelectedSong(null);
       });
+  };
+
+  const handleRemoveRating = async () => {
+    if (!selectedSong) return;
+
+    // 1. Construct the target ID string (slug) exactly as the backend expects
+    const type = selectedSong.musicType || 'Song';
+    const artistName = selectedSong.artist || '';
+    const songTitle = selectedSong.title || '';
+    
+    const targetSlug = `${type}-${artistName}-${songTitle}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+
+    try {
+      // 2. Fetch the user's review list for this type
+      const listRes = await axios.get(`/api/reviews/my-list`, { 
+        params: { type: type.toLowerCase() } 
+      });
+      
+      const reviews = Array.isArray(listRes.data) ? listRes.data : [];
+      
+      // 3. Find the review where targetId matches the constructed slug
+      const reviewToDelete = reviews.find(r => {
+        // targetId might be a populated object OR a raw string depending on backend
+        const rId = typeof r.targetId === 'object' ? (r.targetId.spotifyId || r.targetId._id) : r.targetId;
+        
+        // Check match against the constructed slug
+        // Also check against spotifyId if available, just in case
+        return rId === targetSlug || r.targetId === targetSlug || (selectedSong.spotifyId && rId === selectedSong.spotifyId);
+      });
+
+      if (!reviewToDelete || !reviewToDelete._id) {
+        setToast("Review not found.");
+        setTimeout(() => setToast(''), 3000);
+        return;
+      }
+
+      // 4. Delete using the actual Review ID (_id)
+      await axios.delete(`/api/reviews/${reviewToDelete._id}`);
+
+      // 5. Update UI
+      setMusicData(prev => ({
+        ...prev,
+        isRated: false
+      }));
+      
+      setToast("Rating removed");
+      setTimeout(() => setToast(''), 3000);
+      
+      setRefreshKey(prev => prev + 1);
+      window.dispatchEvent(new CustomEvent('reviewSubmitted'));
+      setShowRatingModal(false);
+      setSelectedSong(null);
+
+    } catch (err) {
+      console.error("Error deleting rating:", err);
+      setToast("Failed to remove rating");
+      setTimeout(() => setToast(''), 3000);
+    }
   };
   
   const handleCancelModal = () => {
@@ -354,6 +416,7 @@ function Music() {
           { ...selectedSong } 
           onClose={handleCancelModal}  
           onSubmit={handleRatingSubmit} 
+          onRemove={handleRemoveRating}
         />
       )}
 
