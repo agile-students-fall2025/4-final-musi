@@ -514,28 +514,47 @@ app.get("/api/lists", async (req, res) => {
         rows = [];
       }
     } else if (tab === "trending") {
-      // Fetch trending songs from Spotify Global Top 50
+      // Fetch trending songs using Spotify Search for popular tracks
       try {
         console.log("Fetching Spotify trending for userId:", userId);
-        console.log("CLIENT_ID exists:", !!CLIENT_ID);
-        console.log("CLIENT_SECRET exists:", !!CLIENT_SECRET);
         const accessToken = await getSpotifyAccessToken();
-        console.log("Got Spotify access token:", accessToken ? "YES" : "NO");
+        console.log("Got access token for trending");
         
-        // Use Spotify's Browse API to get new releases (most reliable with Client Credentials)
-        const spotifyResp = await axios.get(
-          "https://api.spotify.com/v1/browse/new-releases",
-          {
+        // Search for popular tracks across multiple genres
+        const genres = ['pop', 'hip-hop', 'rock', 'electronic', 'r-n-b'];
+        const searchPromises = genres.map(genre => 
+          axios.get("https://api.spotify.com/v1/search", {
             headers: { Authorization: `Bearer ${accessToken}` },
             params: {
-              limit: 50,
-              country: "US",
-            },
-          }
+              q: `genre:${genre}`,
+              type: 'track',
+              limit: 10,
+              market: 'US'
+            }
+          }).catch(err => {
+            console.log(`Error searching ${genre}:`, err.message);
+            return { data: { tracks: { items: [] } } };
+          })
         );
 
-        console.log("Got Spotify response, albums:", spotifyResp.data?.albums?.items?.length);
-        const albums = spotifyResp.data?.albums?.items || [];
+        const searchResults = await Promise.all(searchPromises);
+        console.log("Got search results from", searchResults.length, "genres");
+        
+        // Combine and deduplicate tracks
+        const allTracks = [];
+        const seenIds = new Set();
+        
+        searchResults.forEach(result => {
+          const tracks = result.data?.tracks?.items || [];
+          tracks.forEach(track => {
+            if (!seenIds.has(track.id) && track.id) {
+              seenIds.add(track.id);
+              allTracks.push(track);
+            }
+          });
+        });
+
+        console.log("Total unique tracks:", allTracks.length);
         
         const user = await User.findById(userId)
           .select("wantList")
@@ -543,21 +562,21 @@ app.get("/api/lists", async (req, res) => {
           .exec();
         const wantList = Array.isArray(user?.wantList) ? user.wantList : [];
 
-        // Convert albums to song-like format for trending display
-        rows = albums.slice(0, 50).map((album) => {
-          const artistNames = (album.artists || [])
+        // Convert tracks to song format for trending display
+        rows = allTracks.slice(0, 50).map((track) => {
+          const artistNames = (track.artists || [])
             .map((a) => a.name)
             .join(", ");
           return {
-            id: album.id,
-            spotifyId: album.id,
-            title: album.name || "Unknown",
+            id: track.id,
+            spotifyId: track.id,
+            title: track.name || "Unknown",
             artist: artistNames || "Unknown",
-            imageUrl: album.images?.[0]?.url || "",
-            tags: ["New Release"],
+            imageUrl: track.album?.images?.[0]?.url || "",
+            tags: ["Trending"],
             score: null,
-            musicType: "Album",
-            bookmarked: wantList.includes(album.id),
+            musicType: "Song",
+            bookmarked: wantList.includes(track.id),
           };
         });
         console.log("Processed trending tracks:", rows.length);
