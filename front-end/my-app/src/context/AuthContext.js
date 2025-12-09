@@ -10,6 +10,50 @@ export const AuthProvider = ({ children }) => {
 
   const API_URL = '/api';
 
+  // Set up axios interceptors
+  useEffect(() => {
+    // Request interceptor: ensure token is always included
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken && !config.headers['x-auth-token']) {
+          config.headers['x-auth-token'] = storedToken;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor: handle 401 errors
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Token is invalid or expired, clear it
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['x-auth-token'];
+          
+          // Only redirect if not already on login/register page
+          if (!window.location.pathname.includes('/login') && 
+              !window.location.pathname.includes('/signup') &&
+              !window.location.pathname.includes('/register')) {
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, []);
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token');

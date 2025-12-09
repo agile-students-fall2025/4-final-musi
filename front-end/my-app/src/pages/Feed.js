@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Search, Menu, Heart, Bookmark, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
@@ -73,11 +73,24 @@ const SectionTitle = styled.h3`
 const SeeAll = styled.button`background: none; border: none; color: ${theme.colors.accent}; font-size: 0.9rem; font-weight: 500; cursor: pointer;`;
 const FeaturedLists = styled.div`display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;`;
 const ListCardButton = styled.button`
-  min-width: 120px; height: 120px; border-radius: 8px;
-  display: flex; align-items: flex-end; padding: 12px; color: white;
-  font-weight: 500; font-size: 0.9rem; border: none; cursor: pointer; text-align: left;
-  background-size: cover; background-position: center;
-  position: relative; overflow: hidden;
+  width: 120px; 
+  height: 120px; 
+  min-width: 120px;
+  border-radius: 8px;
+  display: flex; 
+  align-items: flex-end; 
+  padding: 12px; 
+  color: white;
+  font-weight: 500; 
+  font-size: 0.9rem; 
+  border: none; 
+  cursor: pointer; 
+  text-align: left;
+  background-size: cover; 
+  background-position: center;
+  position: relative; 
+  overflow: hidden;
+  flex-shrink: 0;
   
   &::before {
     content: '';
@@ -151,6 +164,75 @@ const LoadingIndicator = styled.div`
   padding: 20px;
   color: #666;
   font-size: 0.9rem;
+`;
+
+// Skeleton loading components
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
+
+const SkeletonBase = styled.div`
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 0px,
+    #f8f8f8 40px,
+    #f0f0f0 80px
+  );
+  background-size: 1000px 100%;
+  animation: ${shimmer} 1.5s infinite;
+  border-radius: 4px;
+`;
+
+const SkeletonCircle = styled(SkeletonBase)`
+  border-radius: 50%;
+  width: ${props => props.size || '40px'};
+  height: ${props => props.size || '40px'};
+`;
+
+const SkeletonRect = styled(SkeletonBase)`
+  width: ${props => props.width || '100%'};
+  height: ${props => props.height || '16px'};
+  margin-bottom: ${props => props.marginBottom || '8px'};
+`;
+
+const SkeletonFeaturedCard = styled(SkeletonBase)`
+  min-width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  flex-shrink: 0;
+`;
+
+const SkeletonFeedItem = styled.div`
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+`;
+
+const SkeletonUserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+`;
+
+const SkeletonUserDetails = styled.div`
+  flex: 1;
+`;
+
+const SkeletonArtwork = styled(SkeletonBase)`
+  width: 80px;
+  height: 80px;
+  margin: 12px 0;
+  border-radius: 4px;
+`;
+
+const SkeletonScore = styled(SkeletonCircle)`
+  width: 2.5rem;
+  height: 2.5rem;
 `;
 
 // Helper function to get score color based on rating
@@ -329,7 +411,44 @@ function Feed() {
       </SearchContainer>
 
       {loading ? (
-        <Section><div>Loading…</div></Section>
+        <>
+          <Section>
+            <SectionHeader>
+              <SectionTitle>Featured Lists</SectionTitle>
+            </SectionHeader>
+            <FeaturedLists>
+              {[1, 2, 3, 4].map((i) => (
+                <SkeletonFeaturedCard key={i} />
+              ))}
+            </FeaturedLists>
+          </Section>
+
+          <Section>
+            <SectionTitle>Your Feed</SectionTitle>
+          </Section>
+
+          {[1, 2, 3, 4, 5].map((i) => (
+            <SkeletonFeedItem key={i}>
+              <SkeletonUserInfo>
+                <SkeletonCircle size="40px" />
+                <SkeletonUserDetails>
+                  <SkeletonRect width="120px" height="14px" marginBottom="8px" />
+                  <SkeletonRect width="200px" height="12px" marginBottom="4px" />
+                  <SkeletonRect width="80px" height="10px" marginBottom="0" />
+                </SkeletonUserDetails>
+                <SkeletonScore />
+              </SkeletonUserInfo>
+              {i % 2 === 0 && <SkeletonArtwork />}
+              <SkeletonRect width="100%" height="12px" marginBottom="8px" />
+              <SkeletonRect width="90%" height="12px" marginBottom="8px" />
+              <SkeletonRect width="60%" height="12px" marginBottom="12px" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                <SkeletonRect width="80px" height="14px" marginBottom="0" />
+                <SkeletonRect width="100px" height="14px" marginBottom="0" />
+              </div>
+            </SkeletonFeedItem>
+          ))}
+        </>
       ) : err ? (
         <Section><div style={{color:"#e5534b"}}>Error: {err}</div></Section>
       ) : (
@@ -337,7 +456,6 @@ function Feed() {
           <Section>
             <SectionHeader>
               <SectionTitle>Featured Lists</SectionTitle>
-              <SeeAll>See all</SeeAll>
             </SectionHeader>
 
         <FeaturedLists>
