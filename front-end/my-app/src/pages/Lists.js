@@ -411,7 +411,7 @@ export default function Lists() {
                 {(activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both") && (
                   <SkeletonScore />
                 )}
-                {(activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends") && (
+                {(activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends" || activeTab === "recs") && (
                   <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
                     <SkeletonScore style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
                     <SkeletonScore style={{ width: "24px", height: "24px", borderRadius: "50%" }} />
@@ -489,9 +489,9 @@ export default function Lists() {
                   meta={activeTab === "new releases" ? null : (song.tags ?? []).join(", ")}
                   score={song.score}
                   imageUrl={song.imageUrl}
-                  showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both"}
-                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
-                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends")}
+                  showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both" && activeTab !== "recs"}
+                  showPlus={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends" || activeTab === "recs")}
+                  showBookmark={!isViewingOtherUser && (activeTab === "want" || activeTab === "new releases" || activeTab === "trending" || activeTab === "recs from friends" || activeTab === "recs")}
                   bookmarked={song.bookmarked || (activeTab === "want")}
                   twoScores={activeTab === "both" ? {
                     yourScore: song.currentUserScore,
@@ -541,7 +541,7 @@ export default function Lists() {
                             : t
                         )
                       );
-                    } else if (activeTab === "new releases" || activeTab === "recs from friends") {
+                    } else if (activeTab === "new releases" || activeTab === "recs from friends" || activeTab === "recs") {
                       // Toggle want list
                       if (song.bookmarked) {
                         await axios.post("/api/want/remove", {
