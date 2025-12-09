@@ -5,6 +5,7 @@ import { Search, Menu, Heart, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import LikesModal from "../components/LikesModal";
+import RatingModal from "../components/RatingModal";
 import "../components/Score.css";
 import axios from "axios";
 
@@ -108,7 +109,7 @@ const ListCardButton = styled.button`
     z-index: 2;
   }
 `;
-const FeedItem = styled.div`padding: 16px 20px; border-bottom: 1px solid #f0f0f0;`;
+const FeedItem = styled.div`padding: 16px 20px; border-bottom: 1px solid #f0f0f0; position: relative;`;
 const UserInfo = styled.div`display: flex; align-items: center; gap: 12px; margin-bottom: 8px;`;
 const Avatar = styled.div`
   width: 40px;
@@ -160,11 +161,66 @@ const LikeButton = styled.button`
   cursor: pointer; font-size: 0.85rem; color: #666; padding: 0; &:hover { color: #333; }
 `;
 const InteractionRight = styled.div`font-size: 0.85rem; color: #666;`;
+const MoreButtonWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+const MoreButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 0 8px 0;
+  color: ${theme.colors.text_secondary};
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: ${theme.colors.text};
+  }
+`;
+const ReviewMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: -4px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+`;
+const ReviewMenuItem = styled.button`
+  border: none;
+  background: none;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: ${theme.colors.text};
+
+  &:hover {
+    background: #f5f5f5;
+  }
+`;
 const FeedScoreContainer = styled.div`
+  .score-item{ margin-right: 0!important; }
+  .score-circle-container{ margin-right: 0!important; }
   .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
-
+const ScoreAndMenuContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
 const LoadingIndicator = styled.div`
   text-align: center;
   padding: 20px;
@@ -263,6 +319,17 @@ function Feed() {
   const [err, setErr] = useState(null);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [currentUsername, setCurrentUsername] = useState(null);
+  const [activeReviewMenuId, setActiveReviewMenuId] = useState(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedSong, setSelectedSong] = useState(null);
+
+  // Fetch current user's username
+  useEffect(() => {
+    axios.get("/api/auth/me")
+      .then((r) => setCurrentUsername(r.data?.user?.username || null))
+      .catch((e) => console.error("Failed to fetch current user:", e));
+  }, []);
 
   // load featured lists (once)
   useEffect(() => {
@@ -304,6 +371,33 @@ function Feed() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
+
+  // Close review menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeReviewMenuId) {
+        const clickedMenu = event.target.closest('[data-review-menu]');
+        const clickedButton = event.target.closest('[data-review-button]');
+        
+        // Close if clicking outside both the menu and the button
+        if (!clickedMenu && !clickedButton) {
+          setActiveReviewMenuId(null);
+        }
+      }
+    };
+    
+    if (activeReviewMenuId) {
+      // Use a small delay to avoid closing immediately when opening
+      const timeoutId = setTimeout(() => {
+        document.addEventListener("click", handleClickOutside);
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [activeReviewMenuId]);
 
   const handleListRedirect = (tabName) => {
     navigate("/app/lists", { state: { tab: tabName } });
@@ -360,6 +454,92 @@ function Feed() {
 
   const goToMusic = (music) => {
     navigate(`/app/music/${encodeURIComponent(music.musicType)}/${encodeURIComponent(music.artist)}/${encodeURIComponent(music.title)}`);
+  };
+
+  const openReviewMenu = (id) => {
+    setActiveReviewMenuId((prev) => (prev === id ? null : id));
+  };
+
+  const startEditReview = (item) => {
+    setActiveReviewMenuId(null);
+    
+    // Convert rating to ratingIndex (0, 1, or 2)
+    // Rating >= 8 = 0 (liked it), > 5 = 1 (fine), <= 5 = 2 (didn't like)
+    let ratingIndex = 0;
+    const rating = parseFloat(item.rating || 0);
+    if (rating >= 8) {
+      ratingIndex = 0; // "I liked it!"
+    } else if (rating > 5) {
+      ratingIndex = 1; // "It was fine"
+    } else {
+      ratingIndex = 2; // "I didn't like it"
+    }
+    
+    // Generate spotifyId from item data
+    const spotifyId = `${item.musicType || "Song"}-${item.artist}-${item.title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    
+    setSelectedSong({
+      title: item.title,
+      artist: item.artist,
+      musicType: item.musicType || "Song",
+      imageUrl: item.imageUrl,
+      spotifyId: spotifyId,
+      initialRating: ratingIndex,
+      initialComment: item.review || ""
+    });
+    setShowRatingModal(true);
+  };
+
+  const handleRatingSubmit = async (ratingInfo) => {
+    const payload = {
+      ...ratingInfo,
+      reviewText: ratingInfo.comment,
+      targetId: ratingInfo.targetId || ratingInfo.spotifyId 
+    };
+
+    if (!payload.targetId) {
+      alert("Error: Missing Target ID");
+      return;
+    }
+
+    try {
+      await axios.post('/api/reviews/rate-ranked', payload);
+      
+      // Refresh feed data
+      const feedResponse = await axios.get("/api/feed", { params: { tab: "trending" } });
+      setFeedData(Array.isArray(feedResponse.data?.items) ? feedResponse.data.items : []);
+      
+      window.dispatchEvent(new CustomEvent('reviewSubmitted'));
+      
+      setShowRatingModal(false);
+      setSelectedSong(null);
+    } catch (err) {
+      console.error('Failed to save rating:', err);
+      alert("Failed to save rating");
+    }
+  };
+
+  const handleCancelModal = () => {
+    setShowRatingModal(false);
+    setSelectedSong(null);
+  };
+
+  const deleteReview = async (item) => {
+    if (!window.confirm("Delete this review?")) {
+      setActiveReviewMenuId(null);
+      return;
+    }
+    try {
+      await axios.delete(`/api/reviews/${item.id}`);
+      setFeedData((prev) => prev.filter((it) => it.id !== item.id));
+    } catch (e) {
+      console.error("Failed to delete review:", e);
+      alert("Failed to delete review. Please try again.");
+    } finally {
+      setActiveReviewMenuId(null);
+    }
   };
 
 
@@ -502,24 +682,52 @@ function Feed() {
               </ActivityText>
               <TimeStamp>{item.time}</TimeStamp>
             </UserDetails>
-            <FeedScoreContainer>
-              {item.rating ? (
-                <div className="score-item">
-                  <div className="score-circle-container">
-                    <div className="score-circle">
-                      <span 
-                        className="score-number" 
-                        style={{ color: getScoreColor(item.rating) }}
-                      >
-                        {item.rating}
-                      </span>
+            <ScoreAndMenuContainer>
+              <FeedScoreContainer>
+                {item.rating ? (
+                  <div className="score-item">
+                    <div className="score-circle-container">
+                      <div className="score-circle">
+                        <span 
+                          className="score-number" 
+                          style={{ color: getScoreColor(item.rating) }}
+                        >
+                          {item.rating}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div style={{ fontSize: '1.2rem' }}>🔥</div>
+                ) : (
+                  <div style={{ fontSize: '1.2rem' }}>🔥</div>
+                )}
+              </FeedScoreContainer>
+              {currentUsername && item.username === currentUsername && (
+                <MoreButtonWrapper>
+                  <MoreButton 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openReviewMenu(item.id);
+                    }}
+                    data-review-button
+                  >
+                    ⋯
+                  </MoreButton>
+                  {activeReviewMenuId === item.id && (
+                    <ReviewMenu data-review-menu>
+                      <ReviewMenuItem onClick={() => startEditReview(item)}>
+                        Edit review
+                      </ReviewMenuItem>
+                      <ReviewMenuItem
+                        onClick={() => deleteReview(item)}
+                        style={{ color: "#e5534b" }}
+                      >
+                        Delete review
+                      </ReviewMenuItem>
+                    </ReviewMenu>
+                  )}
+                </MoreButtonWrapper>
               )}
-            </FeedScoreContainer>
+            </ScoreAndMenuContainer>
           </UserInfo>
 
           {item.imageUrl && (
@@ -557,6 +765,14 @@ function Feed() {
         <LikesModal
           reviewId={likesModalReviewId}
           onClose={() => setLikesModalReviewId(null)}
+        />
+      )}
+      
+      {showRatingModal && selectedSong && (
+        <RatingModal 
+          {...selectedSong}
+          onClose={handleCancelModal}  
+          onSubmit={handleRatingSubmit} 
         />
       )}
     </Container>

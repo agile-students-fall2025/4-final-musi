@@ -20,6 +20,7 @@ import { theme } from "../theme";
 import SongItem from "../components/SongItem";
 import Sidebar from "../components/Sidebar";
 import LikesModal from "../components/LikesModal";
+import RatingModal from "../components/RatingModal";
 import "../components/Score.css";
 import axios from "axios";
 
@@ -326,9 +327,29 @@ const TimeStamp = styled.div`
   text-align: left;
 `;
 const FeedScoreContainer = styled.div`
+  .score-item{ margin-right: 0!important; }
+  .score-circle-container{ margin-right: 0!important; }
   .score-circle{ width:2.5rem!important; height:2.5rem!important; border:1.5px solid #4b5563!important;}
   .score-number{ font-size:1rem!important; font-weight:600!important;}
 `;
+const ScoreAndMenuContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+// Helper function to get score color based on rating
+const getScoreColor = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 8) {
+    return theme.colors.green;
+  } else if (numRating > 5) {
+    return theme.colors.yellow;
+  } else {
+    return theme.colors.red;
+  }
+};
+
 const Artwork = styled.div`
   width: 80px;
   height: 80px;
@@ -382,17 +403,33 @@ const InteractionRight = styled.div`
   font-size: 0.85rem;
   color: #666;
 `;
+const MoreButtonWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
 const MoreButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 8px 0 8px 0;
   color: ${theme.colors.text_secondary};
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: ${theme.colors.text};
+  }
 `;
 const ReviewMenu = styled.div`
   position: absolute;
-  top: 8px;
+  top: 100%;
   right: 0;
+  margin-top: -4px;
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
@@ -647,8 +684,8 @@ function Profile() {
   const [insights, setInsights] = useState({}); // {artistsListened, songsRated}
   const fileInputRef = useRef(null);
   const [activeReviewMenuId, setActiveReviewMenuId] = useState(null);
-  const [editingReview, setEditingReview] = useState(null);
-  const [editingReviewText, setEditingReviewText] = useState("");
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedSong, setSelectedSong] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
 
@@ -969,33 +1006,68 @@ if (loading) {
   };
 
   const startEditReview = (item) => {
-    setEditingReview(item);
-    setEditingReviewText(item.review || "");
     setActiveReviewMenuId(null);
+    
+    // Convert rating to ratingIndex (0, 1, or 2)
+    // Rating >= 8 = 0 (liked it), > 5 = 1 (fine), <= 5 = 2 (didn't like)
+    let ratingIndex = 0;
+    const rating = parseFloat(item.rating || 0);
+    if (rating >= 8) {
+      ratingIndex = 0; // "I liked it!"
+    } else if (rating > 5) {
+      ratingIndex = 1; // "It was fine"
+    } else {
+      ratingIndex = 2; // "I didn't like it"
+    }
+    
+    // Generate spotifyId from item data
+    const spotifyId = `${item.musicType || "Song"}-${item.artist}-${item.title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    
+    setSelectedSong({
+      title: item.title,
+      artist: item.artist,
+      musicType: item.musicType || "Song",
+      imageUrl: item.imageUrl,
+      spotifyId: spotifyId,
+      initialRating: ratingIndex,
+      initialComment: item.review || ""
+    });
+    setShowRatingModal(true);
   };
 
-  const saveEditReview = async () => {
-    if (!editingReview) return;
+  const handleRatingSubmit = async (ratingInfo) => {
+    const payload = {
+      ...ratingInfo,
+      reviewText: ratingInfo.comment,
+      targetId: ratingInfo.targetId || ratingInfo.spotifyId 
+    };
+
+    if (!payload.targetId) {
+      alert("Error: Missing Target ID");
+      return;
+    }
+
     try {
-      await axios.patch(`/api/reviews/${editingReview.id}`, {
-        text: editingReviewText,
-      });
-      setActivity((prev) =>
-        prev.map((it) =>
-          it.id === editingReview.id ? { ...it, review: editingReviewText } : it
-        )
-      );
-      setEditingReview(null);
-      setEditingReviewText("");
-    } catch (e) {
-      console.error("Failed to update review:", e);
-      alert("Failed to update review. Please try again.");
+      await axios.post('/api/reviews/rate-ranked', payload);
+      
+      // Refresh profile data
+      await fetchProfileData();
+      
+      window.dispatchEvent(new CustomEvent('reviewSubmitted'));
+      
+      setShowRatingModal(false);
+      setSelectedSong(null);
+    } catch (err) {
+      console.error('Failed to save rating:', err);
+      alert("Failed to save rating");
     }
   };
 
-  const cancelEditReview = () => {
-    setEditingReview(null);
-    setEditingReviewText("");
+  const handleCancelModal = () => {
+    setShowRatingModal(false);
+    setSelectedSong(null);
   };
 
   const deleteReview = async (item) => {
@@ -1212,18 +1284,40 @@ if (loading) {
                       </ActivityText>
                       <TimeStamp>{item.time}</TimeStamp>
                     </UserDetails>
-                    <FeedScoreContainer>
-                      <div className="score-item">
-                        <div className="score-circle-container">
-                          <div className="score-circle">
-                            <span className="score-number">{item.rating}</span>
+                    <ScoreAndMenuContainer>
+                      <FeedScoreContainer>
+                        <div className="score-item">
+                          <div className="score-circle-container">
+                            <div className="score-circle">
+                              <span 
+                                className="score-number"
+                                style={{ color: getScoreColor(item.rating) }}
+                              >
+                                {item.rating}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </FeedScoreContainer>
-                    <MoreButton onClick={() => openReviewMenu(item.id)}>
-                      ⋯
-                    </MoreButton>
+                      </FeedScoreContainer>
+                      <MoreButtonWrapper>
+                        <MoreButton onClick={() => openReviewMenu(item.id)}>
+                          ⋯
+                        </MoreButton>
+                        {activeReviewMenuId === item.id && (
+                          <ReviewMenu>
+                            <ReviewMenuItem onClick={() => startEditReview(item)}>
+                              Edit review
+                            </ReviewMenuItem>
+                            <ReviewMenuItem
+                              onClick={() => deleteReview(item)}
+                              style={{ color: "#e5534b" }}
+                            >
+                              Delete review
+                            </ReviewMenuItem>
+                          </ReviewMenu>
+                        )}
+                      </MoreButtonWrapper>
+                    </ScoreAndMenuContainer>
                   </UserInfo>
 
                   {item.imageUrl && (
@@ -1251,20 +1345,6 @@ if (loading) {
                       </span>
                     </InteractionLeft>
                   </InteractionBar>
-
-                  {activeReviewMenuId === item.id && (
-                    <ReviewMenu>
-                      <ReviewMenuItem onClick={() => startEditReview(item)}>
-                        Edit review
-                      </ReviewMenuItem>
-                      <ReviewMenuItem
-                        onClick={() => deleteReview(item)}
-                        style={{ color: "#e5534b" }}
-                      >
-                        Delete review
-                      </ReviewMenuItem>
-                    </ReviewMenu>
-                  )}
                 </FeedItem>
               ))
             )}
@@ -1456,62 +1536,40 @@ if (loading) {
       </ModalOverlay>
 
       {/* Input Edit Modal */}
-      <InputModalOverlay show={showInputModal || !!editingReview}>
+      <InputModalOverlay show={showInputModal}>
         <InputModalHeader>
-          <CancelButton onClick={editingReview ? cancelEditReview : handleCancelEdit}>
+          <CancelButton onClick={handleCancelEdit}>
             Cancel
           </CancelButton>
           <InputModalTitle>
-            {editingReview ? "Edit review" : getFieldTitle(editingField)}
+            {getFieldTitle(editingField)}
           </InputModalTitle>
           <div style={{ width: "60px" }} />
         </InputModalHeader>
 
         <InputModalBody>
           <InputWrapper>
-            {editingReview ? (
-              <textarea
-                style={{
-                  width: "100%",
-                  minHeight: "120px",
-                  border: "none",
-                  outline: "none",
-                  fontSize: "1rem",
-                  fontFamily: "inherit",
-                  resize: "vertical",
-                }}
-                value={editingReviewText}
-                onChange={(e) => setEditingReviewText(e.target.value)}
-                placeholder="Update your notes..."
-                autoFocus
-              />
-            ) : (
-              <>
-                {editingField === "username" && <InputPrefix>@</InputPrefix>}
-                <Input
-                  type="text"
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  placeholder={`Enter ${editingField}`}
-                  autoFocus
-                />
-                {tempValue && profile && tempValue !== profile[editingField] && (
-                  <CheckIcon>
-                    <Check size={16} />
-                  </CheckIcon>
-                )}
-              </>
+            {editingField === "username" && <InputPrefix>@</InputPrefix>}
+            <Input
+              type="text"
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              placeholder={`Enter ${editingField}`}
+              autoFocus
+            />
+            {tempValue && profile && tempValue !== profile[editingField] && (
+              <CheckIcon>
+                <Check size={16} />
+              </CheckIcon>
             )}
           </InputWrapper>
         </InputModalBody>
 
         <SaveButton
-          onClick={editingReview ? saveEditReview : handleSaveField}
+          onClick={handleSaveField}
           disabled={
-            editingReview
-              ? false
-              : !tempValue.trim() ||
-                (profile && tempValue === profile[editingField])
+            !tempValue.trim() ||
+            (profile && tempValue === profile[editingField])
           }
         >
           Save
@@ -1521,6 +1579,14 @@ if (loading) {
         <LikesModal
           reviewId={likesModalReviewId}
           onClose={() => setLikesModalReviewId(null)}
+        />
+      )}
+      
+      {showRatingModal && selectedSong && (
+        <RatingModal 
+          {...selectedSong}
+          onClose={handleCancelModal}  
+          onSubmit={handleRatingSubmit} 
         />
       )}
     </>
