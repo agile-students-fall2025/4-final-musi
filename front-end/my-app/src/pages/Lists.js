@@ -489,7 +489,7 @@ export default function Lists() {
                 <SongItem
                   title={song.title}
                   subtitle={`${song.musicType ?? "Song"} • ${song.artist}`}
-                  meta={(song.tags ?? []).join(", ")}
+                  meta={activeTab === "new releases" ? null : (song.tags ?? []).join(", ")}
                   score={song.score}
                   imageUrl={song.imageUrl}
                   showScore={activeTab !== "want" && activeTab !== "new releases" && activeTab !== "trending" && activeTab !== "both"}
