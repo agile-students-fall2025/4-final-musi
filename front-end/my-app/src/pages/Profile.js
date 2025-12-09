@@ -1187,7 +1187,7 @@ if (loading) {
           </div>
         </ListItem>
 
-        <ListItem>
+        <ListItem onClick={() => navigate("/app/lists", { state: { tab: "recs" } })}>
           <ListItemLeft>
             <span>🎯</span>
             <ListItemText>Recs for you</ListItemText>
