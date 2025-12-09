@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Heart,
   Check,
+  X,
   Star,
   Flame,
   RefreshCw,
@@ -577,6 +578,12 @@ const InputModalBody = styled.div`
   flex: 1;
   padding: 24px 20px;
 `;
+const ErrorMessage = styled.div`
+  color: ${theme.colors.red};
+  font-size: 0.9rem;
+  margin-top: 8px;
+  padding: 0 4px;
+`;
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -604,11 +611,24 @@ const CheckIcon = styled.div`
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #4caf50;
+  background: ${props => props.isError ? theme.colors.red : '#4caf50'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  
+  &.spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 const SaveButton = styled.button`
   width: calc(100% - 40px);
@@ -671,6 +691,9 @@ function Profile() {
   const [showInputModal, setShowInputModal] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [tempValue, setTempValue] = useState("");
+  const [editError, setEditError] = useState("");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -921,21 +944,61 @@ const handleRefresh = async () => {
   const openEditField = (field) => {
     setEditingField(field);
     setTempValue(profile?.[field] || "");
+    setEditError("");
+    setUsernameAvailable(null);
     setShowEditModal(false);
     setShowInputModal(true);
   };
 
+  // Validate username format and check availability
+  const validateUsername = async (username) => {
+    if (!username || username === profile?.username) {
+      setUsernameAvailable(null);
+      setEditError("");
+      return;
+    }
+
+    // Check for invalid characters (only allow alphanumeric, period, and underscore)
+    const validUsernameRegex = /^[a-zA-Z0-9._]+$/;
+    if (!validUsernameRegex.test(username)) {
+      setEditError("Username can only contain letters, numbers, periods (.), and underscores (_)");
+      setUsernameAvailable(false);
+      return;
+    }
+
+    setEditError("");
+    setIsCheckingUsername(true);
+
+    try {
+      // Check if username is available
+      const response = await axios.get(`/api/users/check-username/${encodeURIComponent(username)}`);
+      setUsernameAvailable(response.data.available);
+      if (!response.data.available) {
+        setEditError("Username already taken");
+      }
+    } catch (error) {
+      console.error("Error checking username:", error);
+      setUsernameAvailable(null);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
   const handleSaveField = () => {
     const payload = { [editingField]: tempValue };
+    setEditError(""); // Clear any previous errors
     axios
       .put("/api/profile", payload)
       .then((r) => {
         setProfile(r.data.profile); // server returns updated profile
         setShowInputModal(false);
         setShowEditModal(true);
+        setEditError("");
       })
-      .catch(() => {
-        // if it fails, keep modal open; could show toast
+      .catch((error) => {
+        // Display error message from server
+        const errorMessage = error.response?.data?.error || "Failed to update profile";
+        setEditError(errorMessage);
       });
   };
 
@@ -943,6 +1006,8 @@ const handleRefresh = async () => {
     setShowInputModal(false);
     setShowEditModal(true);
     setTempValue("");
+    setEditError("");
+    setUsernameAvailable(null);
   };
 
   const getFieldTitle = (field) =>
@@ -1553,23 +1618,51 @@ if (loading) {
             <Input
               type="text"
               value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setTempValue(newValue);
+                if (editingField === "username") {
+                  // Debounce username validation
+                  clearTimeout(window.usernameCheckTimeout);
+                  window.usernameCheckTimeout = setTimeout(() => {
+                    validateUsername(newValue);
+                  }, 500);
+                }
+              }}
               placeholder={`Enter ${editingField}`}
               autoFocus
             />
-            {tempValue && profile && tempValue !== profile[editingField] && (
+            {editingField === "username" && tempValue && profile && tempValue !== profile[editingField] && (
+              isCheckingUsername ? (
+                <div style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <RefreshCw size={16} color="#999" className="spin" />
+                </div>
+              ) : usernameAvailable === true ? (
+                <CheckIcon>
+                  <Check size={16} />
+                </CheckIcon>
+              ) : usernameAvailable === false ? (
+                <CheckIcon isError>
+                  <X size={16} />
+                </CheckIcon>
+              ) : null
+            )}
+            {editingField !== "username" && tempValue && profile && tempValue !== profile[editingField] && (
               <CheckIcon>
                 <Check size={16} />
               </CheckIcon>
             )}
           </InputWrapper>
+          {editError && <ErrorMessage>{editError}</ErrorMessage>}
         </InputModalBody>
 
         <SaveButton
           onClick={handleSaveField}
           disabled={
             !tempValue.trim() ||
-            (profile && tempValue === profile[editingField])
+            (profile && tempValue === profile[editingField]) ||
+            (editingField === "username" && usernameAvailable === false) ||
+            isCheckingUsername
           }
         >
           Save
