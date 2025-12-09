@@ -1954,7 +1954,7 @@ const FEATURED_LISTS = [
   {
     title: "Rock Classics",
     imageUrl:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&h=400&fit=crop",
     tracks: [
       { id: 31, title: "Bohemian Rhapsody", subtitle: "Song • Queen" },
       { id: 32, title: "Stairway to Heaven", subtitle: "Song • Led Zeppelin" },
