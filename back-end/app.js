@@ -1257,11 +1257,10 @@ app.get("/api/scores/:type/:artist/:title", async (req, res) => {
       };
     } else {
       responseData = {
-        scores: ["-", friendScore, globalScore],
-        counts: [0, friendCount, globalCount],
-        scoreTitles: ["Rec Score", "Friend Score", "User Score"],
+        scores: [friendScore, globalScore],
+        counts: [friendCount, globalCount],
+        scoreTitles: ["Friend Score", "User Score"],
         descriptions: [
-          "How much we think <strong>you</strong> will like it",
           friendCount === 1
             ? `What <strong>1 friend</strong> thinks`
             : `What your <strong>${friendCount} friends</strong> think`,

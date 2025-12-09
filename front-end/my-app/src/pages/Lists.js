@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
-import SectionHeader from "../components/SectionHeader";
 import Tabs from "../components/Tabs";
 import SongItem from "../components/SongItem";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
@@ -350,7 +349,6 @@ export default function Lists() {
           {isViewingOtherUser && <div />}
         </TopBar>
         <Main>
-          <SectionHeader title="Songs" />
           <SkeletonTabs>
             {[...Array(4)].map((_, index) => (
               <SkeletonTab key={`tab-skeleton-${index}`} />
@@ -397,7 +395,6 @@ export default function Lists() {
       </TopBar>
 
       <Main>
-        <SectionHeader title="Songs" />
         {tabs.length > 0 && (
           <Tabs tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
         )}
