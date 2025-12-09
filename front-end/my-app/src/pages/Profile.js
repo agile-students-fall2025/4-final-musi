@@ -930,7 +930,11 @@ const handleRefresh = async () => {
     axios
       .put("/api/profile", payload)
       .then((r) => {
-        setProfile(r.data.profile); // server returns updated profile
+        //setProfile(r.data.profile); // server returns updated profile
+        setProfile((prev) => ({
+          ...prev,           
+          ...r.data.profile
+        }));
         setShowInputModal(false);
         setShowEditModal(true);
       })
