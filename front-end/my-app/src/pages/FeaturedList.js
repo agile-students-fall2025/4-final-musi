@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ChevronLeft } from "lucide-react";
@@ -56,6 +56,21 @@ export default function FeaturedList() {
   const tracks =
     (Array.isArray(stateTracks) && stateTracks.length > 0 && stateTracks) || [];
 
+  const [bookmarkedTracks, setBookmarkedTracks] = useState(new Set());
+
+  // Fetch user's want list to initialize bookmark states
+  useEffect(() => {
+    axios.get("/api/want")
+      .then((response) => {
+        const wantList = Array.isArray(response.data?.wantList) ? response.data.wantList : [];
+        const bookmarkedSet = new Set(wantList);
+        setBookmarkedTracks(bookmarkedSet);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch want list:", error);
+      });
+  }, []);
+
   const handleBack = () => navigate("/app/feed");
 
   // Parse artist from subtitle (format: "Song • Artist Name")
@@ -73,23 +88,45 @@ export default function FeaturedList() {
     );
   };
 
-  const handleBookmarkClick = async (track) => {
-    try {
-      const { musicType, artist } = parseTrackInfo(track);
-      const spotifyId = `${musicType}-${artist}-${track.title}`
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-');
+  const handleBookmarkClick = async (e, track) => {
+    if (e) e.stopPropagation();
+    
+    const { musicType, artist } = parseTrackInfo(track);
+    const spotifyId = `${musicType}-${artist}-${track.title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
 
-      await axios.post('/api/want', {
-        spotifyId,
-        title: track.title,
-        artist: artist,
-        musicType: musicType,
-        imageUrl: track.imageUrl,
-      });
-    } catch (e) {
-      console.error('Failed to add to want list:', e);
-      alert('Failed to add to Want to listen');
+    const isBookmarked = bookmarkedTracks.has(spotifyId);
+
+    try {
+      if (isBookmarked) {
+        // Remove from want list
+        await axios.post('/api/want/remove', {
+          spotifyId,
+        });
+        setBookmarkedTracks((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(spotifyId);
+          return newSet;
+        });
+      } else {
+        // Add to want list
+        await axios.post('/api/want', {
+          spotifyId,
+          title: track.title,
+          artist: artist,
+          musicType: musicType,
+          imageUrl: track.imageUrl,
+        });
+        setBookmarkedTracks((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(spotifyId);
+          return newSet;
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update want list:', error);
+      alert(isBookmarked ? 'Failed to remove from Want to listen' : 'Failed to add to Want to listen');
     }
   };
 
@@ -107,21 +144,33 @@ export default function FeaturedList() {
           No tracks provided for this list.
         </div>
       ) : (
-        tracks.map((track, index) => (
-          <SongItem
-            key={track.id || index}
-            title={track.title}
-            subtitle={track.subtitle}
-            showScore={false}
-            showPlus={false}
-            showBookmark={true}
-            score={null}
-            imageUrl={track.imageUrl}
-            onClick={() => handleTrackClick(track)}
-            onBookmarkClick={() => handleBookmarkClick(track)}
-            bookmarked={false}
-          />
-        ))
+        tracks.map((track, index) => {
+          const { musicType, artist } = parseTrackInfo(track);
+          const spotifyId = `${musicType}-${artist}-${track.title}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-');
+          const isBookmarked = bookmarkedTracks.has(spotifyId);
+
+          return (
+            <SongItem
+              key={track.id || index}
+              title={track.title}
+              subtitle={track.subtitle}
+              showScore={false}
+              showPlus={true}
+              showBookmark={true}
+              score={null}
+              imageUrl={track.imageUrl}
+              onClick={() => handleTrackClick(track)}
+              onPlusClick={(e) => {
+                if (e) e.stopPropagation();
+                handleTrackClick(track);
+              }}
+              onBookmarkClick={(e) => handleBookmarkClick(e, track)}
+              bookmarked={isBookmarked}
+            />
+          );
+        })
       )}
     </Container>
   );
