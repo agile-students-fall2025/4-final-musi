@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Search, Menu, Heart, Bookmark, Check, Users, Disc, TrendingUp } from "lucide-react";
+import { Search, Menu, Heart, Bookmark, Users, Disc, TrendingUp } from "lucide-react";
 import { theme } from "../theme";
 import Sidebar from "../components/Sidebar";
 import LikesModal from "../components/LikesModal";
@@ -42,10 +42,10 @@ const FilterButtons = styled.div`
   scrollbar-width: none;
 `;
 
-// Reverted styling to use accent colors as requested
+// Updated Button Styling (Removed 'active' prop logic, added hover effect)
 const FilterButton = styled.button`
-  background: ${(p) => (p.active ? theme.colors.accent : "white")};
-  color: ${(p) => (p.active ? "white" : theme.colors.accent)};
+  background: white;
+  color: ${theme.colors.accent};
   border: 1px solid ${theme.colors.accent};
   border-radius: 20px; 
   padding: 8px 16px; 
@@ -57,6 +57,11 @@ const FilterButton = styled.button`
   gap: 6px;
   white-space: nowrap;
   transition: all 0.2s ease;
+
+  &:hover {
+    background: ${theme.colors.accent};
+    color: white;
+  }
 `;
 
 const Section = styled.div`padding: 20px;`;
@@ -148,21 +153,6 @@ const LoadingIndicator = styled.div`
   font-size: 0.9rem;
 `;
 
-const Button = styled.button`
-  background-color: ${theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 18px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
-
-  &:hover {
-    opacity: 0.85;
-  }
-`;
-
 // Helper function to get score color based on rating
 const getScoreColor = (rating) => {
   const numRating = parseFloat(rating);
@@ -185,7 +175,6 @@ function Feed() {
   const [err, setErr] = useState(null);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [activeTab, setActiveTab] = useState("trending");
 
   // load featured lists (once)
   useEffect(() => {
@@ -228,33 +217,8 @@ function Feed() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Tab click handler for filtering feed
-  const handleTabClick = async (tab) => {
-    setLoading(true);
-    setErr(null);
-    setVisibleCount(10); // Reset visible count
-    setActiveTab(tab);
-
-    let params = {};
-    
-    if (tab === "trending") {
-      params = { tab: "trending" };
-    } else if (tab === "recs from friends") {
-      params = { tab: "friend-recs" };
-    } else if (tab === "new releases") {
-      params = { tab: "new-releases" };
-    }
-
-    try {
-      const response = await axios.get("/api/feed", { params });
-      setFeedData(
-        Array.isArray(response.data?.items) ? response.data.items : []
-      );
-    } catch (e) {
-      setErr(e.message || "Failed to load feed");
-    } finally {
-      setLoading(false);
-    }
+  const handleListRedirect = (tabName) => {
+    navigate("/app/lists", { state: { tab: tabName } });
   };
 
   const handleLike = async (itemId, e) => {
@@ -351,24 +315,14 @@ function Feed() {
           />
         </SearchBar>
 
-        {/* Updated Tabs - Now filters feed content */}
         <FilterButtons>
-          <FilterButton 
-            active={activeTab === "trending"}
-            onClick={() => handleTabClick("trending")}
-          >
+          <FilterButton onClick={() => handleListRedirect("trending")}>
             <TrendingUp size={16} /> Trending
           </FilterButton>
-          <FilterButton 
-            active={activeTab === "recs from friends"}
-            onClick={() => handleTabClick("recs from friends")}
-          >
+          <FilterButton onClick={() => handleListRedirect("recs from friends")}>
             <Users size={16} /> Friend recs
           </FilterButton>
-          <FilterButton 
-            active={activeTab === "new releases"}
-            onClick={() => handleTabClick("new releases")}
-          >
+          <FilterButton onClick={() => handleListRedirect("new releases")}>
             <Disc size={16} /> New releases
           </FilterButton>
         </FilterButtons>
