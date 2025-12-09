@@ -502,7 +502,7 @@ app.get("/api/lists", async (req, res) => {
             imageUrl: album.images?.[0]?.url || "",
             tags: album.album_type ? [album.album_type] : [],
             score: null,
-            musicType: "Album",
+            musicType: album.album_type === "single" ? "Song" : "Album",
             bookmarked: wantList.includes(album.id),
           };
         });
