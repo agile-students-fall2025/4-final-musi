@@ -1,11 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
-import { RotateCcw, HelpCircle, SkipForward } from "lucide-react";
+import { RotateCcw, HelpCircle, SkipForward, Trash2 } from "lucide-react";
 import { theme } from "../theme";
 import "./RatingModal.css";
 
-function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, spotifyId, initialRating, initialComment }) {
+// Added 'isRated' to props
+function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, onRemove, spotifyId, initialRating, initialComment, isRated }) {
   const { token } = useContext(AuthContext);
   const targetType = musicType ? musicType.toLowerCase() : "song";
 
@@ -24,6 +25,7 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
       setComment(initialComment);
     }
   }, [initialRating, initialComment]); 
+
   const [existingList, setExistingList] = useState([]);
   
   // Binary Search State
@@ -129,6 +131,15 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
     }
   };
 
+  const handleDelete = () => {
+      if (onRemove) {
+        onRemove();
+      } else {
+        console.warn("onRemove prop not passed to RatingModal");
+      }
+    
+  };
+
   // 4. Calculate Global Rank
   const calculateGlobalAndSubmit = async (localRankIndex) => {
     try {
@@ -202,9 +213,31 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
                 <span className="icon">📝</span><span>{comment ? "Edit notes" : "Add notes"}</span><span className="chevron">›</span>
               </button>
             </div>
+            
             <button className="rating-submit-btn" onClick={handleStartRanking} disabled={mode === 'loading'}>
               {mode === 'loading' ? "Loading List..." : "Next: Rank it"}
             </button>
+
+            {(isRated || initialRating !== undefined) && (
+              <button 
+                onClick={handleDelete}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: theme.colors.red || '#ff4b4b',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  marginTop: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  width: '100%'
+                }}
+              >
+                <Trash2 size={16} /> Remove rating
+              </button>
+            )}
           </>
         )}
 
@@ -220,7 +253,6 @@ function RatingModal({ title, artist, imageUrl, musicType, onClose, onSubmit, sp
                 <div className="versus-card-title">{title}</div>
                 <div className="versus-card-artist">{artist}</div>
                 
-                {/* Updated: Added 'new' class for red color */}
                 <div className="versus-card-rank new">New</div>
               </div>
 
