@@ -2775,14 +2775,19 @@ async function generateTasteData(userId, reviews, songs, songMap) {
     );
 
     // Count genres
-    artistGenreResults.forEach(({ genres }) => {
-      genres.forEach(genre => {
-        const capitalizedGenre = genre
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
-      });
+    artistGenreResults.forEach(({ genres, artist }) => {
+      if (genres.length > 0) {
+        genres.forEach(genre => {
+          const capitalizedGenre = genre
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
+        });
+      } else {
+        // If no genres found for artist, count as "Other"
+        genreCounts['Other'] = (genreCounts['Other'] || 0) + 1;
+      }
     });
 
     // Track total unique artists listened (based on reviews)
@@ -3129,6 +3134,8 @@ app.put("/api/profile", async (req, res) => {
       streakDays: user.currentStreak || 0,
       listenedCount: user.reviews?.length || 0,
       wantCount: 0,
+      profilePictureUrl: user.profilePictureUrl || null,
+      avatarColor: user.avatarColor || null,
     };
 
     res.json({
@@ -3139,6 +3146,32 @@ app.put("/api/profile", async (req, res) => {
   } catch (error) {
     console.error("Error updating profile:", error);
     res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// GET check username availability
+app.get("/api/users/check-username/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const userId = req.user?.id; // Get current user ID if authenticated
+
+    if (!username || !username.trim()) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+
+    // Check if username exists and is not the current user's
+    const existingUser = await User.findOne({
+      username: username.trim(),
+      ...(userId && { _id: { $ne: userId } }),
+    });
+
+    res.json({
+      available: !existingUser,
+      username: username.trim(),
+    });
+  } catch (error) {
+    console.error("Error checking username:", error);
+    res.status(500).json({ error: "Failed to check username" });
   }
 });
 
