@@ -10,11 +10,11 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../components/Score.css';
 
-const getScoreColor = (rating) => {
-  const numRating = parseFloat(rating);
-  if (numRating >= 8) {
+const getScoreColor = (ratingIndex) => {
+  // ratingIndex: 0 = Liked (green), 1 = Fine (yellow), 2 = Disliked (red)
+  if (ratingIndex === 0) {
     return theme.colors.green;
-  } else if (numRating > 5) {
+  } else if (ratingIndex === 1) {
     return theme.colors.yellow;
   } else {
     return theme.colors.red;
