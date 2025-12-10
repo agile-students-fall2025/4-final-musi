@@ -1163,6 +1163,38 @@ if (loading) {
     }
   };
 
+  const handleShareProfile = async () => {
+    if (!profile || !profile.username) {
+      return;
+    }
+
+    // Construct the profile URL using current domain
+    const profileUrl = `${window.location.origin}/app/user/${encodeURIComponent(profile.username)}`;
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      alert('Profile link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = profileUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert('Profile link copied to clipboard!');
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+        alert(`Profile URL: ${profileUrl}`);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   return (
     <>
       <Container>
@@ -1177,7 +1209,7 @@ if (loading) {
             >
               <RefreshCw size={20} />
             </RefreshButton>
-            <IconButton>
+            <IconButton onClick={handleShareProfile} title="Share profile">
               <Share size={24} />
             </IconButton>
             <IconButton onClick={() => setIsSidebarOpen(true)}>
@@ -1215,7 +1247,7 @@ if (loading) {
 
           <ButtonGroup>
             <Button onClick={() => setShowEditModal(true)}>Edit profile</Button>
-            <Button>Share profile</Button>
+            <Button onClick={handleShareProfile}>Share profile</Button>
           </ButtonGroup>
         </ProfileSection>
 
