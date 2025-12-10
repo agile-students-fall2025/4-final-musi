@@ -5,34 +5,10 @@
   align-items: center;
   gap: 1.5rem; 
   padding: 1rem 0; 
-  padding-top: 12px; /* give fixed back-button its own space */
 }
 
 .description {
   margin-top: 1rem;
-  max-width: 480px;
-  width: calc(100% - 2rem);
+  width: 480px;
   text-align: left;
-}
-
-/* New section wrappers to add whitespace behind headings/content and be responsive */
-.scores-section,
-.friend-section {
-  max-width: 480px;
-  width: calc(100% - 2rem);
-  margin-top: 1.25rem;
-  padding-bottom: 1.25rem; /* whitespace "behind" the section */
-}
-
-/* Slightly reduce spacing on very small screens */
-@media (max-width: 420px) {
-  .Music {
-    padding-top: 28px; /* reduced space on small devices */
-    gap: 1rem;
-  }
-  .scores-section,
-  .friend-section {
-    margin-top: 1rem;
-    padding-bottom: 1rem;
-  }
 }
