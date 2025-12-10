@@ -111,16 +111,6 @@ const ButtonGroup = styled.div`
   margin-bottom: 24px;
 `;
 
-// const Button = styled.button`
-//   flex: 1;
-//   padding: 10px 20px;
-//   border: 1px solid #e0e0e0;
-//   background: white;
-//   border-radius: 8px;
-//   font-size: 0.9rem;
-//   cursor: pointer;
-// `;
-
 const StatsRow = styled.div`
   display: flex;
   justify-content: space-around;
@@ -263,6 +253,12 @@ const ChartContainer = styled.div`
   margin: 24px 0;
   position: relative;
   height: 250px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    height: auto;
+    padding-bottom: 8px;
+  }
 `;
 
 const ChartLegend = styled.div`
@@ -270,6 +266,16 @@ const ChartLegend = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  @media (max-width: 600px) {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 12px;
+    justify-content: center;
+    width: 100%;
+  }
 `;
 
 const LegendItem = styled.div`
@@ -350,7 +356,6 @@ const InsightValue = styled.div`
   color: ${theme.colors.text};
 `;
 
-// Edit Modal Styles
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -461,7 +466,6 @@ const SectionDivider = styled.div`
   height: 16px;
 `;
 
-// Feed styled components for activity
 const FeedItem = styled.div`
   padding: 16px 0;
   border-bottom: 1px solid #f0f0f0;
@@ -607,7 +611,7 @@ function User() {
     if (!item) return;
 
     const wasLiked = item.isLiked;
-    // Optimistic update
+
     setActivity((prev) =>
       prev.map((it) =>
         it.id === id
@@ -680,7 +684,14 @@ function User() {
         const data = response.data.profile;
         setProfile(data);
         setActivity(response.data.activity || []);
-        setGenres(response.data.taste?.genres || []);
+        // Ensure we include an "Other" slice when some listens have no genre info
+        const rawGenres = response.data.taste?.genres || [];
+        const totalPct = rawGenres.reduce((s, g) => s + (g?.value || 0), 0);
+        const genresWithOther = [...rawGenres];
+        if (totalPct < 99.999) {
+          genresWithOther.push({ name: 'Other', value: Number((100 - totalPct).toFixed(2)), color: '#e5e7eb' });
+        }
+        setGenres(genresWithOther);
         setTopTracks(response.data.taste?.topTracks || []);
         setInsights(response.data.taste?.insights || {});
         setIsFollowing(!!data.isFollowing);
@@ -974,7 +985,7 @@ function User() {
                       <UserDetails>
                         <FeedUserName>{item.user}</FeedUserName>
                         <ActivityText>
-                          {item.activity}{" "}
+                          {item.activity} {" "}
                           <span
                             style={{
                               color: theme.colors.accent,
@@ -1062,7 +1073,6 @@ function User() {
                 </PieChart>
               </ResponsiveContainer>
 
-              {/* Dynamic legends matching Profile.js */}
               <ChartLegend
                 style={{
                   left: '10%',
