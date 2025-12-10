@@ -1410,7 +1410,7 @@ if (loading) {
                             <div className="score-circle">
                               <span 
                                 className="score-number"
-                                style={{ color: getScoreColor(item.rating) }}
+                                style={{ color: getScoreColor(item.ratingIndex) }}
                               >
                                 {item.rating}
                               </span>
