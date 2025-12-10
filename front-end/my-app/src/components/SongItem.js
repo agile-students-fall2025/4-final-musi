@@ -3,11 +3,10 @@ import styled from "styled-components";
 import { Plus, Bookmark } from "lucide-react";
 import { theme } from "../theme";
 
-const getScoreColor = (ratingIndex) => {
-  // ratingIndex: 0 = Liked (green), 1 = Fine (yellow), 2 = Disliked (red)
-  if (ratingIndex === 0) {
+const getScoreColor = (score) => {
+  if (score >= 8) {
     return theme.colors.green;
-  } else if (ratingIndex === 1) {
+  } else if (score >= 5) {
     return theme.colors.yellow;
   } else {
     return theme.colors.red;

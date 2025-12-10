@@ -11,11 +11,10 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../components/Score.css';
 
-const getScoreColor = (ratingIndex) => {
-  // ratingIndex: 0 = Liked (green), 1 = Fine (yellow), 2 = Disliked (red)
-  if (ratingIndex === 0) {
+const getScoreColor = (score) => {
+  if (score >= 8) {
     return theme.colors.green;
-  } else if (ratingIndex === 1) {
+  } else if (score >= 5) {
     return theme.colors.yellow;
   } else {
     return theme.colors.red;
@@ -523,7 +522,6 @@ const FeedScoreContainer = styled.div`
   .score-number {
     font-size: 1rem !important;
     font-weight: 600 !important;
-    color: inherit !important; /* Add this line */
   }
 `;
 
@@ -995,7 +993,7 @@ function User() {
                             <div className="score-circle">
                               <span
                                 className="score-number"
-                                style={{ color: getScoreColor(item.ratingIndex) }}
+                                style={{ color: getScoreColor(item.rating) }}
                               >
                                 {item.rating}
                               </span>
