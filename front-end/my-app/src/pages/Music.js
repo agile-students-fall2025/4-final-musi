@@ -389,6 +389,9 @@ function Music() {
         </BackButton>
       </BackButtonContainer>
       
+      {/* spacer to keep back button clear of header actions */}
+      <div style={{ height: 12, width: '100%' }} />
+
       <ImageHeader 
         {...musicData} 
         onRatingClick={(t, a, type, rated) => handleRatingClick(t, a, type, rated, musicData.spotifyId || musicData._id || musicData.id)}
@@ -398,7 +401,9 @@ function Music() {
         {descriptionString}
       </DescriptionText>
       </div>
-      <Scores title={title} artist={artist} musicType={musicType} refreshTrigger={refreshKey} />
+      <div className="scores-section">
+        <Scores title={title} artist={artist} musicType={musicType} refreshTrigger={refreshKey} />
+      </div>
 
       {musicType === "Album" && (
         <AlbumList 
@@ -408,7 +413,9 @@ function Music() {
           onRatingClick={handleRatingClick} 
         />
       )}
-      <FriendScore musicType={musicType} artist={artist} title={title} />
+      <div className="friend-section">
+        <FriendScore musicType={musicType} artist={artist} title={title} />
+      </div>
       <BottomNavBar />
 
       {showRatingModal && selectedSong && (
