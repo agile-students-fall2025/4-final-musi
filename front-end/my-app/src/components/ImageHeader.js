@@ -4,10 +4,24 @@ import './ImageHeader.css'
 function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType, isBookmarked: initialBookmarked = false, spotifyId, spotifyUrl}) {
 
     const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
       setIsBookmarked(initialBookmarked);
     }, [initialBookmarked]);
+
+    const handleShare = () => {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => {
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("Failed to copy link: ", err);
+        });
+    };
 
     const toggleBookmark = async () => {
       try {
@@ -67,6 +81,7 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
       <button 
         className="image-header-share-btn"
         title="Share"
+        onClick={handleShare}
       >
         <img 
           src="/share.png" 
