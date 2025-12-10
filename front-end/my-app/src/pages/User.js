@@ -6,6 +6,7 @@ import { theme } from '../theme';
 import FollowButton from '../components/FollowButton';
 import LikesModal from '../components/LikesModal';
 import SongItem from '../components/SongItem';
+import Sidebar from '../components/Sidebar';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../components/Score.css';
@@ -593,6 +594,7 @@ function User() {
   const [profile, setProfile] = useState(null);
   const [activity, setActivity] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [likesModalReviewId, setLikesModalReviewId] = useState(null);
   const [genres, setGenres] = useState([]);
@@ -794,7 +796,7 @@ function User() {
             <IconButton>
               <Share size={20} />
             </IconButton>
-            <IconButton>
+            <IconButton onClick={() => setIsSidebarOpen(true)}>
               <Menu size={20} />
             </IconButton>
           </div>
@@ -1141,6 +1143,8 @@ function User() {
           </TabContent>
         )}
       </Container>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Edit Profile Modal */}
       <ModalOverlay
