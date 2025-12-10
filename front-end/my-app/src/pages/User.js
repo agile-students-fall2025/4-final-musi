@@ -1039,7 +1039,7 @@ function User() {
 
         {activeTab === "taste" && (
           <TabContent>
-            <SectionTitle>YOUR TOP GENRES</SectionTitle>
+            <SectionTitle>TOP GENRES</SectionTitle>
 
             <ChartContainer>
               <ResponsiveContainer width="100%" height={250}>
@@ -1105,7 +1105,7 @@ function User() {
               </ChartLegend>
             </ChartContainer>
 
-            <SectionTitle>YOUR TOP TRACKS</SectionTitle>
+            <SectionTitle>TOP TRACKS</SectionTitle>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {topTracks.map((t, i) => (
                 <li 
