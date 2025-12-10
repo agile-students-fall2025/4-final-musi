@@ -5,7 +5,7 @@
 }
 
 .leaderboard-content {
-  max-width: 600px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -15,10 +15,12 @@
 }
 
 .header h1 {
-  font-size: 1.5rem;
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
   color: #000;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .filter-section {
