@@ -2775,14 +2775,19 @@ async function generateTasteData(userId, reviews, songs, songMap) {
     );
 
     // Count genres
-    artistGenreResults.forEach(({ genres }) => {
-      genres.forEach(genre => {
-        const capitalizedGenre = genre
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
-      });
+    artistGenreResults.forEach(({ genres, artist }) => {
+      if (genres.length > 0) {
+        genres.forEach(genre => {
+          const capitalizedGenre = genre
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          genreCounts[capitalizedGenre] = (genreCounts[capitalizedGenre] || 0) + 1;
+        });
+      } else {
+        // If no genres found for artist, count as "Other"
+        genreCounts['Other'] = (genreCounts['Other'] || 0) + 1;
+      }
     });
 
     // Track total unique artists listened (based on reviews)
