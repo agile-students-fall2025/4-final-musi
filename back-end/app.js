@@ -1645,6 +1645,7 @@ app.get("/api/users/:username/profile", async (req, res) => {
           user.avatarColor || computeAvatarColor(user.username || ""),
         activity: "ranked",
         rating,
+        ratingIndex: r.ratingIndex !== undefined ? r.ratingIndex : 0, // 0=green, 1=yellow, 2=red
         time,
         review: r.text || "",
         likes: likesCount,
@@ -2453,6 +2454,7 @@ app.get("/api/feed", async (req, res) => {
               userAvatarColor: color,
               activity: "ranked",
               rating,
+              ratingIndex: r.ratingIndex !== undefined ? r.ratingIndex : 0, // 0=green, 1=yellow, 2=red
               time,
               review: r.text || "",
               likes: likesCount,
@@ -2558,6 +2560,7 @@ app.get("/api/feed", async (req, res) => {
         userAvatarColor: color,
         activity: "ranked",
         rating,
+        ratingIndex: r.ratingIndex !== undefined ? r.ratingIndex : 0,
         time,
         review: r.text || "",
         likes: likesCount,
@@ -3051,6 +3054,7 @@ app.get("/api/profile", async (req, res) => {
           user.avatarColor || computeAvatarColor(user.username || ""),
         activity: "ranked",
         rating,
+        ratingIndex: r.ratingIndex !== undefined ? r.ratingIndex : 0, // 0=green, 1=yellow, 2=red
         time,
         review: r.text || "",
         likes: likesCount,
