@@ -68,6 +68,12 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
       
       <div className="image-header-gradient" />
 
+      {showToast && (
+        <div className="toast-notification">
+          Link copied to clipboard!
+        </div>
+      )}
+      
       {spotifyUrl && (
         <button
           className="image-header-spotify-btn"
