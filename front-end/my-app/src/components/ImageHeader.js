@@ -1,10 +1,10 @@
 import React, {useState, useEffect} from 'react'
 import './ImageHeader.css'
+import toast from 'react-hot-toast';
 
 function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, onRatingClick, musicType, isBookmarked: initialBookmarked = false, spotifyId, spotifyUrl}) {
 
     const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
-    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
       setIsBookmarked(initialBookmarked);
@@ -13,13 +13,10 @@ function ImageHeader({imageUrl, title, artist, avgScore, totalRatings, isRated, 
     const handleShare = () => {
       navigator.clipboard.writeText(window.location.href)
         .then(() => {
-          setShowToast(true);
-          setTimeout(() => {
-            setShowToast(false);
-          }, 2000);
+          toast.success('Copied to clipboard!');
         })
         .catch((err) => {
-          console.error("Failed to copy link: ", err);
+          toast.error('Failed to copy.');
         });
     };
 
