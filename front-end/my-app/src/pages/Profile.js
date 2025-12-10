@@ -241,12 +241,30 @@ const ChartContainer = styled.div`
   margin: 24px 0;
   position: relative;
   height: 250px;
+
+  /* On small screens stack chart and legend vertically and allow natural height */
+  @media (max-width: 600px) {
+    flex-direction: column;
+    height: auto;
+    padding-bottom: 8px;
+  }
 `;
 const ChartLegend = styled.div`
   position: absolute;
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  /* On small screens place legend below chart, wrap items and center them */
+  @media (max-width: 600px) {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 12px;
+    justify-content: center;
+    width: 100%;
+  }
 `;
 const LegendItem = styled.div`
   display: flex;
